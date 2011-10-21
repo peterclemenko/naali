@@ -117,7 +117,7 @@ else
     cd generator
     qmake
     make -j $nprocs
-    ./generator --include-paths=/usr/include/qt4
+    ./generator --include-paths=`qmake -query QT_INSTALL_HEADERS`
     cd ..
 
     cd qtbindings

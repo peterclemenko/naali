@@ -44,7 +44,8 @@ if lsb_release -c | egrep -q "lucid|maverick|natty|oneiric"; then
 	 build-essential g++ libogre-dev libboost-all-dev \
 	 ccache libqt4-dev python-dev freeglut3-dev \
 	 libxml2-dev cmake libalut-dev libtheora-dev \
-	 liboil0.3-dev mercurial unzip xsltproc libqtscript4-qtbindings
+	 liboil0.3-dev mercurial unzip xsltproc libqtscript4-qtbindings \
+	 libspeex-dev
 fi
 
 what=bullet-2.77
@@ -235,6 +236,27 @@ else
     cp lib/lib* $prefix/lib/
     # luckily only extensionless headers under src match Qt*:
     cp src/qt*.h src/Qt* $prefix/include/
+    touch $tags/$what-done
+fi
+
+cd $build
+what=qxmpp
+rev=r1671
+if test -f $tags/$what-done; then
+    echo $what is done
+else
+    rm -rf $what
+    svn checkout http://qxmpp.googlecode.com/svn/trunk@$rev $what
+    cd $what
+    sed 's/# DEFINES += QXMPP_USE_SPEEX/DEFINES += QXMPP_USE_SPEEX/g' src/src.pro > src/temp
+    sed 's/# LIBS += -lspeex/LIBS += -lspeex/g' src/temp > src/src.pro
+    sed 's/LIBS += $$QXMPP_LIBS/LIBS += $$QXMPP_LIBS -lspeex/g' tests/tests.pro > tests/temp && mv tests/temp tests/tests.pro
+    rm src/temp
+    qmake
+    make -j $nprocs
+    mkdir -p $prefix/include/$what
+    cp src/*.h $prefix/include/$what
+    cp lib/libqxmpp.a $prefix/lib/
     touch $tags/$what-done
 fi
 

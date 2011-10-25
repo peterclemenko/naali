@@ -13,10 +13,7 @@
 #include <QByteArray>
 #include <QStringList>
 
-namespace Foundation
-{
-    class Framework;
-}
+class Framework;
 
 namespace XMPP
 {
@@ -27,7 +24,7 @@ class AccountManager : public QObject
     Q_OBJECT
 
 public:
-    AccountManager(Foundation::Framework* framework);
+    AccountManager(Framework* framework);
     ~AccountManager();
 
     void loadFromFile();

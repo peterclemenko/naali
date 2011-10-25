@@ -3,6 +3,8 @@
 #include "StableHeaders.h"
 #include "DebugOperatorNew.h"
 
+#include "LoggingFunctions.h"
+
 #include "Extension.h"
 
 namespace XMPP

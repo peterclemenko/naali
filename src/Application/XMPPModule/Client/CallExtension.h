@@ -16,10 +16,7 @@
 #include <QObject>
 #include <QString>
 
-namespace Foundation
-{
-    class Framework;
-}
+class Framework;
 
 namespace XMPP
 {
@@ -94,7 +91,7 @@ private slots:
 private:
     static QString extension_name_;
     QXmppCallManager *qxmpp_call_manager_;
-    Foundation::Framework *framework_;
+    Framework *framework_;
     Client *client_;
     QMap<QString, Call*> calls_;
     QMap<QString, Call*> incoming_calls_;

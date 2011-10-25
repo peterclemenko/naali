@@ -7,6 +7,9 @@
 #include "Client.h"
 #include "XMPPModule.h"
 
+#include "LoggingFunctions.h"
+#include "Framework.h"
+
 #include "qxmpp/QXmppMucManager.h"
 #include "qxmpp/QXmppUtils.h"
 #include "qxmpp/QXmppMessage.h"
@@ -50,13 +53,13 @@ void MucExtension::handleMessageReceived(const QXmppMessage &message)
     if(!room)
         return;
 
-    XMPPModule::LogInfo("Received message. From: " + message.from().toStdString() + " Body: " + message.body().toStdString());
+    LogInfo("XMPPModule: Received message. From: " + message.from().toStdString() + " Body: " + message.body().toStdString());
 
 }
 
 void MucExtension::handleInvitationReceived(const QString &room, const QString &inviter, const QString &reason)
 {
-    XMPPModule::LogDebug(extension_name_.toStdString() + ": Received invitation (room ="
+    LogDebug(extension_name_.toStdString() + ": Received invitation (room ="
                          + room.toStdString() + " inviter ="
                          + inviter.toStdString() + " reason = "
                          + reason.toStdString() +")");
@@ -173,7 +176,7 @@ QXmppMucRoom* MucExtension::getRoom(const QString &roomJid)
         if(room->jid() == roomJid)
             return room;
     }
-    XMPPModule::LogError("No such room: " + roomJid.toStdString());
+    LogError("XMPPModule: No such room: " + roomJid.toStdString());
     return 0;
 }
 

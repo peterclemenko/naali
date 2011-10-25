@@ -19,6 +19,7 @@
   <plugin path="CAVEStereoModule" />            <!-- CAVEStereoModule depends on OgreRenderingModule -->
   <plugin path="VlcPlugin" />
   <plugin path="UpdateModule" />
+  <plugin path="XMPPModule" />                  <!-- This manly module doesn't depend on anyone -->
   
   <!-- The following are commented out as they are not a part of the default build -->
   <!-- <plugin path="CAVEStereoModule" /> -->           <!-- Depends on OgreRenderingModule and TundraLogicModule -->

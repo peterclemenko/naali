@@ -19,6 +19,8 @@ class QXmppMucRoom;
 class QXmppMessage;
 class QXmppPresence;
 
+class Framework;
+
 namespace XMPP
 {
 class Client;
@@ -81,7 +83,7 @@ private:
     QXmppMucManager* qxmpp_muc_manager_;
     //QMap<QString, MucRoom*> rooms_;
     QList<QXmppMucRoom*> rooms_;
-    Foundation::Framework *framework_;
+    Framework *framework_;
     Client *client_;
 
 protected:

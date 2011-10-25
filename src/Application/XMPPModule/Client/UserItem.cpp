@@ -6,6 +6,7 @@
 #include "UserItem.h"
 #include "XMPPModule.h"
 
+#include "LoggingFunctions.h"
 #include "CoreStringUtils.h"
 
 #include <qxmpp/QXmppUtils.h>
@@ -35,7 +36,7 @@ namespace XMPP
         if(resources_.size() == 0)
         {
             available_ = false;
-            XMPPModule::LogDebug(bare_jid_.toStdString() + " changed availability to: " + (available_ ? "available" : "unavailable"));
+            LogDebug(bare_jid_.toStdString() + " changed availability to: " + (available_ ? "available" : "unavailable"));
             emit availabilityChanged(available_);
             return;
         }
@@ -50,7 +51,7 @@ namespace XMPP
         if(available_ != available)
         {
             available_ = available;
-            XMPPModule::LogDebug(bare_jid_.toStdString() + " changed availability to: " + (available_ ? "available" : "unavailable"));
+            LogDebug(bare_jid_.toStdString() + " changed availability to: " + (available_ ? "available" : "unavailable"));
             emit availabilityChanged(available_);
         }
     }

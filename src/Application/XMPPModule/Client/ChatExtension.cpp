@@ -7,6 +7,8 @@
 #include "Client.h"
 #include "XMPPModule.h"
 
+#include "LoggingFunctions.h"
+
 #include "qxmpp/QXmppMessage.h"
 #include "qxmpp/QXmppUtils.h"
 
@@ -44,7 +46,7 @@ void ChatExtension::handleMessageReceived(const QXmppMessage &message)
     QString sender_jid = jidToBareJid(message.from());
     QString msg = message.body();
 
-    XMPPModule::LogDebug(extension_name_.toStdString()
+    LogDebug(extension_name_.toStdString()
                          + "Message (sender = \"" + sender_jid.toStdString()
                          + "\", message =\"" + msg.toStdString() + "\"");
 

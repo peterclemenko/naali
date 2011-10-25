@@ -7,6 +7,7 @@
 #include "XMPPModule.h"
 
 #include "Framework.h"
+#include "LoggingFunctions.h"
 
 #include "qxmpp/QXmppRtpChannel.h"
 #include "qxmpp/QXmppJingleIq.h"
@@ -16,7 +17,7 @@
 
 namespace XMPP
 {
-Call::Call(Foundation::Framework *framework, QXmppCall *call) :
+Call::Call(Framework *framework, QXmppCall *call) :
     framework_(framework),
     call_(call)
 {
@@ -40,7 +41,7 @@ Call::Call(Foundation::Framework *framework, QXmppCall *call) :
 
 Call::~Call()
 {
-    XMPPModule::LogDebug("Destroyed call object, with jid: " + peer_jid_.toStdString());
+    LogDebug("XMPPModule: Destroyed call object, with jid: " + peer_jid_.toStdString());
     if(audio_channel_)
     {
         framework_->Audio()->Stop(audio_channel_);
@@ -106,7 +107,7 @@ void Call::handleCallConnected()
 
     if(!framework_->Audio())
     {
-        XMPPModule::LogError("Tundra sound API not initialized, cannot initialize voice call.");
+        LogError("XMPPModule: Tundra sound API not initialized, cannot initialize voice call.");
         handleCallTerminated();
     }
 
@@ -229,7 +230,7 @@ void Call::setState(Call::State state)
         break;
     }
 
-    XMPPModule::LogInfo("Call with \"" + peer_jid_.toStdString() + "\" " + state_string.toStdString());
+    LogInfo("XMPPModule: Call with \"" + peer_jid_.toStdString() + "\" " + state_string.toStdString());
     emit stateChanged(state_);
 }
 

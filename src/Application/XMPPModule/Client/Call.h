@@ -7,10 +7,7 @@
 
 #include <QObject>
 
-namespace Foundation
-{
-    class Framework;
-}
+class Framework;
 
 namespace XMPP
 {
@@ -23,7 +20,7 @@ class Call : public QObject
 public:
     enum State { RingingState = 0, ConnectingState, ActiveState, SuspendedState, DisconnectingState, FinishedState };
 
-    Call(Foundation::Framework *framework, QXmppCall *call);
+    Call(Framework *framework, QXmppCall *call);
     ~Call();
 
     void Update(f64 frametime);
@@ -63,7 +60,7 @@ private slots:
 private:
     void setState(Call::State state);
 
-    Foundation::Framework *framework_;
+    Framework *framework_;
     SoundChannelPtr audio_channel_;
     QString peer_jid_;
     QXmppCall *call_;

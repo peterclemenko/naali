@@ -23,10 +23,7 @@ class QXmppVCardIq;
 class QXmppConfiguration;
 class QXmppPresence;
 
-namespace Foundation
-{
-    class Framework;
-}
+class Framework;
 
 namespace XMPP
 {
@@ -43,12 +40,12 @@ class Client : public QObject
 {
     Q_OBJECT
 public:
-    Client(Foundation::Framework* framework, QXmppConfiguration &configuration);
+    Client(Framework* framework, QXmppConfiguration &configuration);
     ~Client();
 
     void Update(f64 frametime);
 
-    Foundation::Framework *getFramework() { return framework_; }
+    Framework *getFramework() { return framework_; }
     QXmppClient *getQxmppClient() { return xmpp_client_; }
 
     //! Get extension pointer
@@ -133,7 +130,7 @@ private:
     QList<Extension*> available_extensions_; // All possible extensions in unititialized state
     QXmppConfiguration *current_configuration_;
     QMap<QString, UserItem*> users_;
-    Foundation::Framework* framework_;
+    Framework* framework_;
     bool log_stream_;
 
     //! Connect to a XMPP Server using QXmppConfiguration

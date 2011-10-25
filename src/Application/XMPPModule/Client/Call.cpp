@@ -47,7 +47,6 @@ Call::~Call()
         framework_->Audio()->Stop(audio_channel_);
         audio_channel_.reset();
     }
-    delete call_;
 }
 
 bool Call::accept()

@@ -162,8 +162,9 @@ if [ x$private_ogre = xtrue ]; then
     else
         cd $build
         rm -rf $what
-        hg clone http://bitbucket.org/sinbad/$what/ -u v1-7-3
-        cd $what
+	test -f $tarballs/$what.tar.bz2 || wget -O $tarballs/$what.tar.bz2 'http://downloads.sourceforge.net/project/ogre/ogre/1.7/ogre_src_v1-7-3.tar.bz2?r=http%3A%2F%2Fwww.ogre3d.org%2Fdownload%2Fsource&ts=1319633319&use_mirror=switch'
+	tar jxf $tarballs/$what.tar.bz2
+        cd ${what}_src_v1-7-3/
         mkdir -p $what-build
         cd $what-build
         cmake .. -DCMAKE_INSTALL_PREFIX=$prefix

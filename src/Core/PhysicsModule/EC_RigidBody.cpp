@@ -64,7 +64,8 @@ EC_RigidBody::EC_RigidBody(Scene* scene) :
     heightField_(0),
     disconnected_(false),
     cachedShapeType_(-1),
-    cachedSize_(float3::zero)
+    cachedSize_(float3::zero),
+    got_authority_(false)
 {
     owner_ = framework->GetModule<PhysicsModule>();
     
@@ -259,6 +260,10 @@ void EC_RigidBody::UpdateSignals()
     world_ = scene->GetWorld<PhysicsWorld>().get();
     if (world_)
         connect(world_, SIGNAL(AboutToUpdate(float)), this, SLOT(OnAboutToUpdate()));
+    if (world_->IsClient())
+        got_authority_ = false;
+    else
+        got_authority_ = true;
 }
 
 void EC_RigidBody::CheckForPlaceableAndTerrain()
@@ -712,12 +717,21 @@ void EC_RigidBody::GetAabbox(float3 &outAabbMin, float3 &outAabbMax)
     outAabbMax.Set(aabbMax.x(), aabbMax.y(), aabbMax.z());
 }
 
-bool EC_RigidBody::HasAuthority() const
+void EC_RigidBody::AssertAuthority(bool yesno)
 {
-    if ((!world_) || ((world_->IsClient()) && (!ParentEntity()->IsLocal())))
-        return false;
-    
-    return true;
+    got_authority_ = yesno;
+}
+
+bool EC_RigidBody::HasAuthority()
+{
+    if (!world_)
+	return false;
+    else if (ParentEntity() && ParentEntity()->IsLocal()) // preserve old default, could also require explicitness and drop this
+        return true;
+    else if (got_authority_)
+        return true;
+    else
+	return false;
 }
 
 void EC_RigidBody::TerrainUpdated(IAttribute* attribute)

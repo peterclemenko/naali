@@ -156,6 +156,7 @@ else
 fi
 
 if [ x$private_ogre = xtrue ]; then
+    sudo apt-get build-dep libogre-dev
     what=ogre
     if test -f $tags/$what-done; then
         echo $what is done

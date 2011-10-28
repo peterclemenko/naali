@@ -48,8 +48,8 @@ if lsb_release -c | egrep -q "lucid|maverick|natty|oneiric"; then
 	 build-essential g++ libogre-dev libboost-all-dev \
 	 ccache libqt4-dev python-dev freeglut3-dev \
 	 libxml2-dev cmake libalut-dev libtheora-dev \
-	 liboil0.3-dev mercurial unzip xsltproc libqtscript4-qtbindings \
-	 libspeex-dev nvidia-cg-toolkit $more
+	 liboil0.3-dev mercurial unzip xsltproc \
+	 libspeex-dev nvidia-cg-toolkit svn $more
 fi
 
 what=bullet-2.77

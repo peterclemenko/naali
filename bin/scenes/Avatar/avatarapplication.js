@@ -115,6 +115,8 @@ function ServerHandleUserConnected(connectionID, user) {
     transform.pos.y = avatar_area_y;
     transform.pos.z = (Math.random() - 0.5) * avatar_area_size + avatar_area_z;
     placeable.transform = transform;
+    
+    placeable.selectionLayer = 0x80000000;
 
     if (user != null)
         print("[Avatar Application] Created avatar for " + user.GetProperty("username"));

@@ -4,10 +4,8 @@ set -x
 
 # script to build naali and most deps.
 #
-# if you want to use caelum, install ogre and nvidia cg from
-# ppa:andrewfenn/ogredev, change the caelum setting to 1 in
-# top-level CMakeBuildConfig.txt and enable Cg module in bin/plugins-unix.cfg
-
+# note: you need to enable the universe and multiverse software sources
+# as this script attempts to get part of the deps using apt-get
 
 viewer=$(dirname $(readlink -f $0))/..
 deps=$viewer/../naali-deps
@@ -38,6 +36,12 @@ export CC="ccache gcc"
 export CXX="ccache g++"
 export CCACHE_DIR=$deps/ccache
 
+private_ogre=true # build own ogre by default, since ubuntu shipped ogre is too old and/or built without thread support
+
+if [ x$private_ogre != xtrue ]; then
+   more="$more libogre-dev"
+fi
+
 if lsb_release -c | egrep -q "lucid|maverick|natty|oneiric"; then
         which aptitude > /dev/null 2>&1 || sudo apt-get install aptitude
 	sudo aptitude -y install python-dev libogg-dev libvorbis-dev \
@@ -45,7 +49,7 @@ if lsb_release -c | egrep -q "lucid|maverick|natty|oneiric"; then
 	 ccache libqt4-dev python-dev freeglut3-dev \
 	 libxml2-dev cmake libalut-dev libtheora-dev \
 	 liboil0.3-dev mercurial unzip xsltproc libqtscript4-qtbindings \
-	 libspeex-dev
+	 libspeex-dev nvidia-cg-toolkit $more
 fi
 
 what=bullet-2.77
@@ -151,6 +155,25 @@ else
     touch $tags/$what-done
 fi
 
+if [ x$private_ogre = xtrue ]; then
+    sudo apt-get build-dep libogre-dev
+    what=ogre
+    if test -f $tags/$what-done; then
+        echo $what is done
+    else
+        cd $build
+        rm -rf $what
+	test -f $tarballs/$what.tar.bz2 || wget -O $tarballs/$what.tar.bz2 'http://downloads.sourceforge.net/project/ogre/ogre/1.7/ogre_src_v1-7-3.tar.bz2?r=http%3A%2F%2Fwww.ogre3d.org%2Fdownload%2Fsource&ts=1319633319&use_mirror=switch'
+	tar jxf $tarballs/$what.tar.bz2
+        cd ${what}_src_v1-7-3/
+        mkdir -p $what-build
+        cd $what-build
+        cmake .. -DCMAKE_INSTALL_PREFIX=$prefix
+        make -j $nprocs VERBOSE=1
+        make install
+        touch $tags/$what-done
+    fi
+fi
 
 # HydraX, SkyX and PythonQT are build from the realxtend own dependencies.
 # At least for the time being, until changes to those components flow into

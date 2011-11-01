@@ -8,6 +8,8 @@
 #include "XMPPModule.h"
 #include "UserItem.h"
 
+#include "LoggingFunctions.h"
+
 #include "qxmpp/QXmppUtils.h"
 
 #include "MemoryLeakCheck.h"
@@ -151,7 +153,7 @@ void CallExtension::handleCallReceived(QXmppCall *qxmppCall)
 {
     QString from_jid = jidToBareJid(qxmppCall->jid());
 
-    XMPPModule::LogDebug(extension_name_.toStdString()
+    LogDebug(extension_name_.toStdString()
                          + "Incoming call (from = \"" + from_jid.toStdString() + "\")");
 
     Call *call = new Call(framework_, qxmppCall);

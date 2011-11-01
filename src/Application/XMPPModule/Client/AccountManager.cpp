@@ -8,6 +8,7 @@
 
 #include "ConfigAPI.h"
 #include "Framework.h"
+#include "LoggingFunctions.h"
 
 #include <qxmpp/QXmppUtils.h>
 
@@ -19,7 +20,7 @@
 namespace XMPP
 {
 
-AccountManager::AccountManager(Foundation::Framework *framework) :
+AccountManager::AccountManager(Framework *framework) :
     accounts_(new QDomDocument()),
     accounts_filename_("XmppAccounts.xml")
 {
@@ -81,7 +82,7 @@ void AccountManager::addLoginData(QString userJid, QString server, QString passw
 {
     if(userJid.isEmpty() || server.isEmpty())
     {
-        XMPPModule::LogError("Please provide atleast user Jabber ID and XMPP Server address to save login credentials.");
+        LogError("XMPPModule: Please provide atleast user Jabber ID and XMPP Server address to save login credentials.");
         return;
     }
 

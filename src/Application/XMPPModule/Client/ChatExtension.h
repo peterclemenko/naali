@@ -15,10 +15,7 @@
 
 class QXmppMessage;
 
-namespace Foundation
-{
-    class Framework;
-}
+class Framework;
 
 namespace XMPP
 {

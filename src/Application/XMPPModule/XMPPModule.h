@@ -9,9 +9,7 @@
 #define incl_XMPP_XMPPModule_h
 
 #include "IModule.h"
-#include "ModuleLoggingFunctions.h"
 #include "XMPPModuleApi.h"
-#include "ForwardDefines.h"
 #include "CoreStringUtils.h"
 
 #include "qxmpp/QXmppConfiguration.h"
@@ -32,7 +30,7 @@ class AccountManager;
  *
  *  Work in progress
  */
-class XMPP_MODULE_API XMPPModule : public QObject, public IModule
+class XMPP_MODULE_API XMPPModule : public IModule
 {
     Q_OBJECT
 
@@ -50,18 +48,11 @@ public:
     void Initialize();
 
     /// IModule override.
-    void PostInitialize();
-
-    /// IModule override.
     void Uninitialize();
 
     /// IModule override.
     void Update(f64 frametime);
 
-    MODULE_LOGGING_FUNCTIONS
-
-    /// Returns name of this module. Needed for logging.
-    static const std::string &NameStatic() { return type_name_static_; }
 
 public slots:
     QObject *getClient(QString host);
@@ -72,12 +63,10 @@ public slots:
 private slots:
     void handleClientDisconnect(Client *client);
 
-
 private:
     static std::string type_name_static_;
     AccountManager *account_manager_;
     QList<Client*> clients_;
-
 };
 
 } // end of namespace: XMPP

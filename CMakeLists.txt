@@ -233,7 +233,6 @@ include (ConfigurePackages)
 include (TundraInstall)
 include (FindOgre)
 include (FindDirectX)
-include (FindQXmpp)
 
 # Disable unnecessary build types
 set(CMAKE_CONFIGURATION_TYPES "Release;RelWithDebInfo;Debug" CACHE STRING "Configurations" FORCE)

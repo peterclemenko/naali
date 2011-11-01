@@ -313,7 +313,10 @@ public slots:
     btRigidBody* GetRigidBody() const { return body_; }
     
     /// Return whether have authority. On the client, returns false for non-local objects.
-    bool HasAuthority() const;
+    bool HasAuthority();
+
+    //! (Dis)claim authority.
+    void AssertAuthority(bool);
     
 private slots:
     /// Called when the parent entity has been set.
@@ -419,6 +422,10 @@ private:
     
     /// Heightfield values, for the case the shape is a heightfield.
     std::vector<float> heightValues_;
+
+    //! Physics authority flag
+    bool got_authority_;
+
 };
 
 

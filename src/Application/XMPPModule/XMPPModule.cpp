@@ -8,15 +8,14 @@
 #include "Client/AccountManager.h"
 
 #include "Framework.h"
+#include "LoggingFunctions.h"
 
 #include "MemoryLeakCheck.h"
 
 namespace XMPP
 {
-std::string XMPPModule::type_name_static_ = "XMPP";
-
 XMPPModule::XMPPModule() :
-    IModule(type_name_static_),
+    IModule("XMPPModule"),
     account_manager_(0)
 {
 }
@@ -40,10 +39,6 @@ void XMPPModule::Initialize()
 {
     account_manager_ = new AccountManager(framework_);
     account_manager_->loadFromFile();
-}
-
-void XMPPModule::PostInitialize()
-{
 }
 
 void XMPPModule::Uninitialize()
@@ -99,14 +94,12 @@ void XMPPModule::handleClientDisconnect(Client *client)
 
 }// end of namespace: XMPP
 
-extern "C" void POCO_LIBRARY_API SetProfiler(Foundation::Profiler *profiler);
-void SetProfiler(Foundation::Profiler *profiler)
+extern "C"
 {
-    Foundation::ProfilerSection::SetProfiler(profiler);
+    DLLEXPORT void TundraPluginMain(Framework *fw)
+    {
+        Framework::SetInstance(fw); // Inside this DLL, remember the pointer to the global framework object.
+        IModule *module = new XMPP::XMPPModule();
+        fw->RegisterModule(module);
+    }
 }
-
-using namespace XMPP;
-
-POCO_BEGIN_MANIFEST(IModule)
-   POCO_EXPORT_CLASS(XMPPModule)
-POCO_END_MANIFEST

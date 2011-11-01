@@ -1,11 +1,13 @@
 // !ref: default_avatar.avatar
-// !ref: crosshair.js
+
+// A simple walking avatar running on client side
+
+engine.IncludeFile("av_common.js");
 
 if (!server.IsRunning() && !framework.IsHeadless())
 {
     engine.ImportExtension("qt.core");
     engine.ImportExtension("qt.gui");
-    engine.IncludeFile("crosshair.js");
 }
 
 // A simple walking avatar with physics & 1st/3rd person camera
@@ -34,11 +36,10 @@ function SimpleAvatar(entity, comp)
     this.rotate = 0;
 
     // Needed bools for logic
-    this.isServer = server.IsRunning();
+    this.isServer = server.IsRunning() || server.IsAboutToStart();
     this.ownAvatar = false;
     this.flying = false;
     this.falling = false;
-    this.crosshair = null;
     this.isMouseLookLockedOnX = true;
 
     // Animation detection
@@ -51,7 +52,6 @@ function SimpleAvatar(entity, comp)
     this.animsDetected = false;
     this.listenGesture = false;
 
-    // Create avatar on server, and camera & inputmapper on client
     if (this.isServer)
         this.ServerInitialize();
     else
@@ -62,45 +62,62 @@ SimpleAvatar.prototype.OnScriptObjectDestroyed = function() {
     // Must remember to manually disconnect subsystem signals, otherwise they'll continue to get signalled
     if (this.isServer)
     {
-        frame.Updated.disconnect(this, this.ServerUpdate);
-        scene.physics.Updated.disconnect(this, this.ServerUpdatePhysics);
+        frame.Updated.disconnect(this, this.AnimationUpdate);
+        scene.physics.Updated.disconnect(this, this.ClientUpdatePhysics);
     }
     else
         frame.Updated.disconnect(this, this.ClientUpdate);
 }
 
 SimpleAvatar.prototype.ServerInitialize = function() {
-    // Create the avatar component & set the avatar appearance. The avatar component will create the mesh & animationcontroller, once the avatar asset has loaded
+    var rigidbody = this.me.GetOrCreateComponentRaw("EC_RigidBody");
+    rigidbody.AssertAuthority(false);
+}
+
+SimpleAvatar.prototype.ClientInitialize2 = function() {
+    // This is ServerInitialize in the standard avatar app.
+
+    // Create the avatar component & set the avatar appearance. The
+    // avatar component will create the mesh & animationcontroller,
+    // once the avatar asset has loaded
+
+    log("ClientInitialize2 called");
+
     var avatar = this.me.GetOrCreateComponent("EC_Avatar");
-    
+
+    var me_connid = dc_get(me, "connectionID");
+    var thisclient_connid = client.GetConnectionID();
+
+    log("checking if own avatar, client has " + thisclient_connid + ", me ent has " + me_connid);
+
+    if (me_connid != thisclient_connid) {
+	log(".. nope.");
+	return;
+    }
     // Try to dig login param avatar. This seemed like the easiest way to do it.
     // Parse the connection id from the entity name and get a connection for him,
     // check if a custom av url was passed when this client logged in.
-    var entName = this.me.name;
-    var indexNum = entName.substring(6); // 'Avatar' == 6, we want the number after that
-    var clientPtr = server.GetUserConnection(parseInt(indexNum, 10));
+
+    // var entName = this.me.name;
+    // var indexNum = entName.substring(6); // 'Avatar' == 6, we want the number after that
+    // var clientPtr = server.GetUserConnection(parseInt(indexNum, 10));
     
     // Default avatar ref
     var avatarurl = "default_avatar.avatar";
     
-    // This is done here (server side) because it seems changing the avatar 
-    // appearance ref right after this in the client actually does not take effect at all.
-    if (clientPtr != null)
-    {
-        var avatarurlProp = clientPtr.GetProperty("avatarurl");
-        if (avatarurlProp && avatarurlProp.length > 0)
-        {
-            debug.Log("Avatar from login parameters enabled: " + avatarurlProp);
-            avatarurl = avatarurlProp;
-        }
+    var avatarurlProp = client.GetLoginProperty("avatarurl");
+    if (avatarurlProp && avatarurlProp.length > 0) {
+	debug.Log("Avatar from login parameters enabled: " + avatarurlProp);
+	avatarurl = avatarurlProp;
     }
     
     var r = avatar.appearanceRef;
     r.ref = avatarurl;
     avatar.appearanceRef = r;
 
-    // Create rigid body component and set physics properties
+    // Get rigid body component and set physics properties
     var rigidbody = this.me.GetOrCreateComponent("EC_RigidBody");
+    rigidbody.AssertAuthority(true);
     var sizeVec = new float3(0.5, 2.4, 0.5);
     rigidbody.mass = this.avatarMass;
     rigidbody.shapeType = 3; // Capsule
@@ -129,21 +146,21 @@ SimpleAvatar.prototype.ServerInitialize = function() {
     // proxtrigger.active = false;
 
     // Hook to physics update
-    scene.physics.Updated.connect(this, this.ServerUpdatePhysics);
+    scene.physics.Updated.connect(this, this.ClientUpdatePhysics);
 
     // Hook to tick update for animation update
-    frame.Updated.connect(this, this.ServerUpdate);
+    frame.Updated.connect(this, this.AnimationUpdate);
 
     // Connect actions. These come from the client side inputmapper
-    this.me.Action("Move").Triggered.connect(this, this.ServerHandleMove);
-    this.me.Action("Stop").Triggered.connect(this, this.ServerHandleStop);
-    this.me.Action("ToggleFly").Triggered.connect(this, this.ServerHandleToggleFly);
-    this.me.Action("SetRotation").Triggered.connect(this, this.ServerHandleSetRotation);
+    this.me.Action("Move").Triggered.connect(this, this.ClientHandleMove);
+    this.me.Action("Stop").Triggered.connect(this, this.ClientHandleStop);
+    this.me.Action("ToggleFly").Triggered.connect(this, this.ClientHandleToggleFly);
+    this.me.Action("SetRotation").Triggered.connect(this, this.ClientHandleSetRotation);
 
-    rigidbody.PhysicsCollision.connect(this, this.ServerHandleCollision);
+    rigidbody.PhysicsCollision.connect(this, this.ClientHandleCollision);
 }
 
-SimpleAvatar.prototype.ServerUpdate = function(frametime) {
+SimpleAvatar.prototype.AnimationUpdate = function(frametime) {
     var attrs = this.me.dynamiccomponent;
 
     if (!this.animsDetected) {
@@ -159,7 +176,7 @@ SimpleAvatar.prototype.ServerUpdate = function(frametime) {
     
     // If flying enable was toggled off, but we are still flying, disable now
     if ((this.flying) && (!attrs.GetAttribute("enableFly")))
-        this.ServerSetFlying(false);
+        this.ClientSetFlying(false);
 
     this.CommonUpdateAnimation(frametime);
 }
@@ -167,14 +184,21 @@ SimpleAvatar.prototype.ServerUpdate = function(frametime) {
 SimpleAvatar.prototype.ServerHandleCollision = function(ent, pos, normal, distance, impulse, newCollision) {
     if (this.falling && newCollision) {
         this.falling = false;
-        this.ServerSetAnimationState();
+        this.SetAnimationState();
     }
 }
 
-SimpleAvatar.prototype.ServerUpdatePhysics = function(frametime) {
+SimpleAvatar.prototype.ClientUpdatePhysics = function(frametime) {
     var placeable = this.me.placeable;
     var rigidbody = this.me.rigidbody;
     var attrs = this.me.dynamiccomponent;
+
+    // don't fall to china
+    if (transform.pos.z < -50) {
+	transform.pos.z = 20;
+	placeable.transform = transform;
+	ServerHandleToggleFly();
+    }
 
     if (!this.flying) {
         // Apply motion force
@@ -224,10 +248,9 @@ SimpleAvatar.prototype.ServerUpdatePhysics = function(frametime) {
     }
 }
 
-SimpleAvatar.prototype.ServerHandleMove = function(param) {
-    var attrs = this.me.dynamiccomponent;
-
-    if (attrs.GetAttribute("enableWalk")) {
+SimpleAvatar.prototype.ClientHandleMove = function(param) {
+    log("ClientHandleMove " + param);
+    if (dc_get(this.me, "enableWalk")) {
         if (param == "forward") {
             this.motionZ = 1;
         }
@@ -249,10 +272,11 @@ SimpleAvatar.prototype.ServerHandleMove = function(param) {
         this.motionY = -1;
     }
 
-    this.ServerSetAnimationState();
+    this.SetAnimationState();
 }
 
-SimpleAvatar.prototype.ServerHandleStop = function(param) {
+SimpleAvatar.prototype.ClientHandleStop = function(param) {
+    log("ClientHandleStop " + param);
     if ((param == "forward") && (this.motionZ == 1)) {
         this.motionZ = 0;
     }
@@ -272,14 +296,14 @@ SimpleAvatar.prototype.ServerHandleStop = function(param) {
         this.motionY = 0;
     }
 
-    this.ServerSetAnimationState();
+    this.SetAnimationState();
 }
 
-SimpleAvatar.prototype.ServerHandleToggleFly = function() {
-    this.ServerSetFlying(!this.flying);
+SimpleAvatar.prototype.ClientHandleToggleFly = function() {
+    this.ClientSetFlying(!this.flying);
 }
 
-SimpleAvatar.prototype.ServerSetFlying = function(newFlying) {
+SimpleAvatar.prototype.ClientSetFlying = function(newFlying) {
     var attrs = this.me.dynamiccomponent;
     if (!attrs.GetAttribute("enableFly"))
         newFlying = false;
@@ -301,18 +325,17 @@ SimpleAvatar.prototype.ServerSetFlying = function(newFlying) {
         var pushVec = placeable.LocalToWorld().MulDir(moveVec);
         rigidbody.ApplyImpulse(pushVec);
     }
-    this.ServerSetAnimationState();
+    this.SetAnimationState();
 }
 
-SimpleAvatar.prototype.ServerHandleSetRotation = function(param) {
-    var attrs = this.me.dynamiccomponent;
-    if (attrs.GetAttribute("enableRotate")) {
+SimpleAvatar.prototype.ClientHandleSetRotation = function(param) {
+    if (dc_get(this.me, "enableRotate")) {
         var rot = new float3(0, parseFloat(param), 0);
         this.me.rigidbody.SetRotation(rot);
     }
 }
 
-SimpleAvatar.prototype.ServerSetAnimationState = function() {
+SimpleAvatar.prototype.SetAnimationState = function() {
     // Not flying: Stand, Walk or Crouch
     var animName = this.standAnimName;
     if ((this.motionX != 0) || (this.motionZ != 0)) {
@@ -344,14 +367,21 @@ SimpleAvatar.prototype.ClientInitialize = function() {
     // This is already done in the server but the info seems to not travel to the clients!
     this.me.SetTemporary(true);
     
+    // TODO t1 ver connected Move action to ClientHandleMove here unconditionally, check
+
     // Check if this is our own avatar
     // Note: bad security. For now there's no checking who is allowed to invoke actions
     // on an entity, and we could theoretically control anyone's avatar
-    if (this.me.name == "Avatar" + client.GetConnectionID()) {
+
+    var me_connid = dc_get(me, "connectionID");
+    var thisclient_connid = client.GetConnectionID();
+
+    log("checking if own avatar, client has " + thisclient_connid + ", me ent has " + me_connid);
+
+    if (me_connid == thisclient_connid) {
         this.ownAvatar = true;
         this.ClientCreateInputMapper();
         this.ClientCreateAvatarCamera();
-        this.crosshair = new Crosshair(/*bool useLabelInsteadOfCursor*/ true);
         var soundlistener = this.me.GetOrCreateComponent("EC_SoundListener", 2, false);
         soundlistener.active = true;
 
@@ -359,6 +389,7 @@ SimpleAvatar.prototype.ClientInitialize = function() {
         this.me.Action("Zoom").Triggered.connect(this, this.ClientHandleKeyboardZoom);
         this.me.Action("Rotate").Triggered.connect(this, this.ClientHandleRotate);
         this.me.Action("StopRotate").Triggered.connect(this, this.ClientHandleStopRotate);
+	this.me.ClientInitialize2();
     }
     else
     {
@@ -425,7 +456,7 @@ SimpleAvatar.prototype.ClientCreateInputMapper = function() {
     inputmapper.takeKeyboardEventsOverQt = false;
     inputmapper.modifiersEnabled = false;
     inputmapper.keyrepeatTrigger = false; // Disable repeat keyevent sending over network, not needed and will flood network
-    inputmapper.executionType = 2; // Execute actions on server
+    inputmapper.executionType = 1; // Execute actions on client
 
     // Key pressed -actions
     inputmapper.RegisterMapping("W", "Move(forward)", 1); // 1 = keypress
@@ -631,15 +662,10 @@ SimpleAvatar.prototype.ClientUpdateRotation = function(frametime) {
 }
 
 SimpleAvatar.prototype.ClientUpdateAvatarCamera = function() {
-
-    // Check 1st/3rd person mode toggle
-    this.ClientCheckState();
-
     var attrs = this.me.dynamiccomponent;
     if (attrs == null)
         return;
     var avatarCameraDistance = attrs.GetAttribute("cameraDistance");
-    var firstPerson = avatarCameraDistance < 0;
 
     var cameraentity = scene.GetEntityByName("AvatarCamera");
     if (cameraentity == null)
@@ -650,78 +676,18 @@ SimpleAvatar.prototype.ClientUpdateAvatarCamera = function() {
     cameratransform.rot = new float3(this.pitch, 0, 0);
     cameratransform.pos = new float3(0, this.avatarCameraHeight, avatarCameraDistance);
 
-    // Track the head bone in 1st person
-    if ((firstPerson) && (me.mesh != null))
-    {
-        me.mesh.ForceSkeletonUpdate();
-        var headPos = me.mesh.GetBoneDerivedPosition("Bip01_Head");
-        headPos.z -= 0.5;
-        headPos.y -= 0.7;
-        cameratransform.pos = headPos;
-    }
-
     cameraplaceable.transform = cameratransform;
-}
-
-SimpleAvatar.prototype.ClientCheckState = function() {
-    var attrs = this.me.dynamiccomponent;
-    var firstPerson = attrs.GetAttribute("cameraDistance") < 0;
-
-    var cameraentity = scene.GetEntityByName("AvatarCamera");
-    var avatarPlaceable = this.me.GetComponent("EC_Placeable");
-
-    if (this.crosshair == null)
-        return;
-    // If ent got destroyed or something fatal, return cursor
-    if (cameraentity == null || avatarPlaceable == null) {
-        if (this.crosshair.isActive()) {
-            this.crosshair.hide();
-        }
-        return;
-    }
-
-    if (!firstPerson) {
-        if (this.crosshair.isActive()) {
-            this.crosshair.hide();
-        }
-        return;
-    }
-    else
-    {
-        // We might be in 1st person mode but camera might not be active
-        // hide curson and show av
-        if (!cameraentity.camera.IsActive()) {
-            if (this.crosshair.isActive()) {
-                this.crosshair.hide();
-            }
-        }
-        else {
-            // 1st person mode and camera is active
-            // show curson and av
-            if (!this.crosshair.isActive()) {
-                this.crosshair.show();
-            }
-        }
-    }
 }
 
 SimpleAvatar.prototype.ClientHandleMouseMove = function(mouseevent) {
     var attrs = this.me.dynamiccomponent;
-    var firstPerson = attrs.GetAttribute("cameraDistance") < 0;
 
-    if ((firstPerson) && (input.IsMouseCursorVisible()))
-    {
-        input.SetMouseCursorVisible(false);
-        if (!this.crosshair.isUsingLabel)
-            QApplication.setOverrideCursor(crosshair.cursor);
-    }
-        
     // Do not rotate if not allowed
     if (!attrs.GetAttribute("enableRotate"))
         return;
 
     // Do not rotate in third person if right mousebutton not held down
-    if ((!firstPerson) && (input.IsMouseCursorVisible()))
+    if (input.IsMouseCursorVisible())
         return;
 
     if (mouseevent.IsRightButtonDown())
@@ -744,7 +710,7 @@ SimpleAvatar.prototype.ClientHandleMouseMove = function(mouseevent) {
         this.me.Exec(2, "SetRotation", this.yaw.toString());
     }
 
-    if (mouseevent.relativeY != 0 && (firstPerson || !this.isMouseLookLockedOnX))
+    if (mouseevent.relativeY != 0 && !this.isMouseLookLockedOnX)
     {
         // Look up/down
         var attrs = this.me.dynamiccomponent;

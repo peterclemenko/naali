@@ -1,29 +1,33 @@
-// Avatar application. Will handle switching logic between avatar & freelook camera (clientside), and
-// spawning avatars for clients (serverside). Note: this is not a startup script, but is meant to be
-// placed in an entity in a scene that wishes to implement avatar functionality, with the application name
-// AvatarApp.
+// Client-side avatar application, based on the bundled Avatar app.
+
+// This runs in a single EC on the server, and gives each connection
+// an avatar entity of their own (and an along with an avatar entity
+// script, avatar_entity.js)
+
+engine.IncludeFile("av_common.js");
 
 var avatar_area_size = 10;
 var avatar_area_x = 0;
 var avatar_area_y = 5;
 var avatar_area_z = 0;
 
-if (!server.IsRunning()) {
-    var inputmapper = me.GetOrCreateComponent("EC_InputMapper");
-    inputmapper.SetTemporary(true);
-    inputmapper.contextPriority = 102;
-    inputmapper.RegisterMapping("Ctrl+Tab", "ToggleCamera", 1);
+is_server = server.IsRunning() || server.IsAboutToStart();
+is_client = !is_server;
 
-    me.Action("ToggleCamera").Triggered.connect(ClientHandleToggleCamera);
-} else {
+if (is_client) {
+    // nothing
+    // TODO see about making this a server-only entity
+} else if (is_server) {
     server.UserAboutToConnect.connect(ServerHandleUserAboutToConnect);
     server.UserConnected.connect(ServerHandleUserConnected);
     server.UserDisconnected.connect(ServerHandleUserDisconnected);
     
     // If there are connected users when this script was added, add av for all of them
+    // TODO new, check
+
     var userIdList = server.GetConnectionIDs();
     if (userIdList.length > 0)
-        print("[Avatar Application] Application started. Creating avatars for logged in clients.");
+        log("Application started. Creating avatars for logged in clients.");
 
     for (var i=0; i < userIdList.length; i++)
     {
@@ -34,49 +38,9 @@ if (!server.IsRunning()) {
     }
 }
 
-function ClientHandleToggleCamera() {
-    // For camera switching to work, must have both the freelookcamera & avatarcamera in the scene
-    var freelookcameraentity = scene.GetEntityByName("FreeLookCamera");
-    var avatarcameraentity = scene.GetEntityByName("AvatarCamera");
-    var freecameralistener = freelookcameraentity.GetComponent("EC_SoundListener");
-    var avatarent = scene.GetEntityByName("Avatar" + client.GetConnectionID());
-    var avatarlistener = avatarent.GetComponent("EC_SoundListener");
-    if ((freelookcameraentity == null) || (avatarcameraentity == null))
-        return;
-    var freelookcamera = freelookcameraentity.camera;
-    var avatarcamera = avatarcameraentity.camera;
-
-    if (avatarcamera.IsActive()) {
-        var trans = freelookcameraentity.placeable.transform;
-        trans.pos = avatarcameraentity.placeable.WorldPosition();
-        trans.SetOrientation(avatarcameraentity.placeable.WorldOrientation());
-
-        // If there is roll in the rotation, adjust it away
-        if (trans.rot.z > 170.0)
-        {
-            trans.rot.x -= 180.0;
-            trans.rot.z = 0;
-            trans.rot.y = -90.0 - (90.0 + trans.rot.y);
-        }
-        if (trans.rot.z < -170.0)
-        {
-            trans.rot.x += 180.0;
-            trans.rot.z = 0;
-            trans.rot.y = -90.0 - (90.0 + trans.rot.y);
-        }
-
-        freelookcameraentity.placeable.transform = trans;
-        freelookcamera.SetActive();
-        freecameralistener.active = true;
-        avatarlistener.active = false;
-    } else {
-        avatarcamera.SetActive();
-        avatarlistener.active = true;
-        freecameralistener.active = false;
-    }
-    
-    // Ask entity to check his camera state
-    avatarent.Exec(1, "CheckState");
+function HandleClientDisconnected() {
+    // we have to reset these on client side too since sync won't work disconnected
+    clear_av_connectionids(scene);
 }
 
 function ServerHandleUserAboutToConnect(connectionID, user) {
@@ -86,14 +50,31 @@ function ServerHandleUserAboutToConnect(connectionID, user) {
 }
 
 function ServerHandleUserConnected(connectionID, user) {
-    var avatarEntityName = "Avatar" + connectionID;
+    if (!user) {
+	log("got UserConnected but no user");
+    }
+    var username = user.GetProperty("username");
+    var avatarEntityName = "Avatar_" + username;
+    var avatarEntity = scene.GetEntityByNameRaw(avatarEntityName);
 
+    // avatar entity state might be out of sync 
+    if (!avatarEntity) {
+	print("no existing av ent found by username" + username + ", creating new");
+        avatarEntity = CreateAvatarEntity(username, connectionID, avatarEntityName);
+    } else {
+	SetAvatarAppearance(avatarEntity, "default");
+    }
+    dc_set(avatarEntity, "connectionID",  connectionID);
+}
+
+function CreateAvatarEntity(username, connectionID, avatarEntityName) {
     // Create necessary components to the avatar entity:
     // - Script for the main avatar script simpleavatar.js
     // - Placeable for position
     // - AnimationController for skeletal animation control
     // - DynamicComponent for holding disabled/enabled avatar features
     var avatarEntity = scene.CreateEntity(scene.NextFreeId(), ["EC_Script", "EC_Placeable", "EC_AnimationController", "EC_DynamicComponent"]);
+
     avatarEntity.SetTemporary(true); // We never want to save the avatar entities to disk.
     avatarEntity.SetName(avatarEntityName);
     
@@ -117,17 +98,30 @@ function ServerHandleUserConnected(connectionID, user) {
     placeable.transform = transform;
 
     if (user != null)
-        print("[Avatar Application] Created avatar for " + user.GetProperty("username"));
+        log("Created avatar for " + user.GetProperty("username"));
 }
 
 function ServerHandleUserDisconnected(connectionID, user) {
-    var avatarEntityName = "Avatar" + connectionID;
+    username = user.GetProperty("username");
+    if (!username) {
+	log("no username!");
+	return;
+    }
+    var avatarEntityName = "Avatar_" + username;
     var avatarEntity = scene.GetEntityByName(avatarEntityName);
     if (avatarEntity != null) {
         scene.RemoveEntity(avatarEntity.id);
 
+	print("clearing connectionid from " + AvatarEntityName);
+	dc_set(avatarEntity, "connectionID", "");
+	print("connectionID now: '" + dc_get(avatarEntity, "connectionID") + "'");
+
+        var av_transform = avatarEntity.placeable.transform;
+        var entityID = avatarEntity.Id || avatarEntity.id;
+
         if (user != null) {
-        print("[Avatar Application] User " + user.GetProperty("username") + " disconnected, destroyed avatar entity.");
+	    log("User " + username + " disconnected, destroyed avatar entity.");
+            dc_set(me, username, av_transform);
         }
     }
 }

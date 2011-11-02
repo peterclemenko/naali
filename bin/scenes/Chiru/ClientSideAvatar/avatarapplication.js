@@ -78,10 +78,11 @@ function CreateAvatarEntity(username, connectionID, avatarEntityName) {
     // - Placeable for position
     // - AnimationController for skeletal animation control
     // - DynamicComponent for holding disabled/enabled avatar features
-    var avatarEntity = scene.CreateEntity(scene.NextFreeIdPersistent(), ["EC_Script", "EC_Placeable", "EC_AnimationController", "EC_DynamicComponent"]);
+
+    var avatarEntity = scene.CreateEntity(scene.NextFreeId() /*scene.NextFreeIdPersistent()*/, ["EC_Script", "EC_Placeable", "EC_AnimationController", "EC_DynamicComponent"]);
 
     var dc = avatarEntity.dynamiccomponent;
-    dc.AddQVariantAttribute("foo");
+    dc.CreateAttribute("foo", "int");
     dc.SetAttribute("foo", "42");
 
     avatarEntity.SetTemporary(true); // We never want to save the avatar entities to disk.

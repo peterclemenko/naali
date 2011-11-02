@@ -191,6 +191,7 @@ SimpleAvatar.prototype.ClientUpdatePhysics = function(frametime) {
     var placeable = this.me.placeable;
     var rigidbody = this.me.rigidbody;
     var attrs = this.me.dynamiccomponent;
+    var transform = placeable.transform;
 
     // don't fall to china
     if (transform.pos.z < -50) {
@@ -412,7 +413,7 @@ SimpleAvatar.prototype.ClientInitialize = function() {
         this.me.Action("Zoom").Triggered.connect(this, this.ClientHandleKeyboardZoom);
         this.me.Action("Rotate").Triggered.connect(this, this.ClientHandleRotate);
         this.me.Action("StopRotate").Triggered.connect(this, this.ClientHandleStopRotate);
-	this.me.ClientInitialize2();
+	this.ClientInitialize2();
     }
     else
     {
@@ -450,6 +451,34 @@ SimpleAvatar.prototype.IsCameraActive = function() {
     return camera.IsActive();
 }
 
+SimpleAvatar.prototype.ClientUpdate2 = function(frametime) {
+    // TODO hook this up, dead code now
+
+    // former ServerUpdate
+    var attrs = this.me.dynamiccomponent;
+
+    // already done in ClientUpdate
+    // if (!this.animsDetected) {
+    //     this.CommonFindAnimations();
+    // }
+
+    // If walk enable was toggled off, make sure the motion state is cleared
+    if (!attrs.GetAttribute("enableWalk"))
+    {
+        this.motionX = 0;
+        this.motionZ = 0;
+    }
+    
+    // If flying enable was toggled off, but we are still flying, disable now
+    if ((this.flying) && (!attrs.GetAttribute("enableFly")))
+        this.ServerSetFlying(false);
+
+    // already done in ClientUpdate
+    // this.CommonUpdateAnimation(frametime);
+
+    print("dc foo: " + this.me.dynamiccomponent.GetAttribute("foo"));
+}
+
 SimpleAvatar.prototype.ClientUpdate = function(frametime) {
     // Tie enabled state of inputmapper to the enabled state of avatar camera
     if (this.ownAvatar) {
@@ -469,6 +498,8 @@ SimpleAvatar.prototype.ClientUpdate = function(frametime) {
         this.CommonFindAnimations();
     }
     this.CommonUpdateAnimation(frametime);
+
+    print("dc foo: " + this.me.dynamiccomponent.GetAttribute("foo"));
 }
 
 SimpleAvatar.prototype.ClientCreateInputMapper = function() {
@@ -689,16 +720,21 @@ SimpleAvatar.prototype.ClientUpdateAvatarCamera = function() {
     if (attrs == null)
         return;
     var avatarCameraDistance = attrs.GetAttribute("cameraDistance");
-
+    if (avatarCameraDistance == undefined) {
+	log("skipping camera update, distance undefined");
+	return;
+    }
     var cameraentity = scene.GetEntityByName("AvatarCamera");
     if (cameraentity == null)
         return;
     var cameraplaceable = cameraentity.placeable;
 
     var cameratransform = cameraplaceable.transform;
+    log("paa");
     cameratransform.rot = new float3(this.pitch, 0, 0);
+    log("apa " + this.avatarCameraHeight+ " " + avatarCameraDistance);
     cameratransform.pos = new float3(0, this.avatarCameraHeight, avatarCameraDistance);
-
+    log("aap");
     cameraplaceable.transform = cameratransform;
 }
 

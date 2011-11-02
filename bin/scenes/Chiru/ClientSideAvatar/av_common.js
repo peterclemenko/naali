@@ -6,9 +6,9 @@ function dc_set(ent, key, val) {
     var dc = ent.GetOrCreateComponent("EC_DynamicComponent");
     if (!dc.ContainsAttribute(key)) {
 	// log("creating attr");
-        dc.CreateAttribute("string", key);
+        dc.CreateAttribute("qvariant", key);
 	if (!dc.ContainsAttribute(key))
-	    log("AddQVariantAttribute didn't work!");
+	    log("CreateAttribute didn't work!");
     }
     dc.SetAttribute(key, val);
     // log("set attribute: " + key + ": " + val);

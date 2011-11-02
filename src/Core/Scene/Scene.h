@@ -51,6 +51,7 @@ class Scene : public QObject, public boost::enable_shared_from_this<Scene>
 public:
     ~Scene();
 
+    typedef std::list<EntityPtr> EntityList;
     typedef std::map<entity_id_t, EntityPtr> EntityMap; ///< Typedef for an entity map.
     typedef EntityMap::iterator iterator; ///< entity iterator, see begin() and end()
     typedef EntityMap::const_iterator const_iterator;///< const entity iterator. see begin() and end()
@@ -219,13 +220,17 @@ public slots:
     /// Removes all entities
     /** The entities may not get deleted if dangling references to a pointer to them exist.
         @param send_events whether to send events & signals of each delete. */
-    void RemoveAllEntities(bool send_events = true, AttributeChange::Type change = AttributeChange::Default);
+    void RemoveAllEntities(bool send_events = true, AttributeChange::Type change = AttributeChange::Default,
+			   bool keep_persistent = false);
 
-    /// Gets and allocates the next free entity id.
+    /// Gets and allocates the next free replicated entity id.
     entity_id_t NextFreeId();
 
-    /// Gets and allocates the next free entity id.
+    /// Gets and allocates the next free local entity id.
     entity_id_t NextFreeIdLocal();
+
+    /// Gets and allocates the next free peristent entity id.
+    entity_id_t NextFreeIdPersistent();
 
     /// Returns list of entities with a specific component present.
     /** @param typeName Type name of the component

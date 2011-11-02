@@ -348,7 +348,7 @@ void Client::HandleLoginReply(MessageConnection* source, const MsgLoginReply& ms
 
             ScenePtr scene = framework_->Scene()->GetScene("TundraClient");
             if (scene)
-                scene->RemoveAllEntities(true, AttributeChange::LocalOnly);
+		scene->RemoveAllEntities(true, AttributeChange::LocalOnly, true /* keep_persistent*/);
         }
         reconnect_ = true;
     }

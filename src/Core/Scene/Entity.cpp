@@ -93,7 +93,7 @@ void Entity::AddComponent(component_id_t id, const ComponentPtr &component, Attr
         }
         else
         {
-            component->SetReplicated(id < UniqueIdGenerator::FIRST_LOCAL_ID);
+	    component->SetReplicated(id < UniqueIdGenerator::FIRST_LOCAL_ID || id >= UniqueIdGenerator::FIRST_PERSISTENT_ID);
             // If component ID is specified manually, but it already exists, it is an error. Do not add the component in that case.
             if (components_.find(id) != components_.end())
             {
@@ -489,14 +489,14 @@ AttributeVector Entity::GetAttributes(const QString &name) const
     return ret;
 }
 
-EntityPtr Entity::Clone(bool local, bool temporary) const
+EntityPtr Entity::Clone(bool local, bool persistent, bool temporary) const
 {
     // Craft XML
     QDomDocument doc("Scene");
     QDomElement sceneElem = doc.createElement("scene");
     QDomElement entityElem = doc.createElement("entity");
     entityElem.setAttribute("sync", QString::fromStdString(::ToString<bool>(!local)));
-    entityElem.setAttribute("id", local ? scene_->NextFreeIdLocal() : scene_->NextFreeId());
+    entityElem.setAttribute("id", local ? scene_->NextFreeIdLocal() : persistent ? scene_->NextFreeIdPersistent() : scene_->NextFreeId());
     for (ComponentMap::const_iterator i = components_.begin(); i != components_.end(); ++i)
         i->second->SerializeTo(doc, entityElem);
     sceneElem.appendChild(entityElem);

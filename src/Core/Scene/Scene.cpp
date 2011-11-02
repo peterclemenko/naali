@@ -186,13 +186,20 @@ void Scene::RemoveEntity(entity_id_t id, AttributeChange::Type change)
     }
 }
 
-void Scene::RemoveAllEntities(bool send_events, AttributeChange::Type change)
+void Scene::RemoveAllEntities(bool send_events, AttributeChange::Type change, bool keep_persistent)
 {
     ///\todo Rewrite this function to call Scene::RemoveEntity and not duplicate the logic here.
 
     EntityMap::iterator it = entities_.begin();
+    EntityList persist_ents;
+
     while(it != entities_.end())
     {
+	if (it->second->IsPersistent() && keep_persistent)
+	{
+	    persist_ents.push_back(it->second);
+	    continue;
+	}
         // If entity somehow manages to live, at least it doesn't belong to the scene anymore
         if (send_events)
         {
@@ -204,8 +211,9 @@ void Scene::RemoveAllEntities(bool send_events, AttributeChange::Type change)
     entities_.clear();
     if (send_events)
         emit SceneCleared(this);
-    
     idGenerator_.Reset();
+    for (EntityList::iterator it = persist_ents.begin(); it != persist_ents.end(); it++)
+	entities_[(*it)->Id()] = *it;
 }
 
 entity_id_t Scene::NextFreeId()
@@ -219,6 +227,11 @@ entity_id_t Scene::NextFreeId()
 entity_id_t Scene::NextFreeIdLocal()
 {
     return idGenerator_.AllocateLocal();
+}
+
+entity_id_t Scene::NextFreeIdPersistent()
+{
+    return idGenerator_.AllocatePersistent();
 }
 
 EntityList Scene::GetEntitiesWithComponent(const QString &typeName, const QString &name) const
@@ -594,7 +607,7 @@ QList<Entity *> Scene::CreateContentFromXml(const QDomDocument &xml, bool useEnt
         QString id_str = ent_elem.attribute("id");
         entity_id_t id = !id_str.isEmpty() ? ParseString<entity_id_t>(id_str.toStdString()) : 0;
         if (!useEntityIDsFromFile || id == 0) // If we don't want to use entity IDs from file, or if file doesn't contain one, generate a new one.
-            id = replicated ? NextFreeId() : NextFreeIdLocal();
+	    id = replicated ? NextFreeId() : NextFreeIdLocal(); // \bug persistent not handled
 
         if (HasEntity(id)) // If the entity we are about to add conflicts in ID with an existing entity in the scene, delete the old entity.
         {
@@ -698,7 +711,7 @@ QList<Entity *> Scene::CreateContentFromBinary(const char *data, int numBytes, b
             entity_id_t id = source.Read<u32>();
             bool replicated = source.Read<u8>() ? true : false;
             if (!useEntityIDsFromFile || id == 0)
-                id = replicated ? NextFreeId() : NextFreeIdLocal();
+                id = replicated ? NextFreeId() : NextFreeIdLocal(); // \bug persistent not handled
 
             if (HasEntity(id)) // If the entity we are about to add conflicts in ID with an existing entity in the scene.
             {
@@ -798,7 +811,7 @@ QList<Entity *> Scene::CreateContentFromSceneDesc(const SceneDesc &desc, bool us
     {
         entity_id_t id;
         if (e.id.isEmpty() || !useEntityIDsFromFile)
-            id = e.local ? NextFreeIdLocal() : NextFreeId();
+            id = e.local ? NextFreeIdLocal() : NextFreeId(); // \bug persistent not handled
         else
             id =  ParseString<entity_id_t>(e.id.toStdString());
 

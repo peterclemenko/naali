@@ -15,8 +15,7 @@ is_server = server.IsRunning() || server.IsAboutToStart();
 is_client = !is_server;
 
 if (is_client) {
-    // nothing
-    // TODO see about making this a server-only entity
+    client.Disconnected.connect(HandleClientDisconnected);
 } else if (is_server) {
     server.UserAboutToConnect.connect(ServerHandleUserAboutToConnect);
     server.UserConnected.connect(ServerHandleUserConnected);
@@ -39,7 +38,8 @@ if (is_client) {
 }
 
 function HandleClientDisconnected() {
-    // we have to reset these on client side too since sync won't work disconnected
+    // clear up stuff that might be stale after disconnection
+
     clear_av_connectionids(scene);
 }
 
@@ -55,16 +55,21 @@ function ServerHandleUserConnected(connectionID, user) {
     }
     var username = user.GetProperty("username");
     var avatarEntityName = "Avatar_" + username;
-    var avatarEntity = scene.GetEntityByNameRaw(avatarEntityName);
+    var avatarEntity = scene.GetEntityByName(avatarEntityName);
 
     // avatar entity state might be out of sync 
     if (!avatarEntity) {
-	print("no existing av ent found by username" + username + ", creating new");
+	log("no existing av ent found by username" + username + ", creating new");
         avatarEntity = CreateAvatarEntity(username, connectionID, avatarEntityName);
     } else {
-	SetAvatarAppearance(avatarEntity, "default");
+	log("skip setting appearance");
+	//SetAvatarAppearance(avatarEntity, "default");
     }
     dc_set(avatarEntity, "connectionID",  connectionID);
+    // log("set avatar connid time=" + new Date().getTime());
+    // var dc = avatarEntity.GetOrCreateComponent("EC_DynamicComponent");
+    // log("read back (2) attribute: " + dc.GetAttribute("connectionID"));
+    // log("value: " + dc_get(avatarEntity, "connectionID"));
 }
 
 function CreateAvatarEntity(username, connectionID, avatarEntityName) {
@@ -73,13 +78,16 @@ function CreateAvatarEntity(username, connectionID, avatarEntityName) {
     // - Placeable for position
     // - AnimationController for skeletal animation control
     // - DynamicComponent for holding disabled/enabled avatar features
-    var avatarEntity = scene.CreateEntity(scene.NextFreeId(), ["EC_Script", "EC_Placeable", "EC_AnimationController", "EC_DynamicComponent"]);
+    var avatarEntity = scene.CreateEntity(scene.NextFreeIdPersistent(), ["EC_Script", "EC_Placeable", "EC_AnimationController", "EC_DynamicComponent"]);
+
+    var dc = avatarEntity.dynamiccomponent;
+    dc.AddQVariantAttribute("foo");
+    dc.SetAttribute("foo", "42");
 
     avatarEntity.SetTemporary(true); // We never want to save the avatar entities to disk.
     avatarEntity.SetName(avatarEntityName);
     
-    if (user != null)
-    	avatarEntity.SetDescription(user.GetProperty("username"));
+    avatarEntity.SetDescription(username);
 
     var script = avatarEntity.script;
     script.className = "AvatarApp.SimpleAvatar";
@@ -97,8 +105,9 @@ function CreateAvatarEntity(username, connectionID, avatarEntityName) {
     transform.pos.z = (Math.random() - 0.5) * avatar_area_size + avatar_area_z;
     placeable.transform = transform;
 
-    if (user != null)
-        log("Created avatar for " + user.GetProperty("username"));
+    if (username)
+        log("Created avatar for " + username);
+    return avatarEntity;
 }
 
 function ServerHandleUserDisconnected(connectionID, user) {
@@ -112,15 +121,17 @@ function ServerHandleUserDisconnected(connectionID, user) {
     if (avatarEntity != null) {
         scene.RemoveEntity(avatarEntity.id);
 
-	print("clearing connectionid from " + AvatarEntityName);
+	log("clearing connectionid from " + avatarEntityName);
+	log("dc 2");
 	dc_set(avatarEntity, "connectionID", "");
-	print("connectionID now: '" + dc_get(avatarEntity, "connectionID") + "'");
+	log("connectionID now: '" + dc_get(avatarEntity, "connectionID") + "'");
 
         var av_transform = avatarEntity.placeable.transform;
-        var entityID = avatarEntity.Id || avatarEntity.id;
+        var entityID = avatarEntity.id;
 
         if (user != null) {
 	    log("User " + username + " disconnected, destroyed avatar entity.");
+	    log("dc 3");
             dc_set(me, username, av_transform);
         }
     }

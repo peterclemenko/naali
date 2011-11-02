@@ -70,7 +70,7 @@ SimpleAvatar.prototype.OnScriptObjectDestroyed = function() {
 }
 
 SimpleAvatar.prototype.ServerInitialize = function() {
-    var rigidbody = this.me.GetOrCreateComponentRaw("EC_RigidBody");
+    var rigidbody = this.me.GetOrCreateComponent("EC_RigidBody");
     rigidbody.AssertAuthority(false);
 }
 
@@ -85,11 +85,10 @@ SimpleAvatar.prototype.ClientInitialize2 = function() {
 
     var avatar = this.me.GetOrCreateComponent("EC_Avatar");
 
-    var me_connid = dc_get(me, "connectionID");
+    var me_connid = dc_get(this.me, "connectionID");
     var thisclient_connid = client.GetConnectionID();
 
-    log("checking if own avatar, client has " + thisclient_connid + ", me ent has " + me_connid);
-
+    // connection id is set in avatar app UserConnected handler and cleared in UserDisconnected handler
     if (me_connid != thisclient_connid) {
 	log(".. nope.");
 	return;
@@ -366,18 +365,42 @@ SimpleAvatar.prototype.ClientInitialize = function() {
     // Set all avatar entities as temprary also on the clients.
     // This is already done in the server but the info seems to not travel to the clients!
     this.me.SetTemporary(true);
-    
+
     // TODO t1 ver connected Move action to ClientHandleMove here unconditionally, check
 
     // Check if this is our own avatar
     // Note: bad security. For now there's no checking who is allowed to invoke actions
     // on an entity, and we could theoretically control anyone's avatar
 
-    var me_connid = dc_get(me, "connectionID");
     var thisclient_connid = client.GetConnectionID();
 
-    log("checking if own avatar, client has " + thisclient_connid + ", me ent has " + me_connid);
+    log("me = " + me);
+    // log("this.me = " + this.me); // heh, this blows up
 
+    log("ent id: " + this.me.id);
+    // log("dc keys: ");
+    // for (var i = 0; i < this.me.dynamiccomponent.GetNumAttributes(); i++)
+    // 	log("  " + this.me.dynamiccomponent.GetAttributeName(i));
+    log("checking canary dc: " + dc_get(this.me, "foo"));
+    log("checking canary dc(2): " + this.me.dynamiccomponent.GetAttribute("foo"));
+
+    // scene.AttributeChanged.connect(function(comp, attr, changetype) {
+    // 	    log("attribute changed: " + attr.Owner() + "type: " + changetype);
+    // 	});
+    this.me.dynamiccomponent.AttributeChanged.connect(
+						      function (key, type) {
+							  log("dc attribute " + key + " change, time=" + new Date().getTime());
+						      });
+
+    dc_set(this.me, "testing", "fooo");
+    // connection id is set in avatar app UserConnected handler and cleared in UserDisconnected handler
+    var me_connid = dc_get(this.me, "connectionID");
+    log("get avatar connid time=" +new Date().getTime());
+    log("checking if own avatar, client has " + thisclient_connid + ", me ent has " + me_connid);
+    if (me_connid == undefined) {
+	log("XXXXXXXXXXXXX me.connid is undefined, bug!");
+	return;
+    }
     if (me_connid == thisclient_connid) {
         this.ownAvatar = true;
         this.ClientCreateInputMapper();

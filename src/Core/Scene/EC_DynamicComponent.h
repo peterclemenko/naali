@@ -50,7 +50,7 @@ Registered by TundraLogicModule.
 <li>"ContainSameAttribute": Check if a given component is holding exactly same attributes as this component.
     @return Return true if component is holding same attributes as this component else return false.
 <li>"RemoveAttribute": Remove attribute from the component.
-<li>"ContainAttribute": Check if component is holding attribute by that name.
+<li>"ContainsAttribute": Check if component is holding attribute by that name.
     @param name Name of attribute that we are looking for.
 </ul>
 

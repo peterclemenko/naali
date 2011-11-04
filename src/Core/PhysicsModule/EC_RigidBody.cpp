@@ -384,6 +384,8 @@ void EC_RigidBody::CreateBody()
     body_->setCollisionFlags(collisionFlags);
     world_->GetWorld()->addRigidBody(body_, collisionLayer.Get(), collisionMask.Get());
     body_->activate();
+
+    gravity_ = body_->getGravity();
 }
 
 void EC_RigidBody::ReaddBody()
@@ -605,6 +607,18 @@ void EC_RigidBody::OnAttributeUpdated(IAttribute* attribute)
     {
         body_->setAngularVelocity(DegToRad(angularVelocity.Get()));
         body_->activate();
+    }
+
+    if (attribute == &gravityEnabled)
+    {
+        // Cannot modify server-authoritative physics object
+        if (!HasAuthority())
+            return;
+
+        if (gravityEnabled.Get())
+            body_->setGravity(gravity_);
+        else
+            body_->setGravity(btVector3(0,0,0));
     }
 }
 
@@ -917,9 +931,29 @@ void EC_RigidBody::UpdatePosRotFromPlaceable()
     KeepActive();
 }
 
+void EC_RigidBody::InterpolateUpward()
+{
+    btVector3 linearVelocity, angularVelocity;
+    btTransform fromA, toA;
+
+    body_->getMotionState()->getWorldTransform(fromA);
+    btQuaternion pointUp(btVector3(0.f, 1.f, 0.f), 0.0f);
+    btMatrix3x3 fromMat = fromA.getBasis();
+    btQuaternion orientation;
+
+    fromA.getBasis().getRotation(orientation);
+    pointUp *= orientation;
+
+    btMatrix3x3 upMat(pointUp);
+
+    toA.setBasis(upMat);
+
+    btTransformUtil::calculateVelocity(fromA, toA, btScalar(1.0f), linearVelocity, angularVelocity);
+
+    body_->setAngularVelocity(angularVelocity);
+}
 void EC_RigidBody::EmitPhysicsCollision(Entity* otherEntity, const float3& position, const float3& normal, float distance, float impulse, bool newCollision)
 {
     PROFILE(EC_RigidBody_EmitPhysicsCollision);
     emit PhysicsCollision(otherEntity, position, normal, distance, impulse, newCollision);
 }
-

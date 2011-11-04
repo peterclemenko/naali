@@ -128,6 +128,10 @@ public:
     /// Do not directly allocate new components using operator new, but use the factory-based SceneAPI::CreateComponent functions instead.
     explicit EC_RigidBody(Scene* scene);
 
+    //! Gravity toggle. If true(default), gravity has effect on this body.
+    Q_PROPERTY(bool gravityEnabled READ getgravityEnabled WRITE setgravityEnabled)
+    DEFINE_QPROPERTY_ATTRIBUTE(bool, gravityEnabled)
+
     virtual ~EC_RigidBody();
 
     enum ShapeType
@@ -317,7 +321,10 @@ public slots:
 
     //! (Dis)claim authority.
     void AssertAuthority(bool);
-    
+
+    //! Force body to always stay in upright position (needs to be called in Update loop).
+    void InterpolateUpward();
+
 private slots:
     /// Called when the parent entity has been set.
     void UpdateSignals();
@@ -425,7 +432,6 @@ private:
 
     //! Physics authority flag
     bool got_authority_;
-
 };
 
 

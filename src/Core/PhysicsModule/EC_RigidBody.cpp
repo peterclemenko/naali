@@ -384,8 +384,6 @@ void EC_RigidBody::CreateBody()
     body_->setCollisionFlags(collisionFlags);
     world_->GetWorld()->addRigidBody(body_, collisionLayer.Get(), collisionMask.Get());
     body_->activate();
-
-    gravity_ = body_->getGravity();
 }
 
 void EC_RigidBody::ReaddBody()
@@ -616,7 +614,7 @@ void EC_RigidBody::OnAttributeUpdated(IAttribute* attribute)
             return;
 
         if (gravityEnabled.Get())
-            body_->setGravity(gravity_);
+	    body_->setGravity(world_->getGravity());
         else
             body_->setGravity(btVector3(0,0,0));
     }

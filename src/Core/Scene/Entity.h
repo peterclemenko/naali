@@ -50,7 +50,6 @@ class Entity : public QObject, public boost::enable_shared_from_this<Entity>
     Q_PROPERTY (QString description READ Description WRITE SetDescription)
     Q_PROPERTY (bool replicated READ IsReplicated)
     Q_PROPERTY (bool local READ IsLocal)
-    Q_PROPERTY (bool persistent READ IsPersistent)
     Q_PROPERTY (bool unacked READ IsUnacked)
     
 public:
@@ -234,7 +233,7 @@ public slots:
     /** @param local If true, the new entity will be local entity. If false, the entity will be replicated.
         @param temporary Will the new entity be temporary.
         @return Pointer to the new entity, or null pointer if the cloning fails. */
-    EntityPtr Clone(bool local, bool persistent, bool temporary) const;
+    EntityPtr Clone(bool local, bool temporary) const;
 
     void SerializeToXML(QDomDocument& doc, QDomElement& base_element) const;
 //        void DeserializeFromXML(QDomElement& element, AttributeChange::Type change);
@@ -317,14 +316,11 @@ public slots:
 
     /// Returns if this entity's changes will NOT be sent over the network.
     /// An Entity is always either local or replicated, but not both.
-    bool IsLocal() const { return id_ >= UniqueIdGenerator::FIRST_LOCAL_ID && id_ < UniqueIdGenerator::FIRST_PERSISTENT_ID; }
-
-    /// Returns if this entity will be kept in the scene over disconnect/reconnect.
-    bool IsPersistent() const { return id_ >= UniqueIdGenerator::FIRST_PERSISTENT_ID; }
+    bool IsLocal() const { return id_ >= UniqueIdGenerator::FIRST_LOCAL_ID; }
 
     /// Returns if this entity's changes will be sent over the network.
     /// An Entity is always either local or replicated, but not both.
-    bool IsReplicated() const { return id_ < UniqueIdGenerator::FIRST_LOCAL_ID || id_ >= UniqueIdGenerator::FIRST_PERSISTENT_ID; }
+    bool IsReplicated() const { return id_ < UniqueIdGenerator::FIRST_LOCAL_ID; }
 
     /// Returns if this entity is pending a proper ID assignment from the server.
     bool IsUnacked() const { return id_ >= UniqueIdGenerator::FIRST_UNACKED_ID && id_ < UniqueIdGenerator::FIRST_LOCAL_ID; }

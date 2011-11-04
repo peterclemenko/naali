@@ -14,14 +14,12 @@ public:
     static const entity_id_t LAST_REPLICATED_ID = 0x3fffffff;
     static const entity_id_t FIRST_UNACKED_ID = 0x40000000;
     static const entity_id_t FIRST_LOCAL_ID = 0x80000000;
-    static const entity_id_t FIRST_PERSISTENT_ID = 0xe0000000;
     
     /// Construct
     UniqueIdGenerator() :
         id(0),
         unackedId(FIRST_UNACKED_ID),
-	localId(FIRST_LOCAL_ID),
-        persistentId(FIRST_PERSISTENT_ID)
+        localId(FIRST_LOCAL_ID)
     {
     }
     
@@ -50,15 +48,6 @@ public:
         if (localId == 0) localId = FIRST_LOCAL_ID + 1;
         return localId;
     }
-
-    /// Allocate and return the next local ID. Never returns zero.
-    entity_id_t AllocatePersistent()
-    {
-        ++persistentId;
-        if (localId == 0) localId = FIRST_PERSISTENT_ID + 1;
-	// \bug wraps around on overflow resulting in possibly duplicate ids.
-        return persistentId;
-    }
     
     /// Manually reset the replicated ID generator to a specific value. The next returned ID will be value + 1.
     void ResetReplicatedId(entity_id_t id_)
@@ -72,7 +61,6 @@ public:
         id = 0;
         unackedId = FIRST_UNACKED_ID;
         localId = FIRST_LOCAL_ID;
-	persistentId = FIRST_PERSISTENT_ID;
     }
     
     /// Last returned ID
@@ -81,6 +69,4 @@ public:
     entity_id_t unackedId;
     /// Last returned local ID
     entity_id_t localId;
-    /// Last returned persistent ID
-    entity_id_t persistentId;
 };

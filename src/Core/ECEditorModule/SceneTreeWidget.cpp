@@ -1611,7 +1611,7 @@ void SceneTreeWidget::ConvertEntityToLocal()
             EntityPtr orgEntity = item->Entity();
             if (orgEntity && !orgEntity->IsLocal())
             {
-		EntityPtr newEntity = orgEntity->Clone(true, orgEntity->IsPersistent(), orgEntity->IsTemporary());
+                EntityPtr newEntity = orgEntity->Clone(true, orgEntity->IsTemporary());
                 if (newEntity)
                     scn->RemoveEntity(orgEntity->Id()); // Creation successful, remove the original.
             }
@@ -1627,7 +1627,7 @@ void SceneTreeWidget::ConvertEntityToReplicated()
             EntityPtr orgEntity = item->Entity();
             if (orgEntity && orgEntity->IsLocal())
             {
-                EntityPtr newEntity = orgEntity->Clone(false, orgEntity->IsPersistent(), orgEntity->IsTemporary());
+                EntityPtr newEntity = orgEntity->Clone(false, orgEntity->IsTemporary());
                 if (newEntity)
                     scn->RemoveEntity(orgEntity->Id()); // Creation successful, remove the original.
             }

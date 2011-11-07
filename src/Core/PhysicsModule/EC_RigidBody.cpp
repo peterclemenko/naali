@@ -53,6 +53,7 @@ EC_RigidBody::EC_RigidBody(Scene* scene) :
     linearVelocity(this, "Linear velocity", float3(0,0,0)),
     angularVelocity(this, "Angular velocity", float3(0,0,0)),
     phantom(this, "Phantom", false),
+    gravityEnabled(this, "Gravity enabled", true),
     kinematic(this, "Kinematic", false),
     drawDebug(this, "Draw Debug", false),
     collisionLayer(this, "Collision Layer", -1),
@@ -614,7 +615,7 @@ void EC_RigidBody::OnAttributeUpdated(IAttribute* attribute)
             return;
 
         if (gravityEnabled.Get())
-	    body_->setGravity(world_->getGravity());
+            body_->setGravity(world_->GetGravity());
         else
             body_->setGravity(btVector3(0,0,0));
     }

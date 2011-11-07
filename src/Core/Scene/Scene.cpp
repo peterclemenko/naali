@@ -191,31 +191,20 @@ void Scene::RemoveAllEntities(bool send_events, AttributeChange::Type change)
     ///\todo Rewrite this function to call Scene::RemoveEntity and not duplicate the logic here.
 
     EntityMap::iterator it = entities_.begin();
-    EntityList stashed_entities;
     while(it != entities_.end())
     {
-	if (it->second->KeepOverDisconnect())
-	{
-	    stashed_entities.push_back(it->second);
-	} else
-	{
-	    // If entity somehow manages to live, at least it doesn't belong to the scene anymore
-	    if (send_events)
-	    {
-		EmitEntityRemoved(it->second.get(), change);
-	    }
-	    it->second->SetScene(0);
-	}
-	++it;
+        // If entity somehow manages to live, at least it doesn't belong to the scene anymore
+        if (send_events)
+        {
+            EmitEntityRemoved(it->second.get(), change);
+        }
+        it->second->SetScene(0);
+        ++it;
     }
     entities_.clear();
     if (send_events)
         emit SceneCleared(this);
-    for (EntityList::iterator it = persist_ents.begin(); it != persist_ents.end; it++) 
-    {
-	entities_[it->second->Id()] = it->second;
-	LogWarning("Keeping entity over disconnect: " + QString::number(it->second->Id()));
-    }
+    
     idGenerator_.Reset();
 }
 

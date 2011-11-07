@@ -51,7 +51,7 @@ class Entity : public QObject, public boost::enable_shared_from_this<Entity>
     Q_PROPERTY (bool replicated READ IsReplicated)
     Q_PROPERTY (bool local READ IsLocal)
     Q_PROPERTY (bool unacked READ IsUnacked)
-    Q_PROPERTY (bool keep_over_disconnect READ KeepOverDisconnect WRITE SetKeepOverDisconnect)
+    
 public:
     typedef std::map<component_id_t, ComponentPtr> ComponentMap; ///< Component container.
     typedef std::vector<ComponentPtr> ComponentVector; ///< Component vector container.
@@ -347,15 +347,6 @@ public slots:
     /// Returns actions map for introspection/reflection.
     const ActionMap &Actions() const { return actions_; }
 
-    void SetKeepOverDisconnect(bool keepflag)
-    {
-	keep_over_disconnect_ = keepflag;
-    }
-
-    bool KeepOverDisconnect()
-    {
-	return keep_over_disconnect_;
-    }
 signals:
     /// A component has been added to the entity
     /** @note When this signal is received on new entity creation, the attributes might not be filled yet! */ 
@@ -408,7 +399,6 @@ private:
     Scene* scene_; ///< Pointer to scene
     ActionMap actions_; ///< Map of registered entity actions.
     bool temporary_; ///< Temporary-flag
-    bool keep_over_disconnect_;
 };
 
 #include "Entity.inl"

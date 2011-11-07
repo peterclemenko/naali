@@ -23,8 +23,7 @@
 Entity::Entity(Framework* framework, Scene* scene) :
     framework_(framework),
     scene_(scene),
-    temporary_(false),
-    keep_over_disconnect_(false)
+    temporary_(false)
 {
 }
 

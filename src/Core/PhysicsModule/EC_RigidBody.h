@@ -128,10 +128,6 @@ public:
     /// Do not directly allocate new components using operator new, but use the factory-based SceneAPI::CreateComponent functions instead.
     explicit EC_RigidBody(Scene* scene);
 
-    //! Gravity toggle. If true(default), gravity has effect on this body.
-    Q_PROPERTY(bool gravityEnabled READ getgravityEnabled WRITE setgravityEnabled)
-    DEFINE_QPROPERTY_ATTRIBUTE(bool, gravityEnabled)
-
     virtual ~EC_RigidBody();
 
     enum ShapeType
@@ -184,6 +180,10 @@ public:
     /// Angular factor. Defines in which dimensions the object can rotate
     Q_PROPERTY(float3 angularFactor READ getangularFactor WRITE setangularFactor)
     DEFINE_QPROPERTY_ATTRIBUTE(float3, angularFactor);
+
+    //! Gravity toggle. If true(default), gravity has effect on this body.
+    Q_PROPERTY(bool gravityEnabled READ getgravityEnabled WRITE setgravityEnabled)
+    DEFINE_QPROPERTY_ATTRIBUTE(bool, gravityEnabled)
     
     /// Kinematic flag. If true, forces don't affect the object, but it may push other objects around.
     Q_PROPERTY(bool kinematic READ getkinematic WRITE setkinematic)

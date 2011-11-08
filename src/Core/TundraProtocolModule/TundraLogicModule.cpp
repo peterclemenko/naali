@@ -75,6 +75,11 @@
 #include "EC_LaserPointer.h"
 #endif
 
+#ifdef EC_Menu_ENABLED
+#include "EC_MenuContainer.h"
+#include "EC_MenuItem.h"
+#endif
+
 #include "EC_Camera.h"
 #include "EC_Placeable.h"
 #include "EC_AnimationController.h"
@@ -142,6 +147,10 @@ void TundraLogicModule::Load()
 #endif
 #ifdef EC_LaserPointer_ENABLED
     framework_->Scene()->RegisterComponentFactory(ComponentFactoryPtr(new GenericComponentFactory<EC_LaserPointer>));
+#endif
+#ifdef EC_Menu_ENABLED
+    framework_->Scene()->RegisterComponentFactory(ComponentFactoryPtr(new GenericComponentFactory<EC_MenuContainer>));
+    framework_->Scene()->RegisterComponentFactory(ComponentFactoryPtr(new GenericComponentFactory<EC_MenuItem>));
 #endif
 }
 

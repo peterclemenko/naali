@@ -53,6 +53,7 @@ EC_RigidBody::EC_RigidBody(Scene* scene) :
     linearVelocity(this, "Linear velocity", float3(0,0,0)),
     angularVelocity(this, "Angular velocity", float3(0,0,0)),
     phantom(this, "Phantom", false),
+    gravityEnabled(this, "Gravity enabled", true),
     kinematic(this, "Kinematic", false),
     drawDebug(this, "Draw Debug", false),
     collisionLayer(this, "Collision Layer", -1),
@@ -64,7 +65,8 @@ EC_RigidBody::EC_RigidBody(Scene* scene) :
     heightField_(0),
     disconnected_(false),
     cachedShapeType_(-1),
-    cachedSize_(float3::zero)
+    cachedSize_(float3::zero),
+    got_authority_(false)
 {
     owner_ = framework->GetModule<PhysicsModule>();
     
@@ -259,6 +261,10 @@ void EC_RigidBody::UpdateSignals()
     world_ = scene->GetWorld<PhysicsWorld>().get();
     if (world_)
         connect(world_, SIGNAL(AboutToUpdate(float)), this, SLOT(OnAboutToUpdate()));
+    if (world_->IsClient())
+        got_authority_ = false;
+    else
+        got_authority_ = true;
 }
 
 void EC_RigidBody::CheckForPlaceableAndTerrain()
@@ -601,6 +607,18 @@ void EC_RigidBody::OnAttributeUpdated(IAttribute* attribute)
         body_->setAngularVelocity(DegToRad(angularVelocity.Get()));
         body_->activate();
     }
+
+    if (attribute == &gravityEnabled)
+    {
+        // Cannot modify server-authoritative physics object
+        if (!HasAuthority())
+            return;
+
+        if (gravityEnabled.Get())
+            body_->setGravity(world_->GetGravity());
+        else
+            body_->setGravity(btVector3(0,0,0));
+    }
 }
 
 void EC_RigidBody::PlaceableUpdated(IAttribute* attribute)
@@ -712,12 +730,21 @@ void EC_RigidBody::GetAabbox(float3 &outAabbMin, float3 &outAabbMax)
     outAabbMax.Set(aabbMax.x(), aabbMax.y(), aabbMax.z());
 }
 
-bool EC_RigidBody::HasAuthority() const
+void EC_RigidBody::AssertAuthority(bool yesno)
 {
-    if ((!world_) || ((world_->IsClient()) && (!ParentEntity()->IsLocal())))
-        return false;
-    
-    return true;
+    got_authority_ = yesno;
+}
+
+bool EC_RigidBody::HasAuthority()
+{
+    if (!world_)
+	return false;
+    else if (ParentEntity() && ParentEntity()->IsLocal()) // preserve old default, could also require explicitness and drop this
+        return true;
+    else if (got_authority_)
+        return true;
+    else
+	return false;
 }
 
 void EC_RigidBody::TerrainUpdated(IAttribute* attribute)
@@ -903,9 +930,29 @@ void EC_RigidBody::UpdatePosRotFromPlaceable()
     KeepActive();
 }
 
+void EC_RigidBody::InterpolateUpward()
+{
+    btVector3 linearVelocity, angularVelocity;
+    btTransform fromA, toA;
+
+    body_->getMotionState()->getWorldTransform(fromA);
+    btQuaternion pointUp(btVector3(0.f, 1.f, 0.f), 0.0f);
+    btMatrix3x3 fromMat = fromA.getBasis();
+    btQuaternion orientation;
+
+    fromA.getBasis().getRotation(orientation);
+    pointUp *= orientation;
+
+    btMatrix3x3 upMat(pointUp);
+
+    toA.setBasis(upMat);
+
+    btTransformUtil::calculateVelocity(fromA, toA, btScalar(1.0f), linearVelocity, angularVelocity);
+
+    body_->setAngularVelocity(angularVelocity);
+}
 void EC_RigidBody::EmitPhysicsCollision(Entity* otherEntity, const float3& position, const float3& normal, float distance, float impulse, bool newCollision)
 {
     PROFILE(EC_RigidBody_EmitPhysicsCollision);
     emit PhysicsCollision(otherEntity, position, normal, distance, impulse, newCollision);
 }
-

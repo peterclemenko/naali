@@ -115,6 +115,8 @@ SimpleAvatar.prototype.ServerInitialize = function() {
     attrs.CreateAttribute("bool", "enableRotate");
     attrs.CreateAttribute("bool", "enableAnimation");
     attrs.CreateAttribute("bool", "enableZoom");
+    attrs.CreateAttribute("bool", "enableAutoZoom");
+    attrs.CreateAttribute("real", "cameraDefaultDistance");
     attrs.CreateAttribute("real", "cameraDistance");
     attrs.SetAttribute("enableWalk", true);
     attrs.SetAttribute("enableJump", true);
@@ -122,7 +124,9 @@ SimpleAvatar.prototype.ServerInitialize = function() {
     attrs.SetAttribute("enableRotate", true);
     attrs.SetAttribute("enableAnimation", true);
     attrs.SetAttribute("enableZoom", true);
-    attrs.SetAttribute("cameraDistance", 7.0);
+    attrs.SetAttribute("enableAutoZoom", true);
+    attrs.SetAttribute("cameraDefaultDistance", 7.0);
+    attrs.SetAttribute("cameraDistance", attrs.GetAttribute("cameraDefaultDistance"));
 
     // Create an inactive proximitytrigger, so that other proximitytriggers can detect the avatar
     // var proxtrigger = me.GetOrCreateComponent("EC_ProximityTrigger");
@@ -569,7 +573,7 @@ SimpleAvatar.prototype.ClientHandleMouseScroll = function(relativeScroll) {
     if (!attrs.GetAttribute("enableZoom"))
         return;
 
-    var avatarCameraDistance = attrs.GetAttribute("cameraDistance");
+    var avatarCameraDistance = attrs.GetAttribute("cameraDefaultDistance");
 
     if (!this.IsCameraActive())
         return;
@@ -596,7 +600,7 @@ SimpleAvatar.prototype.ClientHandleMouseScroll = function(relativeScroll) {
         else if (avatarCameraDistance > 500)
             avatarCameraDistance = 500;
 
-        attrs.SetAttribute("cameraDistance", avatarCameraDistance);
+        attrs.SetAttribute("cameraDefaultDistance", avatarCameraDistance);
     }
 }
 
@@ -630,14 +634,67 @@ SimpleAvatar.prototype.ClientUpdateRotation = function(frametime) {
     }
 }
 
+SimpleAvatar.prototype.ClientAutoZoomAvatarCamera = function () {
+    var attrs = this.me.dynamiccomponent;
+    if (attrs == null)
+        return;
+        
+    var cameradistance = attrs.GetAttribute("cameraDistance");
+    var cameradefaultdistance = attrs.GetAttribute("cameraDefaultDistance");
+
+    var cameraentity = scene.GetEntityByName("AvatarCamera");
+    var avatarplaceable = this.me.GetComponent("EC_Placeable");
+    var cameraplaceable = cameraentity.placeable;
+    
+    var avatarposition = avatarplaceable.WorldPosition();
+    var cameraposition = cameraplaceable.WorldPosition();
+    cameraposition.y = avatarposition.y;
+    
+    var ray = new Ray(LineSegment(avatarposition, cameraposition));
+    
+    // Raycast assuming avatarentity lives in 0x80000000 layer
+    // \\todo layer should be configurable?
+    var raycastresult = scene.ogre.Raycast(ray, 0x7fffffff);
+    if(raycastresult.entity != null) {
+        var preferreddistance = avatarposition.Distance(raycastresult.pos);
+        
+        // Clamp preferred distance
+        if(preferreddistance > cameradefaultdistance) {
+            preferreddistance = cameradefaultdistance;
+        }
+    } else {
+        var preferreddistance = cameradefaultdistance;
+    }
+    
+    // Adjust actual camera distance towards preferred distance
+    if(preferreddistance >= cameradistance) {
+        cameradistance += 1;
+    } else if(preferreddistance < cameradistance) {
+        cameradistance -= 1;
+    }
+    
+    // Clamp again to get rid of jitter
+    if(Math.abs(preferreddistance - cameradistance) <= 1)
+        cameradistance = preferreddistance;
+    
+    attrs.SetAttribute("cameraDistance", cameradistance);
+}
+
 SimpleAvatar.prototype.ClientUpdateAvatarCamera = function() {
+    var attrs = this.me.dynamiccomponent;
+    if (attrs == null)
+        return;
+
+    // Call Auto Zoom if enabled
+    if(attrs.GetAttribute("enableAutoZoom") == true) {
+        this.ClientAutoZoomAvatarCamera();
+    } else {
+        attrs.SetAttribute("cameraDistance", attrs.GetAttribute("cameraDefaultDistance"));
+    }
 
     // Check 1st/3rd person mode toggle
     this.ClientCheckState();
 
-    var attrs = this.me.dynamiccomponent;
-    if (attrs == null)
-        return;
     var avatarCameraDistance = attrs.GetAttribute("cameraDistance");
     var firstPerson = avatarCameraDistance < 0;
 

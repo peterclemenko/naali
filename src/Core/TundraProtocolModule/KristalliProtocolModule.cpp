@@ -130,8 +130,18 @@ void KristalliProtocolModule::Initialize()
 {
     defaultTransport = kNet::SocketOverTCP;
     QStringList cmdLineParams = framework_->CommandLineParameters("--protocol");
+    
     if (cmdLineParams.size() > 0 && cmdLineParams.first().trimmed().toLower() == "udp")
         defaultTransport = kNet::SocketOverUDP;
+        
+    else if (cmdLineParams.size() > 0 && cmdLineParams.first().trimmed().toLower() == "sctp")
+    {
+#ifdef KNET_HAS_SCTP
+        defaultTransport = kNet::SocketOverSCTP;
+#else
+        ::LogError("SCTP not supported by kNet. Using TCP instead.");
+#endif
+    }
 
 #ifdef KNET_USE_QT
     framework_->Console()->RegisterCommand("kNet", "Shows the kNet statistics window.", this, SLOT(OpenKNetLogWindow()));
@@ -249,9 +259,15 @@ void KristalliProtocolModule::PerformConnection()
     if (serverTransport == kNet::SocketOverUDP)
         dynamic_cast<kNet::UDPMessageConnection*>(serverConnection.ptr())->SetDatagramSendRate(500);
 
-    // For TCP mode sockets, set the TCP_NODELAY option to improve latency for the messages we send.
+    // For TCP mode sockets, disable Nagle's option to improve latency for the messages we send.
     if (serverConnection->GetSocket() && serverConnection->GetSocket()->TransportLayer() == kNet::SocketOverTCP)
         serverConnection->GetSocket()->SetNaglesAlgorithmEnabled(false);
+
+#ifdef KNET_HAS_SCTP
+    // For SCTP mode sockets, disable Nagle's option to improve latency for the messages we send.        
+    else if (serverConnection->GetSocket() && serverConnection->GetSocket()->TransportLayer() == kNet::SocketOverSCTP)
+        serverConnection->GetSocket()->SetNaglesAlgorithmEnabled(false);        
+#endif
 }
 
 void KristalliProtocolModule::Disconnect()
@@ -283,7 +299,7 @@ bool KristalliProtocolModule::StartServer(unsigned short port, SocketTransportLa
     
     ::LogInfo("Server started");
     ::LogInfo(QString("* Port     : ") + QString::number(port));
-    ::LogInfo(QString("* Protocol : ") + (transport == kNet::SocketOverUDP ? "UDP" : "TCP"));
+    ::LogInfo(QString("* Protocol : ") + (transport == kNet::SocketOverUDP ? "UDP" : (transport == kNet::SocketOverTCP) ? "TCP" : "SCTP"));
     ::LogInfo(QString("* Headless : ") + (framework_->IsHeadless() == true ? "True" : "False"));
     return true;
 }
@@ -318,7 +334,13 @@ void KristalliProtocolModule::NewConnectionEstablished(kNet::MessageConnection *
     // For TCP mode sockets, set the TCP_NODELAY option to improve latency for the messages we send.
     if (source->GetSocket() && source->GetSocket()->TransportLayer() == kNet::SocketOverTCP)
         source->GetSocket()->SetNaglesAlgorithmEnabled(false);
-
+        
+#ifdef KNET_HAS_SCTP        
+    // For SCTP mode sockets, set the SCTP_NODELAY option to improve latency for the messages we send.
+    else if (source->GetSocket() && source->GetSocket()->TransportLayer() == kNet::SocketOverSCTP)
+        source->GetSocket()->SetNaglesAlgorithmEnabled(false);
+#endif
+        
     ::LogInfo("User connected from " + source->RemoteEndPoint().ToString() + ", connection ID " + ToString((int)connection->userID));
     
     emit ClientConnectedEvent(connection.get());

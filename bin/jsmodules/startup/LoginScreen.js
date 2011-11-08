@@ -12,6 +12,7 @@ var loginButton;
 var exitButton;
 var tcpButton;
 var udpButton;
+var sctpButton;
 var infotext;
 
 var configFile = "tundra";
@@ -47,6 +48,7 @@ function SetupLoginScreen() {
     passwordLineEdit = findChild(widget, "lineEdit_Password");
     tcpButton = findChild(widget, "radioButton_ProtocolTCP");
     udpButton = findChild(widget, "radioButton_ProtocolUDP");
+    sctpButton = findChild(widget, "radioButton_ProtocolSCTP");
     infotext = findChild(widget, "label_infotext");
     infotext.hide();
 
@@ -80,6 +82,8 @@ function ReadConfigToUi() {
         tcpButton.checked = true;
     else if (configProtocol == "udp")
         udpButton.checked = true;
+    else if (configProtocol == "sctp")
+        sctpButton.checked = true;        
 }
 
 function WriteConfigFromUi() {
@@ -99,6 +103,8 @@ function GetProtocol() {
         return "tcp";
     else if (udpButton.checked)
         return "udp";
+    else if (sctoButton.checked)
+        return "sctp";        
     return "";
 }
 

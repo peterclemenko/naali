@@ -82,11 +82,17 @@ bool Server::Start(unsigned short port, const QString &protocol)
             userSetProtocol = framework_->Config()->Get(configData).toString().toLower();
     }
 
-    if (userSetProtocol != "udp" && userSetProtocol != "tcp")
-        ::LogWarning("Server::Start: Server config has an invalid server protocol '" + userSetProtocol + "'. Use tcp or udp. Resetting to default protocol.");
+    if (userSetProtocol != "udp" && userSetProtocol != "tcp" && userSetProtocol != "sctp")
+        ::LogWarning("Server::Start: Server config has an invalid server protocol '" + userSetProtocol + "'. Use tcp, udp or sctp. Resetting to default protocol.");
     else
     {
-        transportLayer = userSetProtocol == "udp" ? kNet::SocketOverUDP : kNet::SocketOverTCP;
+
+#ifdef KNET_HAS_SCTP
+         transportLayer = (userSetProtocol == "udp") ? kNet::SocketOverUDP : (userSetProtocol == "tcp") ? kNet::SocketOverTCP : kNet::SocketOverSCTP;
+#else
+         transportLayer = (userSetProtocol == "udp") ? kNet::SocketOverUDP : kNet::SocketOverTCP;
+#endif
+
         framework_->Config()->Set(configData, "protocol", userSetProtocol);
     }
 
@@ -99,7 +105,7 @@ bool Server::Start(unsigned short port, const QString &protocol)
 
     // Store current port and protocol
     current_port_ = (int)port;
-    current_protocol_ = transportLayer == kNet::SocketOverUDP ? "udp" : "tcp";
+    current_protocol_ = transportLayer == kNet::SocketOverUDP ? "udp" : transportLayer == kNet::SocketOverTCP ? "tcp" : "sctp";
 
     // Create the default server scene
     /// \todo Should be not hard coded like this. Give some unique id (uuid perhaps) that could be returned to the client to make the corresponding named scene in client?

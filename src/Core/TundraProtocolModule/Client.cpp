@@ -98,10 +98,20 @@ void Client::Login(const QString& address, unsigned short port, const QString& u
 
     QString p = protocol.trimmed().toLower();
     kNet::SocketTransportLayer transportLayer = kNet::InvalidTransportLayer;
+
     if (p == "tcp")
         transportLayer = kNet::SocketOverTCP;
     else if (p == "udp")
         transportLayer = kNet::SocketOverUDP;
+    else if (p == "sctp")
+    {
+#ifdef KNET_HAS_SCTP
+        transportLayer = kNet::SocketOverSCTP;
+#else
+        ::LogError("SCTP not supported by kNet. Using TCP instead.");
+#endif
+    }
+
     Login(address, port, transportLayer);
 }
 
@@ -123,6 +133,10 @@ void Client::Login(const QString& address, unsigned short port, kNet::SocketTran
         QString p = "";
         if (protocol == kNet::SocketOverTCP)
             p = "tcp";
+#ifdef KNET_HAS_SCTP
+        else if (protocol == kNet::SocketOverSCTP)
+            p = "sctp";            
+#endif
         else if (protocol == kNet::SocketOverUDP)
             p = "udp";
 

@@ -1600,6 +1600,7 @@ var ClassicLogin = Class.extend
 		this.usernameLineEdit = findChild(this.widget, "lineEdit_Username");
 		this.passwordLineEdit = findChild(this.widget, "lineEdit_Password");
 		this.tcpButton = findChild(this.widget, "radioButton_ProtocolTCP");
+		this.sctpButton = findChild(this.widget, "radioButton_ProtocolSCTP");
 		this.udpButton = findChild(this.widget, "radioButton_ProtocolUDP");
 
 		var logoLabel = findChild(this.widget, "label_ClientLogo");
@@ -1642,6 +1643,8 @@ var ClassicLogin = Class.extend
 			this.tcpButton.checked = true;
 		else if (configProtocol == "udp")
 			this.udpButton.checked = true;
+		else if (configProtocol == "scto")
+			this.sctpButton.checked = true;
 	},
 		
 	writeConfigFromUi: function() 
@@ -1664,6 +1667,8 @@ var ClassicLogin = Class.extend
 			return "tcp";
 		else if (this.udpButton.checked)
 			return "udp";
+		else if (this.sctpButton.checked)
+			return "sctp";			
 		return "";
 	},
 

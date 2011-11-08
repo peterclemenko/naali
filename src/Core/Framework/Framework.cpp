@@ -161,14 +161,14 @@ Framework::Framework(int argc, char** argv) :
     cmdLineDescs.commands["--disablerunonload"] = "Do not start script applications (EC_Script's with applicationName defined) automatically"; //JavascriptModule
     cmdLineDescs.commands["--server"] = "Start Tundra server"; // TundraLogicModule
     cmdLineDescs.commands["--port"] = "Start server in the specified port"; // TundraLogicModule
-    cmdLineDescs.commands["--protocol"] = "Start server with the specified protocol. Options: '--protocol tcp' and '--protocol udp'. Defaults to tcp if no protocol is spesified."; // KristalliProtocolModule
+    cmdLineDescs.commands["--protocol"] = "Start server with the specified protocol. Options: '--protocol tcp', '--protocol udp' or '--protocol sctp'. Defaults to tcp if no protocol is spesified."; // KristalliProtocolModule
     cmdLineDescs.commands["--fpslimit"] = "Specifies the fps cap to use in rendering. Default: 60. Pass in 0 to disable"; // OgreRenderingModule
     cmdLineDescs.commands["--run"] = "Run script on startup"; // JavaScriptModule
     cmdLineDescs.commands["--file"] = "Load scene on startup. Accepts absolute and relative paths, local:// and http:// are accepted and fetched via the AssetAPI."; // TundraLogicModule & AssetModule
     cmdLineDescs.commands["--storage"] = "Adds the given directory as a local storage directory on startup"; // AssetModule
     cmdLineDescs.commands["--config"] = "Specifies the startup configration file to use. Multiple config files are supported, f.ex. '--config plugins.xml --config MyCustomAddons.xml"; // Framework
     cmdLineDescs.commands["--connect"] = "Connects to a Tundra server automatically. Syntax: '--connect serverIp;port;protocol;name;password'. Password is optional.";
-    cmdLineDescs.commands["--login"] = "Automatically login to server using provided data. Url syntax: {tundra|http|https}://host[:port]/?username=x[&password=y&avatarurl=z&protocol={udp|tcp}]. Minimum information needed to try a connection in the url are host and username";
+    cmdLineDescs.commands["--login"] = "Automatically login to server using provided data. Url syntax: {tundra|http|https}://host[:port]/?username=x[&password=y&avatarurl=z&protocol={udp|tcp|sctp}]. Minimum information needed to try a connection in the url are host and username";
     cmdLineDescs.commands["--netrate"] = "Specifies the number of network updates per second. Default: 30."; // TundraLogicModule
     cmdLineDescs.commands["--noassetcache"] = "Disable asset cache.";
     cmdLineDescs.commands["--assetcachedir"] = "Specify asset cache directory to use.";

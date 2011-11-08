@@ -63,7 +63,6 @@ class EC_MenuItem : public IComponent
 
 public:
     EC_MenuItem(Scene *scene);
-    ~EC_MenuItem();
 
     Q_PROPERTY(float phi READ getphi WRITE setphi)
     DEFINE_QPROPERTY_ATTRIBUTE(float, phi)

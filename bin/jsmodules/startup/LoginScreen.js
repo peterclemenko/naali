@@ -103,7 +103,7 @@ function GetProtocol() {
         return "tcp";
     else if (udpButton.checked)
         return "udp";
-    else if (sctoButton.checked)
+    else if (sctpButton.checked)
         return "sctp";        
     return "";
 }

@@ -1643,7 +1643,7 @@ var ClassicLogin = Class.extend
 			this.tcpButton.checked = true;
 		else if (configProtocol == "udp")
 			this.udpButton.checked = true;
-		else if (configProtocol == "scto")
+		else if (configProtocol == "sctp")
 			this.sctpButton.checked = true;
 	},
 		

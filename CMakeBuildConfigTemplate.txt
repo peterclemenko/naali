@@ -67,7 +67,7 @@ AddEntityComponent(EC_HoveringText)
 AddEntityComponent(EC_ParticleSystem)
 AddEntityComponent(EC_Billboard)
 AddEntityComponent(EC_TransformGizmo)
-#AddEntityComponent(EC_Menu)
+AddEntityComponent(EC_Menu)
 
 ## Here are the Application level ECs that wont be added if BUILD_SDK_ONLY is TRUE (default is FALSE)
 

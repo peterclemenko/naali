@@ -852,20 +852,23 @@ bool SyncManager::ValidateAction(kNet::MessageConnection* source, unsigned messa
     return true;
 }
 
+#define  GET_SCENE_AND_SYNCSTATE \
+    assert(source);						\
+    /* Get matching syncstate for reflecting the changes */	\
+    SceneSyncState* state = GetSceneSyncState(source);		\
+    ScenePtr scene = GetRegisteredScene();			\
+    if (!scene || !state)						\
+    {									\
+	LogWarning("Null scene or sync state(" + ToString(!!scene) + ", " + ToString(!!state) +"), disregarding CreateComponents message"); \
+        return;								\
+    }									\
+    
+
 void SyncManager::HandleCreateEntity(kNet::MessageConnection* source, const char* data, size_t numBytes)
 {
-    assert(source);
-    UserConnection* user = owner_->GetKristalliModule()->GetUserConnection(source);
-    
-    // Get matching syncstate for reflecting the changes
-    SceneSyncState* state = GetSceneSyncState(source);
-    ScenePtr scene = GetRegisteredScene();
-    if (!scene || !state)
-    {
-        LogWarning("Null scene or sync state, disregarding CreateEntity message");
-        return;
-    }
+    GET_SCENE_AND_SYNCSTATE
 
+    UserConnection* user = owner_->GetKristalliModule()->GetUserConnection(source);
     if (!scene->AllowModifyEntity(user, 0)) //should be 'ModifyScene', but ModifyEntity is now the signal that covers all
         return;
 
@@ -992,15 +995,7 @@ void SyncManager::HandleCreateEntity(kNet::MessageConnection* source, const char
 
 void SyncManager::HandleCreateComponents(kNet::MessageConnection* source, const char* data, size_t numBytes)
 {
-    assert(source);
-    // Get matching syncstate for reflecting the changes
-    SceneSyncState* state = GetSceneSyncState(source);
-    ScenePtr scene = GetRegisteredScene();
-    if (!scene || !state)
-    {
-        LogWarning("Null scene or sync state, disregarding CreateComponents message");
-        return;
-    }
+    GET_SCENE_AND_SYNCSTATE
     
     bool isServer = owner_->IsServer();
     // For clients, the change type is LocalOnly. For server, the change type is Replicate, so that it will get replicated to all clients in turn
@@ -1109,16 +1104,8 @@ void SyncManager::HandleCreateComponents(kNet::MessageConnection* source, const 
 
 void SyncManager::HandleRemoveEntity(kNet::MessageConnection* source, const char* data, size_t numBytes)
 {
-    assert(source);
-    // Get matching syncstate for reflecting the changes
-    SceneSyncState* state = GetSceneSyncState(source);
-    ScenePtr scene = GetRegisteredScene();
-    if (!scene || !state)
-    {
-        LogWarning("Null scene or sync state, disregarding RemoveEntity message");
-        return;
-    }
-    
+    GET_SCENE_AND_SYNCSTATE    
+
     bool isServer = owner_->IsServer();
     // For clients, the change type is LocalOnly. For server, the change type is Replicate, so that it will get replicated to all clients in turn
     AttributeChange::Type change = isServer ? AttributeChange::Replicate : AttributeChange::LocalOnly;
@@ -1144,16 +1131,8 @@ void SyncManager::HandleRemoveEntity(kNet::MessageConnection* source, const char
 
 void SyncManager::HandleRemoveComponents(kNet::MessageConnection* source, const char* data, size_t numBytes)
 {
-    assert(source);
-    // Get matching syncstate for reflecting the changes
-    SceneSyncState* state = GetSceneSyncState(source);
-    ScenePtr scene = GetRegisteredScene();
-    if (!scene || !state)
-    {
-        LogWarning("Null scene or sync state, disregarding RemoveComponents message");
-        return;
-    }
-    
+    GET_SCENE_AND_SYNCSTATE    
+
     bool isServer = owner_->IsServer();
     // For clients, the change type is LocalOnly. For server, the change type is Replicate, so that it will get replicated to all clients in turn
     AttributeChange::Type change = isServer ? AttributeChange::Replicate : AttributeChange::LocalOnly;
@@ -1193,15 +1172,7 @@ void SyncManager::HandleRemoveComponents(kNet::MessageConnection* source, const 
 
 void SyncManager::HandleCreateAttributes(kNet::MessageConnection* source, const char* data, size_t numBytes)
 {
-    assert(source);
-    // Get matching syncstate for reflecting the changes
-    SceneSyncState* state = GetSceneSyncState(source);
-    ScenePtr scene = GetRegisteredScene();
-    if (!scene || !state)
-    {
-        LogWarning("Null scene or sync state, disregarding CreateAttributes message");
-        return;
-    }
+    GET_SCENE_AND_SYNCSTATE    
     
     bool isServer = owner_->IsServer();
     // For clients, the change type is LocalOnly. For server, the change type is Replicate, so that it will get replicated to all clients in turn
@@ -1278,16 +1249,8 @@ void SyncManager::HandleCreateAttributes(kNet::MessageConnection* source, const 
 
 void SyncManager::HandleRemoveAttributes(kNet::MessageConnection* source, const char* data, size_t numBytes)
 {
-    assert(source);
-    // Get matching syncstate for reflecting the changes
-    SceneSyncState* state = GetSceneSyncState(source);
-    ScenePtr scene = GetRegisteredScene();
-    if (!scene || !state)
-    {
-        LogWarning("Null scene or sync state, disregarding RemoveAttributes message");
-        return;
-    }
-    
+    GET_SCENE_AND_SYNCSTATE    
+
     bool isServer = owner_->IsServer();
     // For clients, the change type is LocalOnly. For server, the change type is Replicate, so that it will get replicated to all clients in turn
     AttributeChange::Type change = isServer ? AttributeChange::Replicate : AttributeChange::LocalOnly;
@@ -1326,16 +1289,8 @@ void SyncManager::HandleRemoveAttributes(kNet::MessageConnection* source, const 
 
 void SyncManager::HandleEditAttributes(kNet::MessageConnection* source, const char* data, size_t numBytes)
 {
-    assert(source);
-    // Get matching syncstate for reflecting the changes
-    SceneSyncState* state = GetSceneSyncState(source);
-    ScenePtr scene = GetRegisteredScene();
-    if (!scene || !state)
-    {
-        LogWarning("Null scene or sync state, disregarding EditAttributes message");
-        return;
-    }
-    
+    GET_SCENE_AND_SYNCSTATE    
+
     bool isServer = owner_->IsServer();
     // For clients, the change type is LocalOnly. For server, the change type is Replicate, so that it will get replicated to all clients in turn
     AttributeChange::Type change = isServer ? AttributeChange::Replicate : AttributeChange::LocalOnly;
@@ -1464,14 +1419,7 @@ void SyncManager::HandleEditAttributes(kNet::MessageConnection* source, const ch
 
 void SyncManager::HandleCreateEntityReply(kNet::MessageConnection* source, const char* data, size_t numBytes)
 {
-    assert(source);
-    SceneSyncState* state = GetSceneSyncState(source);
-    ScenePtr scene = GetRegisteredScene();
-    if (!scene || !state)
-    {
-        LogWarning("Null scene or sync state, disregarding CreateEntityReply message");
-        return;
-    }
+    GET_SCENE_AND_SYNCSTATE    
     
     bool isServer = owner_->IsServer();
     if (isServer)
@@ -1531,14 +1479,7 @@ void SyncManager::HandleCreateEntityReply(kNet::MessageConnection* source, const
 
 void SyncManager::HandleCreateComponentsReply(kNet::MessageConnection* source, const char* data, size_t numBytes)
 {
-    assert(source);
-    SceneSyncState* state = GetSceneSyncState(source);
-    ScenePtr scene = GetRegisteredScene();
-    if (!scene || !state)
-    {
-        LogWarning("Null scene or sync state, disregarding CreateComponentsReply message");
-        return;
-    }
+    GET_SCENE_AND_SYNCSTATE    
     
     bool isServer = owner_->IsServer();
     if (isServer)

@@ -196,8 +196,11 @@ void Application::Message(const std::string &title, const std::string &text)
 #ifdef WIN32
     MessageBoxA(0, text.c_str(), title.c_str(), MB_OK | MB_ICONERROR | MB_TASKMODAL);
 #else
-    std::cerr << "Application::Message not implemented for current platform!" << std::endl;
-    assert(false && "Not implemented!");
+    std::cerr << "Error:" << std::endl;
+    std::cerr << title << std::endl;
+    std::cerr << text << std::endl;
+    std::cerr << "[Modal error dialog not implemented so aborting]" << std::endl;
+    abort();
 #endif
 }
 

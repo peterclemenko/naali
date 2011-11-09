@@ -194,7 +194,10 @@ void KristalliProtocolModule::Update(f64 /*frametime*/)
             if (!iter->second->IsReadOpen() && iter->second->IsWriteOpen())
                 iter->second->Disconnect(0);
     }
-    
+
+    // ::LogInfo("serverConnection: " + ToString(!!serverConnection));
+    // if (serverConnection)
+    //   ::LogInfo("state: " + ToString(serverConnection->GetConnectionState()));
     if ((!serverConnection || serverConnection->GetConnectionState() == ConnectionClosed ||
         serverConnection->GetConnectionState() == ConnectionPending) && serverIp.length() != 0)
     {
@@ -221,8 +224,7 @@ void KristalliProtocolModule::Update(f64 /*frametime*/)
 
     // If connection was made, enable a larger number of reconnection attempts in case it gets lost
     if (serverConnection && serverConnection->GetConnectionState() == ConnectionOK)
-        reconnectAttempts = cReconnectAttempts;
-    
+        reconnectAttempts = cReconnectAttempts;    
 }
 
 void KristalliProtocolModule::Connect(const char *ip, unsigned short port, SocketTransportLayer transport)

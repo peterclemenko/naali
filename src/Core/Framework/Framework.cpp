@@ -296,7 +296,9 @@ void Framework::ProcessOneFrame()
 
     for(size_t i = 0; i < modules.size(); ++i)
     {
+#ifdef NDEBUG
         try
+#endif
         {
 #ifdef PROFILING
             ProfilerSection ps(("Module_" + modules[i]->Name() + "_Update").toStdString());

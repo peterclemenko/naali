@@ -211,10 +211,10 @@ void Scene::RemoveAllEntities(bool send_events, AttributeChange::Type change)
     entities_.clear();
     if (send_events)
         emit SceneCleared(this);
-    for (EntityList::iterator it = persist_ents.begin(); it != persist_ents.end; it++) 
+    for (EntityList::iterator it = stashed_entities.begin(); it != stashed_entities.end(); it++) 
     {
-	entities_[it->second->Id()] = it->second;
-	LogWarning("Keeping entity over disconnect: " + QString::number(it->second->Id()));
+	entities_[(*it)->Id()] = *it;
+	LogWarning("Keeping entity over disconnect: " + QString::number((*it)->Id()));
     }
     idGenerator_.Reset();
 }

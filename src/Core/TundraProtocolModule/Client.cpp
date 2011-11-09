@@ -164,6 +164,19 @@ void Client::Logout()
     QTimer::singleShot(1, this, SLOT(DelayedLogout()));
 }
 
+void Client::FailConnection()
+{
+  if (GetConnection())
+  {
+      owner_->GetKristalliModule()->serverConnection->Disconnect();
+      ::LogInfo("Broke connection as requested");
+  }
+  loginstate_ = NotConnected;
+  client_id_ = 0;
+  
+  emit Disconnected();
+}
+
 void Client::DelayedLogout()
 {
     DoLogout(false);
@@ -181,9 +194,7 @@ void Client::DoLogout(bool fail)
         
         loginstate_ = NotConnected;
         client_id_ = 0;
-        
-        framework_->Scene()->RemoveScene("TundraClient");
-        
+                
         emit Disconnected();
     }
     
@@ -194,6 +205,8 @@ void Client::DoLogout(bool fail)
     }
     else // An user deliberately disconnected from the world, and not due to a connection error.
     {
+	framework_->Scene()->RemoveScene("TundraClient");
+
         // Clear all the login properties we used for this session, so that the next login session will start from an
         // empty set of login properties (just-in-case).
         properties.clear();

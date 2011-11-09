@@ -93,6 +93,9 @@ public slots:
     /** Delays the logout by one frame, so it is safe to call from scripts. */
     void Logout();
 
+    /// Fails the current connection, to test for net hiccups and reconnect.
+    void FailConnection();
+
     /// Returns client connection ID (from loginreply message). Is zero if not connected
     int GetConnectionID() const { return client_id_; }
 

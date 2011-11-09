@@ -80,10 +80,9 @@ function CreateAvatarEntity(username, connectionID, avatarEntityName) {
     // - DynamicComponent for holding disabled/enabled avatar features
 
     var avatarEntity = scene.CreateEntity(scene.NextFreeId() /*scene.NextFreeIdPersistent()*/, ["EC_Script", "EC_Placeable", "EC_AnimationController", "EC_DynamicComponent"]);
+    //avatarEntity.SetKeepOverDisconnect(true);
 
-    var dc = avatarEntity.dynamiccomponent;
-    dc.CreateAttribute("foo", "int");
-    dc.SetAttribute("foo", "42");
+    dc_set(avatarEntity, "foo", "x");
 
     avatarEntity.SetTemporary(true); // We never want to save the avatar entities to disk.
     avatarEntity.SetName(avatarEntityName);
@@ -120,8 +119,7 @@ function ServerHandleUserDisconnected(connectionID, user) {
     var avatarEntityName = "Avatar_" + username;
     var avatarEntity = scene.GetEntityByName(avatarEntityName);
     if (avatarEntity != null) {
-        scene.RemoveEntity(avatarEntity.id);
-
+	// not removing avatar entity. will stick around
 	log("clearing connectionid from " + avatarEntityName);
 	log("dc 2");
 	dc_set(avatarEntity, "connectionID", "");

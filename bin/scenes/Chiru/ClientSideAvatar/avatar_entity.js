@@ -60,13 +60,12 @@ function SimpleAvatar(entity, comp)
 
 SimpleAvatar.prototype.OnScriptObjectDestroyed = function() {
     // Must remember to manually disconnect subsystem signals, otherwise they'll continue to get signalled
-    if (this.isServer)
-    {
-        frame.Updated.disconnect(this, this.AnimationUpdate);
+    if (!this.isServer) {
         scene.physics.Updated.disconnect(this, this.ClientUpdatePhysics);
-    }
-    else
+        frame.Updated.disconnect(this, this.AnimationUpdate);
         frame.Updated.disconnect(this, this.ClientUpdate);
+        frame.Updated.disconnect(this, this.ClientUpdate2);
+    }
 }
 
 SimpleAvatar.prototype.ServerInitialize = function() {
@@ -180,7 +179,8 @@ SimpleAvatar.prototype.AnimationUpdate = function(frametime) {
     this.CommonUpdateAnimation(frametime);
 }
 
-SimpleAvatar.prototype.ServerHandleCollision = function(ent, pos, normal, distance, impulse, newCollision) {
+SimpleAvatar.prototype.ClientHandleCollision = function(ent, pos, normal, distance, impulse, newCollision) {
+    //log("collision handler called");
     if (this.falling && newCollision) {
         this.falling = false;
         this.SetAnimationState();
@@ -249,7 +249,7 @@ SimpleAvatar.prototype.ClientUpdatePhysics = function(frametime) {
 }
 
 SimpleAvatar.prototype.ClientHandleMove = function(param) {
-    log("ClientHandleMove " + param);
+    //log("ClientHandleMove " + param);
     if (dc_get(this.me, "enableWalk")) {
         if (param == "forward") {
             this.motionZ = 1;
@@ -276,7 +276,7 @@ SimpleAvatar.prototype.ClientHandleMove = function(param) {
 }
 
 SimpleAvatar.prototype.ClientHandleStop = function(param) {
-    log("ClientHandleStop " + param);
+    // log("ClientHandleStop " + param);
     if ((param == "forward") && (this.motionZ == 1)) {
         this.motionZ = 0;
     }
@@ -382,8 +382,8 @@ SimpleAvatar.prototype.ClientInitialize = function() {
     // log("dc keys: ");
     // for (var i = 0; i < this.me.dynamiccomponent.GetNumAttributes(); i++)
     // 	log("  " + this.me.dynamiccomponent.GetAttributeName(i));
-    log("checking canary dc: " + dc_get(this.me, "foo"));
-    log("checking canary dc(2): " + this.me.dynamiccomponent.GetAttribute("foo"));
+    if (dc_get(this.me, "foo") != "x")
+	log("canary dc check failed");
 
     // scene.AttributeChanged.connect(function(comp, attr, changetype) {
     // 	    log("attribute changed: " + attr.Owner() + "type: " + changetype);
@@ -440,6 +440,7 @@ SimpleAvatar.prototype.ClientInitialize = function() {
     }
 
     // Hook to tick update to update visual effects (both own and others' avatars)
+    log("connect ClientUpdate")
     frame.Updated.connect(this, this.ClientUpdate);
 }
 
@@ -476,7 +477,7 @@ SimpleAvatar.prototype.ClientUpdate2 = function(frametime) {
     // already done in ClientUpdate
     // this.CommonUpdateAnimation(frametime);
 
-    print("dc foo: " + this.me.dynamiccomponent.GetAttribute("foo"));
+    //print("dc foo: " + this.me.dynamiccomponent.GetAttribute("foo"));
 }
 
 SimpleAvatar.prototype.ClientUpdate = function(frametime) {
@@ -499,7 +500,7 @@ SimpleAvatar.prototype.ClientUpdate = function(frametime) {
     }
     this.CommonUpdateAnimation(frametime);
 
-    print("dc foo: " + this.me.dynamiccomponent.GetAttribute("foo"));
+    //print("dc foo: " + this.me.dynamiccomponent.GetAttribute("foo"));
 }
 
 SimpleAvatar.prototype.ClientCreateInputMapper = function() {
@@ -586,7 +587,7 @@ SimpleAvatar.prototype.GestureStarted = function(gestureEvent) {
         if (attrs.GetAttribute("enableRotate")) {
             var x = new Number(gestureEvent.Gesture().offset.toPoint().x());
             this.yaw += x;
-            this.me.Exec(2, "SetRotation", this.yaw.toString());
+            this.me.Exec(1, "SetRotation", this.yaw.toString());
         }
 
         gestureEvent.Accept();
@@ -604,7 +605,7 @@ SimpleAvatar.prototype.GestureUpdated = function(gestureEvent) {
         // Rotate avatar with X pan gesture
         delta = gestureEvent.Gesture().delta.toPoint();
         this.yaw += delta.x;
-        this.me.Exec(2, "SetRotation", this.yaw.toString());
+        this.me.Exec(1, "SetRotation", this.yaw.toString());
 
         // Start walking or stop if total Y len of pan gesture is 100
         var walking = false;
@@ -614,19 +615,19 @@ SimpleAvatar.prototype.GestureUpdated = function(gestureEvent) {
         if (totalOffset.y() < -100)
         {
             if (walking) {
-                this.me.Exec(2, "Stop", "forward");
-                this.me.Exec(2, "Stop", "back");
+                this.me.Exec(1, "Stop", "forward");
+                this.me.Exec(1, "Stop", "back");
             } else
-                this.me.Exec(2, "Move", "forward");
+                this.me.Exec(1, "Move", "forward");
             listenGesture = false;
         }
         else if (totalOffset.y() > 100)
         {
             if (walking) {
-                this.me.Exec(2, "Stop", "forward");
-                this.me.Exec(2, "Stop", "back");
+                this.me.Exec(1, "Stop", "forward");
+                this.me.Exec(1, "Stop", "back");
             } else
-                this.me.Exec(2, "Move", "back");
+                this.me.Exec(1, "Move", "back");
             this.listenGesture = false;
         }
         gestureEvent.Accept();
@@ -686,6 +687,7 @@ SimpleAvatar.prototype.ClientHandleMouseScroll = function(relativeScroll) {
 }
 
 SimpleAvatar.prototype.ClientHandleRotate = function(param) {
+    log("rotate " + param);
     if (param == "left") {
         this.rotate = -1;
     }
@@ -711,7 +713,7 @@ SimpleAvatar.prototype.ClientUpdateRotation = function(frametime) {
 
     if (this.rotate != 0) {
         this.yaw -= this.rotateSpeed * this.rotate * frametime;
-        this.me.Exec(2, "SetRotation", this.yaw.toString());
+        this.me.Exec(1, "SetRotation", this.yaw.toString());
     }
 }
 
@@ -730,11 +732,11 @@ SimpleAvatar.prototype.ClientUpdateAvatarCamera = function() {
     var cameraplaceable = cameraentity.placeable;
 
     var cameratransform = cameraplaceable.transform;
-    log("paa");
+    //log("paa");
     cameratransform.rot = new float3(this.pitch, 0, 0);
-    log("apa " + this.avatarCameraHeight+ " " + avatarCameraDistance);
+    //log("apa " + this.avatarCameraHeight+ " " + avatarCameraDistance);
     cameratransform.pos = new float3(0, this.avatarCameraHeight, avatarCameraDistance);
-    log("aap");
+    //log("aap");
     cameraplaceable.transform = cameratransform;
 }
 
@@ -766,7 +768,7 @@ SimpleAvatar.prototype.ClientHandleMouseMove = function(mouseevent) {
     {
         // Rotate avatar or camera
         this.yaw -= this.mouseRotateSensitivity * parseInt(mouseevent.relativeX);
-        this.me.Exec(2, "SetRotation", this.yaw.toString());
+        this.me.Exec(1, "SetRotation", this.yaw.toString());
     }
 
     if (mouseevent.relativeY != 0 && !this.isMouseLookLockedOnX)

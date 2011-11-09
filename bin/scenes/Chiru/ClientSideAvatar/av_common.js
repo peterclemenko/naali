@@ -7,8 +7,10 @@ function dc_set(ent, key, val) {
     if (!dc.ContainsAttribute(key)) {
 	// log("creating attr");
         dc.CreateAttribute("qvariant", key);
-	if (!dc.ContainsAttribute(key))
+	if (!dc.ContainsAttribute(key)) {
 	    log("CreateAttribute didn't work!");
+	    throw new Error("Couldn't create DynamicComponent key " + key);
+	}
     }
     dc.SetAttribute(key, val);
     // log("set attribute: " + key + ": " + val);

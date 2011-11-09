@@ -84,6 +84,7 @@ public slots:
         void OpenKNetLogWindow();
 #endif
 
+        Ptr(kNet::MessageConnection) serverConnection;
     signals:
         /// Triggered whenever a new message is received rom the network.
         void NetworkMessageReceived(kNet::MessageConnection *source, kNet::message_id_t id, const char *data, size_t numBytes);
@@ -122,7 +123,6 @@ public slots:
         kNet::SocketTransportLayer serverTransport;
         
         kNet::Network network;
-        Ptr(kNet::MessageConnection) serverConnection;
         kNet::NetworkServer *server;
         
         /// Users that are connected to server

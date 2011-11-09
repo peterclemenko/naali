@@ -309,11 +309,13 @@ void Framework::ProcessOneFrame()
                 << ": " << (e.what() ? e.what() : "(null)") << std::endl;
             LogError("ProcessOneFrame caught an exception while updating module " + modules[i]->Name() + ": " + (e.what() ? e.what() : "(null)"));
         }
+#ifdef NDEBUG
         catch(...)
         {
             std::cout << "ProcessOneFrame caught an unknown exception while updating module " << modules[i]->Name().toStdString() << std::endl;
             LogError("ProcessOneFrame caught an unknown exception while updating module " + modules[i]->Name());
         }
+#endif
     }
 
     asset->Update(frametime);

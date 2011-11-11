@@ -292,6 +292,13 @@ public slots:
      */
     void SetRotation(const float3& rotation);
     
+    /// Forcibly set orientation
+    /** Use this instead of just setting the placeable's full transform to allow linear motion
+        to continue uninterrupted (with proper inter-step interpolation)
+        @param orientation New orientation
+     */
+    void SetOrientation(const Quat& orientation);
+    
     /// Rotate the body
     /** Use this instead of just setting the placeable's full transform to allow linear motion
         to continue uninterrupted (with proper inter-step interpolation)

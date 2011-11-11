@@ -678,6 +678,35 @@ void EC_RigidBody::SetRotation(const float3& rotation)
     disconnected_ = false;
 }
 
+void EC_RigidBody::SetOrientation(const Quat& orientation)
+{
+    // Cannot modify server-authoritative physics object
+    if (!HasAuthority())
+        return;
+
+    disconnected_ = true;
+
+    EC_Placeable* placeable = placeable_.lock().get();
+    if (placeable)
+    {
+       Transform trans = placeable->transform.Get();
+       trans.SetOrientation(orientation);
+
+       placeable->transform.Set(trans, AttributeChange::Default);
+
+       if(body_)
+       {
+           btTransform& worldTrans = body_->getWorldTransform();
+           btTransform interpTrans = body_->getInterpolationWorldTransform();
+           worldTrans.setRotation(trans.Orientation());
+           interpTrans.setRotation(worldTrans.getRotation());
+           body_->setInterpolationWorldTransform(interpTrans);
+       }
+    }
+
+    disconnected_ = false;
+}
+
 void EC_RigidBody::Rotate(const float3& rotation)
 {
     // Cannot modify server-authoritative physics object

@@ -19,6 +19,7 @@
 #include "ShelveMenuRenderer.h"
 
 #include "EC_Placeable.h"
+#include "EC_RigidBody.h"
 #include "Entity.h"
 #include "Scene.h"
 #include "Framework.h"
@@ -29,6 +30,7 @@
 //#include "FrameworkFwd.h"
 //#include "SceneFwd.h"
 //#include "InputFwd.h"
+#include "OgreWorld.h"
 #include "SceneInteract.h"
 #include "SceneAPI.h"
 #include "InputAPI.h"
@@ -49,6 +51,7 @@ EC_MenuContainer::EC_MenuContainer(Scene *scene) :
 {
     static AttributeMetadata typeAttrData;
     static bool metadataInitialized = false;
+    bool check;
     if (!metadataInitialized)
     {
         typeAttrData.enums[MT_Ring]   = "Ring";
@@ -57,8 +60,13 @@ EC_MenuContainer::EC_MenuContainer(Scene *scene) :
     }
     menuType.SetMetadata(&typeAttrData);
 
-    connect(this, SIGNAL(ParentEntitySet()), this, SLOT(Initialize()));
-    connect(this, SIGNAL(AttributeChanged(IAttribute*, AttributeChange::Type)), SLOT(OnAttributeUpdated(IAttribute*)));
+    check = connect(this, SIGNAL(ParentEntitySet()), this, SLOT(Initialize()));
+    Q_ASSERT(check);
+
+    check = connect(this, SIGNAL(AttributeChanged(IAttribute*, AttributeChange::Type)), SLOT(OnAttributeUpdated(IAttribute*)));
+    Q_ASSERT(check);
+
+    ogreWorld = scene->GetWorld<OgreWorld>();
 
     //framework = GetFramework();
     if (framework)
@@ -69,7 +77,8 @@ EC_MenuContainer::EC_MenuContainer(Scene *scene) :
         if (input)
         {
             input->SetTakeMouseEventsOverQt(true);
-            connect(input.get(), SIGNAL(MouseEventReceived(MouseEvent *)), SLOT(HandleMouseEvent(MouseEvent *)));
+            check = connect(input.get(), SIGNAL(MouseEventReceived(MouseEvent *)), SLOT(HandleMouseEvent(MouseEvent *)));
+            Q_ASSERT(check);
         }
     }
 }
@@ -106,11 +115,11 @@ void EC_MenuContainer::EntityClickReleased(Entity *entity, Qt::MouseButton butto
 
 void EC_MenuContainer::Initialize()
 {
-    LogInfo("Container datamodelPtr: "+ToString(menuDataModel_));
+    //LogInfo("Container datamodelPtr: "+ToString(menuDataModel_));
     if (!menuDataModel_)
     {
         menuDataModel_ = new MenuDataModel();
-        LogInfo("Container datamodelPtr1: "+ToString(menuDataModel_));
+        //LogInfo("Container datamodelPtr1: "+ToString(menuDataModel_));
     }
 }
 
@@ -122,8 +131,8 @@ void EC_MenuContainer::ActivateMenu()
         {
         case MT_Ring:
             menuRenderer_ = new RingMenuRenderer(this, menuDataModel_);
-            LogInfo("Container datamodelPtr2: "+ToString(menuDataModel_));
-            LogInfo("items in datamodel (menucontainer): " + ToString(menuDataModel_->GetNumberOfDataItems()));
+            //LogInfo("Container datamodelPtr2: "+ToString(menuDataModel_));
+            //LogInfo("items in datamodel (menucontainer): " + ToString(menuDataModel_->GetNumberOfDataItems()));
             break;
 
         case MT_Shelve:
@@ -145,7 +154,6 @@ void EC_MenuContainer::SetMenuContainerPosition()
     float3 ownEntityPos;
     EC_Placeable *cameraPlaceable=0;
 
-    Entity *parent = ParentEntity();
     Scene *scene = GetFramework()->Scene()->MainCameraScene();
 
     EntityPtr avatarCameraPtr = scene->GetEntityByName("AvatarCamera");
@@ -153,7 +161,7 @@ void EC_MenuContainer::SetMenuContainerPosition()
     //Offset for menu from camera coordinates
     distance.x=0;
     distance.y=0;
-    distance.z=-22;
+    distance.z=-10;
 
 
     if (avatarCameraPtr)
@@ -168,6 +176,7 @@ void EC_MenuContainer::SetMenuContainerPosition()
         Entity *freeLookCamera = freeLookCameraPtr.get();
         cameraPlaceable = dynamic_cast<EC_Placeable*>(freeLookCamera->GetComponent("EC_Placeable").get());
         LogInfo("freeLookCamera is active");
+        LogInfo(ToString(cameraPlaceable->WorldPosition()));
     }
 
     if (cameraPlaceable)
@@ -185,10 +194,10 @@ void EC_MenuContainer::SetMenuContainerPosition()
         entityTransform.SetPos(ownEntityPos.x, ownEntityPos.y, ownEntityPos.z);
 
         //Remove extra 90 degrees which is originally placed to camera's rotation.
-        entityTransform.SetRotation(cameraTransform.rot.x-90, cameraTransform.rot.y, cameraTransform.rot.z);
+        //entityTransform.SetRotation(cameraTransform.rot.x-90, cameraTransform.rot.y, cameraTransform.rot.z);
 
-        //LogInfo(ToString(entityTransform.position));
-        //LogInfo(ToString(cameraTransform.position));
+        LogInfo("entityTransform "+entityTransform.toString());
+        LogInfo("cameraTransform "+cameraTransform.toString());
 
         GetOrCreatePlaceableComponent()->settransform(entityTransform);
     }
@@ -221,8 +230,6 @@ EC_MenuItem* EC_MenuContainer::CreateMenuItem()
 EC_MenuItem* EC_MenuContainer::CreateMenuItem(ComponentPtr parentPlaceable)
 {
     Scene *scene = GetFramework()->Scene()->MainCameraScene();
-    // return scene->CreateEntity(scene->NextFreeIdLocal(), components, change, defaultNetworkSync).get();
-    //entity_id_t id = scene->NextFreeIdLocal();
     EntityPtr entity_ = scene->CreateEntity(scene->NextFreeIdLocal(), QStringList(), AttributeChange::LocalOnly, false);
 
     //LogInfo("Pointer " + ToString(entity_));
@@ -239,14 +246,7 @@ EC_MenuItem* EC_MenuContainer::CreateMenuItem(ComponentPtr parentPlaceable)
 
             //Sets parent entity for menuItem-entitys placeable component
             menuItem->SetParentMenuContainer(parentPlaceable);
-            //menuItem->GetOrCreatePlaceableComponent()->; //->Translate(Vector3df(90.0, 90.0, 90.0));
-
             scene->EmitEntityCreated(MenuItemEntity, AttributeChange::LocalOnly);
-
-            if (getPhysicsEnabled())
-            {
-                //CreatePhysicsForMenuItem(menuItem);
-            }
 
             return menuItem;
         }
@@ -258,12 +258,37 @@ EC_MenuItem* EC_MenuContainer::CreateMenuItem(ComponentPtr parentPlaceable)
     return 0;
 }
 
+void EC_MenuContainer::GetOrCreateRigidBody(Entity *entity)
+{
+    if (entity)
+        entity->GetOrCreateComponent("EC_RigidBody", AttributeChange::LocalOnly, false).get();
+    else
+        LogError("Invalid entity pointer!");
+}
+
 void EC_MenuContainer::HandleMouseEvent(MouseEvent *event)
 {
-    if (menuRenderer_)
-        menuRenderer_->HandleMouseInput(event);
-    else
-        LogInfo("Error terror!!!#!#¤&");
+    if (event->IsLeftButtonDown())
+    {
+        IRenderer *renderer = framework->Renderer();
+        if (!renderer)
+            return;
+
+        RaycastResult *result = renderer->Raycast(event->x, event->y);
+        if (!result)
+            return;
+
+        //debug prints
+//        if (result->entity)
+//            LogInfo("Entity hit:"+result->entity->Name());
+//        else
+//            LogInfo("none");
+
+        if (menuRenderer_)
+            menuRenderer_->HandleMouseInput(event, result);
+        else
+            LogError("Error while trying to handle mouseinput, MenuRenderer not found!");
+    }
 }
 
 EC_Placeable* EC_MenuContainer::GetOrCreatePlaceableComponent()
@@ -294,23 +319,23 @@ void EC_MenuContainer::OnAttributeUpdated(IAttribute* attribute)
 
     if (attribute == &menuType)
     {
-        if (menuRenderer_)
-        {
-            delete menuRenderer_;
-            menuRenderer_ = 0;
-        }
+//        if (menuRenderer_)
+//        {
+//            delete menuRenderer_;
+//            menuRenderer_ = 0;
+//        }
 
-        switch(menuType.Get())
-        {
-        case MT_Ring:
-            menuRenderer_ = new RingMenuRenderer(this, menuDataModel_);
-            break;
+//        switch(menuType.Get())
+//        {
+//        case MT_Ring:
+//            menuRenderer_ = new RingMenuRenderer(this, menuDataModel_);
+//            break;
 
-        case MT_Shelve:
-            menuRenderer_ = new ShelveMenuRenderer(menuDataModel_);
-            break;
+//        case MT_Shelve:
+//            menuRenderer_ = new ShelveMenuRenderer(menuDataModel_);
+//            break;
 
-        }
+//        }
     }
 }
 

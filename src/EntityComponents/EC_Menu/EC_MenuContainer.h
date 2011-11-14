@@ -16,6 +16,7 @@
 #include "AssetFwd.h"
 
 #include "FrameworkFwd.h"
+#include "OgreModuleFwd.h"
 #include "SceneFwd.h"
 #include "InputFwd.h"
 
@@ -110,13 +111,13 @@ public slots:
     EC_MenuItem* CreateMenuItem();
     EC_MenuItem* CreateMenuItem(ComponentPtr parentPlaceable);
 
+    void GetOrCreateRigidBody(Entity *entity);
+
 
 private slots:
     void EntityClicked(Entity *entity, Qt::MouseButton button, RaycastResult *raycastResult);
     void EntityMouseMove(Entity *entity, Qt::MouseButton button, RaycastResult *raycastResult);
     void EntityClickReleased(Entity *entity, Qt::MouseButton button, RaycastResult *raycastResult);
-
-
 
     void SetMenuContainerPosition();
 
@@ -124,8 +125,9 @@ private slots:
 private:
     //Framework *framework; ///< Framework.
     InputContextPtr input; ///< Input context.
-    MenuDataModel *menuDataModel_;
-    MenuRendererInterface *menuRenderer_;
+    OgreWorldWeakPtr ogreWorld; ///< OgreWorld.
+    MenuDataModel *menuDataModel_; ///< DataModel
+    MenuRendererInterface *menuRenderer_; ///< MenuRenderer
 
     EC_Placeable* GetOrCreatePlaceableComponent();
 

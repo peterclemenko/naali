@@ -10,20 +10,14 @@
 class Entity;
 class RaycastResult;
 
-class MenuRendererInterface
+class MenuRendererInterface : public QObject
 {
 
 public:
     MenuRendererInterface(MenuDataModel *datamodel){menuDataModel_ = datamodel;}
     virtual ~MenuRendererInterface() = 0;
-
-    virtual void HandleMouseInput(MouseEvent*) = 0;
-
-//    virtual void EntityClicked(Entity*, Qt::MouseButton, RaycastResult*) = 0;
-//    virtual void EntityMouseMove(Entity*, Qt::MouseButton, RaycastResult*) = 0;
-//    virtual void EntityClickReleased(Entity*, Qt::MouseButton, RaycastResult*) = 0;
+    virtual void HandleMouseInput(MouseEvent*, RaycastResult* result) = 0;
 
 protected:
-
     MenuDataModel *menuDataModel_;
 };

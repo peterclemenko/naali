@@ -16,7 +16,7 @@ public:
     ShelveMenuRenderer(MenuDataModel *datamodel);
     ~ShelveMenuRenderer();
 
-    void HandleMouseInput(MouseEvent *);
+    void HandleMouseInput(MouseEvent *, RaycastResult* result);
 
     void EntityClicked(Entity*, Qt::MouseButton, RaycastResult*);
     void EntityMouseMove(Entity*, Qt::MouseButton, RaycastResult*);

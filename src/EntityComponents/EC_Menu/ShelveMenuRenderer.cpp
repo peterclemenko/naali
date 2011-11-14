@@ -39,7 +39,7 @@ void ShelveMenuRenderer::SetMenuPosition()
 
 }
 
-void ShelveMenuRenderer::HandleMouseInput(MouseEvent *event)
+void ShelveMenuRenderer::HandleMouseInput(MouseEvent *event, RaycastResult* result)
 {
     LogInfo("In virtual HandleMouseInput()");
     //mouseinput

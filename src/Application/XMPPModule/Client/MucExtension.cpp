@@ -53,8 +53,9 @@ void MucExtension::HandleMessageReceived(const QXmppMessage &message)
     if(!room)
         return;
 
-    LogInfo("XMPPModule: Received message. From: " + message.from().toStdString() + " Body: " + message.body().toStdString());
-
+    LogInfo("XMPPModule: Received message. From: " + message.from().toStdString()
+            + " Room: " + room->jid().toStdString()
+            + " Body: " + message.body().toStdString());
 }
 
 void MucExtension::HandleInvitationReceived(const QString &room, const QString &inviter, const QString &reason)

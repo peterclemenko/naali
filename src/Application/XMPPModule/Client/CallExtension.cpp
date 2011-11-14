@@ -83,7 +83,7 @@ bool CallExtension::CallUser(QString peerJid, QString peerResource, int callType
     /// \todo Check if we miss a signal becouse QXmppCall signals are suscribed inside XMPP::Call constructor
     Call *call = new Call(framework_, qxmpp_call);
 
-    bool check = connect(call, SIGNAL(StateChanged(Call::CurrentState)), this, SLOT(HandleCallStateChanged(Call::CurrentState)));
+    bool check = connect(call, SIGNAL(StateChanged(Call::State)), this, SLOT(HandleCallStateChanged(Call::State)));
     Q_ASSERT(check);
 
     calls_.insert(peerJid, call);
@@ -158,8 +158,7 @@ void CallExtension::HandleCallReceived(QXmppCall *qxmppCall)
 {
     QString from_jid = jidToBareJid(qxmppCall->jid());
 
-    LogDebug(extension_name_.toStdString()
-                         + "Incoming call (from = \"" + from_jid.toStdString() + "\")");
+    LogDebug("XMPPModule: Incoming call from: " + from_jid.toStdString());
 
     Call *call = new Call(framework_, qxmppCall);
     calls_.insert(from_jid, call);

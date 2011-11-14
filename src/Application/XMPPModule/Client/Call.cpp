@@ -41,7 +41,6 @@ Call::Call(Framework *framework, QXmppCall *call) :
 
 Call::~Call()
 {
-    LogDebug("XMPPModule: Destroyed call object, with jid: " + peer_jid_.toStdString());
     if(audio_channel_)
     {
         framework_->Audio()->Stop(audio_channel_);

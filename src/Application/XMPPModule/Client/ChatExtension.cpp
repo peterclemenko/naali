@@ -46,9 +46,8 @@ void ChatExtension::HandleMessageReceived(const QXmppMessage &message)
     QString sender_jid = jidToBareJid(message.from());
     QString msg = message.body();
 
-    LogDebug(extension_name_.toStdString()
-                         + "Message (sender = \"" + sender_jid.toStdString()
-                         + "\", message =\"" + msg.toStdString() + "\"");
+    LogInfo("XMPPModule: Received message. From: " + sender_jid.toStdString()
+            + " Body: " + msg.toStdString());
 
     emit MessageReceived(sender_jid, msg);
 }

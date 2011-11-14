@@ -36,7 +36,7 @@ namespace XMPP
         if(resources_.size() == 0)
         {
             available_ = false;
-            LogDebug(bare_jid_.toStdString() + " changed availability to: " + (available_ ? "available" : "unavailable"));
+            LogDebug("XMPPModule: " + bare_jid_.toStdString() + " changed availability to: " + (available_ ? "available" : "unavailable"));
             emit AvailabilityChanged(available_);
             return;
         }
@@ -51,7 +51,7 @@ namespace XMPP
         if(available_ != available)
         {
             available_ = available;
-            LogDebug(bare_jid_.toStdString() + " changed availability to: " + (available_ ? "available" : "unavailable"));
+            LogDebug("XMPPModule: " + bare_jid_.toStdString() + " changed availability to: " + (available_ ? "available" : "unavailable"));
             emit AvailabilityChanged(available_);
         }
     }

@@ -17,26 +17,43 @@ class float3;
 
 class RingMenuRenderer: public MenuRendererInterface
 {
-    //Q_OBJECT
+    Q_OBJECT
 
 public:
     RingMenuRenderer(EC_MenuContainer *menucontainer, MenuDataModel *datamodel);
     ~RingMenuRenderer();
 
-    void HandleMouseInput(MouseEvent *);
-//    void EntityClicked(Entity*, Qt::MouseButton, RaycastResult*);
-//    void EntityMouseMove(Entity*, Qt::MouseButton, RaycastResult*);
-//    void EntityClickReleased(Entity*, Qt::MouseButton, RaycastResult*);
+    void HandleMouseInput(MouseEvent *mouse, RaycastResult* result);
 
-    void Initialize();
-
-protected:
-    void SetMenuPosition();
+public slots:
+    void KineticScroller();
 
 private:
     QList<EC_MenuItem*> MenuItemList_;
-    EC_Mesh *ringmesh_;
+//    EC_Mesh *ringmesh_;
     EC_MenuContainer *menuContainer_;
+
+    QTimer *scrollerTimer_;
+    int scrollerTimer_Interval;
+
+    bool menuClicked_;
+    //bool subMenu_clicked_;
+    bool subMenu_;
+    //bool subMenuIsScrolling;
+    //bool startingPositionSaved_;
+//    bool menuIsRotating_;
+
+    float speed_;
+    //float radius_;
+    float item_offset_;
+//    float subMenuRadius_;
+    float rotationDirection_;
+//    InputContextPtr input_;
+    int selected_;
+    int previousSelected_;
+//    int subMenuItemSelected_;
+    int menulayer_;
+    int itemToRotate_;
 
     float3 CalculateItemPosition(float phi, bool isSelected=false);
 };

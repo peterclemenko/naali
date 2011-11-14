@@ -19,7 +19,7 @@ void Extension::Update(f64 frametime)
 {
 }
 
-QString Extension::name() const
+QString Extension::Name() const
 {
     return name_;
 }

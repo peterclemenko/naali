@@ -29,13 +29,13 @@ Call::Call(Framework *framework, QXmppCall *call) :
     peer_jid_ = jidToBareJid(call->jid());
 
     bool check;
-    check = connect(call_, SIGNAL(stateChanged(QXmppCall::State)), this, SLOT(handleCallStateChanged(QXmppCall::State)));
+    check = connect(call_, SIGNAL(stateChanged(QXmppCall::State)), this, SLOT(HandleCallStateChanged(QXmppCall::State)));
     Q_ASSERT(check);
 
-    check = connect(call_, SIGNAL(connected()), this, SLOT(handleCallConnected()));
+    check = connect(call_, SIGNAL(connected()), this, SLOT(HandleCallConnected()));
     Q_ASSERT(check);
 
-    check = connect(call_, SIGNAL(finished()), this, SLOT(handleCallTerminated()));
+    check = connect(call_, SIGNAL(finished()), this, SLOT(HandleCallTerminated()));
     Q_ASSERT(check);
 }
 
@@ -49,7 +49,7 @@ Call::~Call()
     }
 }
 
-bool Call::accept()
+bool Call::Accept()
 {
     if(state_ != Call::RingingState)
         return false;
@@ -58,13 +58,13 @@ bool Call::accept()
     return true;
 }
 
-void Call::hangup()
+void Call::Hangup()
 {
     call_->hangup();
-    setState(Call::FinishedState);
+    SetState(Call::FinishedState);
 }
 
-bool Call::suspend()
+bool Call::Suspend()
 {
     if(state_ == Call::FinishedState || state_ == Call::SuspendedState)
         return false;
@@ -73,31 +73,31 @@ bool Call::suspend()
     // We'll just change the internal state of our call and discard received data.
     // We need to craft the messages ourselves unless this changes.
 
-    setState(Call::SuspendedState);
+    SetState(Call::SuspendedState);
     return true;
 }
 
-bool Call::resume()
+bool Call::Resume()
 {
     if(state_ != Call::SuspendedState)
         return false;
 
-    setState(Call::ActiveState);
+    SetState(Call::ActiveState);
     return true;
 }
 
 void Call::Update(f64 frametime)
 {
     UNREFERENCED_PARAM(frametime);
-    handleOutboundVoice();
+    HandleOutboundVoice();
 }
 
-void Call::handleCallTerminated()
+void Call::HandleCallTerminated()
 {
-    setState(Call::FinishedState);
+    SetState(Call::FinishedState);
 }
 
-void Call::handleCallConnected()
+void Call::HandleCallConnected()
 {
     if(!call_)
         return;
@@ -107,7 +107,7 @@ void Call::handleCallConnected()
     if(!framework_->Audio())
     {
         LogError("XMPPModule: Tundra sound API not initialized, cannot initialize voice call.");
-        handleCallTerminated();
+        HandleCallTerminated();
     }
 
     QXmppRtpAudioChannel *channel = call_->audioChannel();
@@ -123,11 +123,11 @@ void Call::handleCallConnected()
 
     framework_->Audio()->StartRecording("", channel->payloadType().clockrate(), true, stereo, buffer_size);
 
-    bool ok = QObject::connect(channel, SIGNAL(readyRead()), this, SLOT(handleInboundVoice()));
+    bool ok = QObject::connect(channel, SIGNAL(readyRead()), this, SLOT(HandleInboundVoice()));
     Q_ASSERT(ok);
 }
 
-void Call::handleInboundVoice()
+void Call::HandleInboundVoice()
 {
     if(state_ == Call::DisconnectingState || state_ == Call::FinishedState)
         return;
@@ -156,7 +156,7 @@ void Call::handleInboundVoice()
         framework_->Audio()->PlaySoundBuffer(buffer, SoundChannel::Voice, audio_channel_);
 }
 
-void Call::handleOutboundVoice()
+void Call::HandleOutboundVoice()
 {
     if(state_ != Call::ActiveState)
         return;
@@ -178,28 +178,28 @@ void Call::handleOutboundVoice()
 }
 
 
-void Call::handleCallStateChanged(QXmppCall::State state)
+void Call::HandleCallStateChanged(QXmppCall::State state)
 {
     switch(state)
     {
     case QXmppCall::ConnectingState:
-        setState(Call::ConnectingState);
+        SetState(Call::ConnectingState);
         break;
     case QXmppCall::ActiveState:
-        setState(Call::ActiveState);
+        SetState(Call::ActiveState);
         break;
     case QXmppCall::DisconnectingState:
-        setState(Call::DisconnectingState);
+        SetState(Call::DisconnectingState);
         break;
     case QXmppCall::FinishedState:
-        setState(Call::FinishedState);
+        SetState(Call::FinishedState);
         break;
     default:
         break;
     }
 }
 
-void Call::setState(Call::State state)
+void Call::SetState(Call::State state)
 {
     state_ = state;
     QString state_string;
@@ -230,7 +230,7 @@ void Call::setState(Call::State state)
     }
 
     LogInfo("XMPPModule: Call with \"" + peer_jid_.toStdString() + "\" " + state_string.toStdString());
-    emit stateChanged(state_);
+    emit StateChanged(state_);
 }
 
 } // end of namespace: XMPP

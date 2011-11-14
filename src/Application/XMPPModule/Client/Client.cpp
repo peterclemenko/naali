@@ -34,26 +34,26 @@ namespace XMPP
         xmpp_client_->logger()->setLoggingType(QXmppLogger::SignalLogging);
 
         // -----Client signals-----
-        connect(xmpp_client_, SIGNAL(messageReceived(QXmppMessage)), this, SLOT(handleMessageReceived(QXmppMessage)));
-        connect(xmpp_client_, SIGNAL(presenceReceived(QXmppPresence)), this, SLOT(handlePresenceReceived(QXmppPresence)));
-        connect(xmpp_client_, SIGNAL(connected()), this, SIGNAL(connected()));
-        connect(xmpp_client_, SIGNAL(disconnected()), this, SLOT(disconnect()));
+        connect(xmpp_client_, SIGNAL(messageReceived(QXmppMessage)), this, SLOT(HandleMessageReceived(QXmppMessage)));
+        connect(xmpp_client_, SIGNAL(presenceReceived(QXmppPresence)), this, SLOT(HandlePresenceReceived(QXmppPresence)));
+        connect(xmpp_client_, SIGNAL(Connected()), this, SIGNAL(Connected()));
+        connect(xmpp_client_, SIGNAL(Disconnected()), this, SLOT(DisconnectFromServer()));
 
         // -----Rostermanager signals-----
-        connect(&xmpp_client_->rosterManager(), SIGNAL(rosterReceived()), this, SLOT(handleRosterReceived()));
-        connect(&xmpp_client_->rosterManager(), SIGNAL(rosterChanged(QString)), this, SLOT(handleRosterChanged(QString)));
-        connect(&xmpp_client_->rosterManager(), SIGNAL(presenceChanged(QString,QString)), this, SLOT(handlePresenceChanged(QString,QString)));
+        connect(&xmpp_client_->rosterManager(), SIGNAL(rosterReceived()), this, SLOT(HandleRosterReceived()));
+        connect(&xmpp_client_->rosterManager(), SIGNAL(RosterChanged(QString)), this, SLOT(HandleRosterChanged(QString)));
+        connect(&xmpp_client_->rosterManager(), SIGNAL(PresenceChanged(QString,QString)), this, SLOT(HandlePresenceChanged(QString,QString)));
 
         // -----vCardmanager signals-----
-        connect(&xmpp_client_->vCardManager(), SIGNAL(vCardReceived(QXmppVCardIq)), this, SLOT(handleVCardReceived(QXmppVCardIq)));
+        connect(&xmpp_client_->vCardManager(), SIGNAL(vCardReceived(QXmppVCardIq)), this, SLOT(HandleVCardReceived(QXmppVCardIq)));
 
         // -----Logger signals-----
-        connect(QXmppLogger::getLogger(), SIGNAL(message(QXmppLogger::MessageType,QString)), this, SLOT(handleLogMessage(QXmppLogger::MessageType,QString)));
+        connect(QXmppLogger::getLogger(), SIGNAL(message(QXmppLogger::MessageType,QString)), this, SLOT(HandleLogMessage(QXmppLogger::MessageType,QString)));
     }
 
     Client::~Client()
     {
-        disconnect();
+        DisconnectFromServer();
         SAFE_DELETE(xmpp_client_);
     }
 
@@ -69,7 +69,7 @@ namespace XMPP
         xmpp_client_->connectToServer(configuration, QXmppPresence::Available);
     }
 
-    void Client::connectToServer(const QString &xmppServer, const QString &userJid, const QString &userPassword)
+    void Client::ConnectToServer(const QString &xmppServer, const QString &userJid, const QString &userPassword)
     {
         QXmppConfiguration configuration;
         configuration.setHost(xmppServer);
@@ -79,23 +79,23 @@ namespace XMPP
         ConnectToServer(configuration);
     }
 
-    bool Client::addExtension(Extension *extension)
+    bool Client::AddExtension(Extension *extension)
     {
         if(extensions_.contains(extension))
         {
-            LogError("XMPPModule: Extension with name \"" + extension->name().toStdString() + "\" already initialized.");
+            LogError("XMPPModule: Extension with name \"" + extension->Name().toStdString() + "\" already initialized.");
             return false;
         }
 
         extension->setParent(this);
-        extension->initialize(this);
+        extension->Initialize(this);
 
         extensions_.append(extension);
 
         return true;
     }
 
-    QObject* Client ::addExtension(const QString &extensionName)
+    QObject* Client ::AddExtension(const QString &extensionName)
     {
         Extension *extension = 0;
 
@@ -113,7 +113,7 @@ namespace XMPP
             return 0;
         }
 
-        if(!addExtension(extension))
+        if(!AddExtension(extension))
         {
             SAFE_DELETE(extension);
             return 0;
@@ -122,26 +122,26 @@ namespace XMPP
         return dynamic_cast<QObject*>(extension);
     }
 
-    QObject* Client::getExtension(QString extensionName)
+    QObject* Client::GetExtension(QString extensionName)
     {
         for(int i = 0; i < extensions_.size(); i++)
         {
-	  if(extensions_[i]->name() == extensionName)
+          if(extensions_[i]->Name() == extensionName)
                 return dynamic_cast<QObject*>(extensions_[i]);
         }
         LogError("XMPPModule: No initialized extension found with name \"" + extensionName.toStdString() + "\"");
         return 0;
     }
 
-    void Client::disconnect()
+    void Client::DisconnectFromServer()
     {
         //if(xmpp_client_->state() == QXmppClient::ConnectedState) // state() method only available in bleeding edge QXmpp
         xmpp_client_->disconnectFromServer();
-        emit disconnected();
+        emit Disconnected();
     }
 
 
-    void Client::handleLogMessage(QXmppLogger::MessageType type, const QString &message)
+    void Client::HandleLogMessage(QXmppLogger::MessageType type, const QString &message)
     {
         QString prefix;
         switch(type)
@@ -167,31 +167,31 @@ namespace XMPP
         LogInfo(prefix.toStdString() + " " + message.toStdString());
     }
 
-    QString Client::getHost()
+    QString Client::GetHost()
     {
         return xmpp_client_->configuration().host();
     }
 
-    void Client::setStreamLogging(bool state)
+    void Client::SetStreamLogging(bool state)
     {
         log_stream_ = state;
     }
 
-    QObject* Client::getUser(QString userJid)
+    QObject* Client::GetUser(QString userJid)
     {
         if(users_.contains(userJid))
             return dynamic_cast<QObject*>(users_[userJid]);
         return 0;
     }
 
-    QStringList Client::getRoster()
+    QStringList Client::GetRoster()
     {
         return users_.keys();
     }
 
-    void Client::handleRosterReceived()
+    void Client::HandleRosterReceived()
     {
-        LogDebug(getHost().toStdString() + ": Received roster.");
+        LogDebug(GetHost().toStdString() + ": Received roster.");
         QStringList roster = xmpp_client_->rosterManager().getRosterBareJids();
         QString roster_user;
         foreach(roster_user, roster)
@@ -204,10 +204,10 @@ namespace XMPP
                 xmpp_client_->vCardManager().requestVCard(roster_user);
             }
         }
-        emit rosterChanged();
+        emit RosterChanged();
     }
 
-    void Client::handleRosterChanged(const QString &userJid)
+    void Client::HandleRosterChanged(const QString &userJid)
     {
         QXmppRosterIq::Item item = xmpp_client_->rosterManager().getRosterEntry(userJid);
         if(!users_.contains(userJid))
@@ -218,16 +218,16 @@ namespace XMPP
         }
         else
         {
-            users_[userJid]->updateRosterItem(item);
+            users_[userJid]->UpdateRosterItem(item);
         }
-        emit rosterChanged();
+        emit RosterChanged();
     }
 
-    void Client::handleMessageReceived(const QXmppMessage &message)
+    void Client::HandleMessageReceived(const QXmppMessage &message)
     {
     }
 
-    void Client::handlePresenceReceived(const QXmppPresence &presence)
+    void Client::HandlePresenceReceived(const QXmppPresence &presence)
     {
         // Filter Muc messages coming from room@conference.host.com
         QString from_domain = jidToDomain(presence.from());
@@ -250,10 +250,10 @@ namespace XMPP
             users_[from_jid] = user;
         }
 
-        users_[from_jid]->updatePresence(from_resource, presence);
+        users_[from_jid]->UpdatePresence(from_resource, presence);
     }
 
-    void Client::handlePresenceChanged(const QString &userJid, const QString &resource)
+    void Client::HandlePresenceChanged(const QString &userJid, const QString &resource)
     {
         if(xmpp_client_->configuration().jidBare() == userJid)
             return;
@@ -268,7 +268,7 @@ namespace XMPP
 
         if(presence.type() == QXmppPresence::Available)
         {
-            if(presence.vCardUpdateType() == QXmppPresence::VCardUpdateNone && !users_[userJid]->hasVCard())
+            if(presence.vCardUpdateType() == QXmppPresence::VCardUpdateNone && !users_[userJid]->HasVCard())
             {
                 xmpp_client_->vCardManager().requestVCard(userJid);
             }
@@ -278,28 +278,28 @@ namespace XMPP
         //emit presenceChanged(presence.from());
     }
 
-    void Client::handleVCardReceived(const QXmppVCardIq& vcard)
+    void Client::HandleVCardReceived(const QXmppVCardIq& vcard)
     {
         QString userJid = vcard.from();
-        LogDebug(getHost().toStdString() + ": Received vCard from: " + userJid.toStdString());
+        LogDebug(GetHost().toStdString() + ": Received vCard from: " + userJid.toStdString());
         if(userJid == xmpp_client_->configuration().jidBare())
             return;
 
         if(!users_.contains(userJid))
             return;
 
-        users_[userJid]->updateVCard(vcard);
-        emit vCardChanged(userJid);
+        users_[userJid]->UpdateVCard(vcard);
+        emit VCardChanged(userJid);
     }
 
-    bool Client::addContact(QString userJid)
+    bool Client::AddContact(QString userJid)
     {
         // Check if the given Jid is in proper format
         QRegExp re("^[^@]+@[^@]+$");
         if(userJid.isEmpty() || !re.exactMatch(userJid))
             return false;
 
-        LogDebug(getHost().toStdString() + ": Sending suscribe request to:" + userJid.toStdString());
+        LogDebug(GetHost().toStdString() + ": Sending suscribe request to:" + userJid.toStdString());
 
         QXmppPresence subscribe;
         subscribe.setTo(userJid);

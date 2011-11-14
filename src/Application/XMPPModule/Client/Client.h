@@ -45,13 +45,13 @@ public:
 
     void Update(f64 frametime);
 
-    Framework *getFramework() { return framework_; }
-    QXmppClient *getQxmppClient() { return xmpp_client_; }
+    Framework *GetFramework() { return framework_; }
+    QXmppClient *GetQxmppClient() { return xmpp_client_; }
 
     //! Get extension pointer
     //! \return pointer for the extensions if found, void otherwise
     template<typename T>
-    T* getExtension()
+    T* GetExtension()
     {
         for (int i = 0; i < extensions_.size(); ++i)
         {
@@ -67,62 +67,62 @@ public slots:
     //! Add and initialize extension for the client
     //! \param extension Pointer for object inherited from XMPP:Extension
     //! \return bool true for succesfully initialized extension
-    bool addExtension(Extension *extension);
+    bool AddExtension(Extension *extension);
 
     //! Script friendly overload for adding extensions
     //! \param extensionName name of the extension
     //! \return QObject pointer for the extension, if succesfully initialized.
     //!         NULL for failure.
-    QObject *addExtension(const QString &extensionName);
+    QObject *AddExtension(const QString &extensionName);
 
     //! Get extension as a QObject pointer
     //! \return QObject pointer to the object if found, null otherwise
-    QObject *getExtension(QString extensionName);
+    QObject *GetExtension(QString extensionName);
 
     //! Set own presence availability
     //! \param QString
-    void setAvailability(QString availability);
+    void SetAvailability(QString availability);
 
     //! Connect to a XMPP Server, script friendly overload
     //! \param userJid User's Jabber ID
     //! \param userPassword User's password
     //! \param xmppServer XMPP Server (host:port)
-    void connectToServer(const QString &xmppServer, const QString &userJid, const QString &userPassword);
+    void ConnectToServer(const QString &xmppServer, const QString &userJid, const QString &userPassword);
 
     //! Get host associated with this connection
     //! \return QString current host (host)
-    QString getHost();
+    QString GetHost();
 
     //! Get UserItem
     //! \param userJid Jabber ID for the user
-    QObject* getUser(QString userJid);   
+    QObject* GetUser(QString userJid);
 
     //! Get current roster
     //! \return QStringList containing known Jabber ID's
-    QStringList getRoster();
+    QStringList GetRoster();
 
     //! Disconnect from server
     //! \note Requesting a disconnect destroys this Client object
-    void disconnect();
+    void DisconnectFromServer();
 
     //! Add contact to roster
     //! \param userJid Jabber ID to be added to roster
     //! \return bool describing if the request was succesfully sent
-    bool addContact(QString userJid);
+    bool AddContact(QString userJid);
 
     //! Set logging of the XML stream on/off
     //! \param state Boolean for on/off
-    void setStreamLogging(bool state);
+    void SetStreamLogging(bool state);
 
 private slots:
-    void handlePresenceChanged(const QString& userJid, const QString& resource);
-    void handlePresenceReceived(const QXmppPresence& presence);
-    void handleSetPresence(QXmppPresence::Type presenceType);
-    void handleMessageReceived(const QXmppMessage &message);
-    void handleRosterReceived();
-    void handleRosterChanged(const QString& userJid);
-    void handleVCardReceived(const QXmppVCardIq& vcard);
-    void handleLogMessage(QXmppLogger::MessageType type, const QString& message);
+    void HandlePresenceChanged(const QString& userJid, const QString& resource);
+    void HandlePresenceReceived(const QXmppPresence& presence);
+    void HandleSetPresence(QXmppPresence::Type presenceType);
+    void HandleMessageReceived(const QXmppMessage &message);
+    void HandleRosterReceived();
+    void HandleRosterChanged(const QString& userJid);
+    void HandleVCardReceived(const QXmppVCardIq& vcard);
+    void HandleLogMessage(QXmppLogger::MessageType type, const QString& message);
 
 private:
     QXmppClient *xmpp_client_;
@@ -138,21 +138,21 @@ private:
 
 signals:
     //! Signals changes in current roster
-    void rosterChanged();
+    void RosterChanged();
 
     //! Signals changes in users presence
     //! Can indicate that capabilities were received
-    void presenceChanged(QString UserJid);
+    void PresenceChanged(QString UserJid);
 
     //! Signals changes in user's vCard
-    void vCardChanged(QString UserJid);
+    void VCardChanged(QString UserJid);
 
     //! Signals disconnect by request
-    void disconnected();
+    void Disconnected();
 
     //! Signals connected status
     //! \note This signal gets emitted when the underlying QXmppClient signals connected state
-    void connected();
+    void Connected();
 };
 
 } // end of namespace: XMPP

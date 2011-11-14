@@ -35,16 +35,16 @@ CallExtension::~CallExtension()
     }
 }
 
-void CallExtension::initialize(Client *client)
+void CallExtension::Initialize(Client *client)
 {
     qxmpp_call_manager_ = new QXmppCallManager();
 
     client_ = client;
-    client_->getQxmppClient()->addExtension(qxmpp_call_manager_);
-    framework_ = client_->getFramework();
+    client_->GetQxmppClient()->addExtension(qxmpp_call_manager_);
+    framework_ = client_->GetFramework();
 
     bool check;
-    check = connect(qxmpp_call_manager_, SIGNAL(callReceived(QXmppCall*)), this, SLOT(handleCallReceived(QXmppCall*)));
+    check = connect(qxmpp_call_manager_, SIGNAL(callReceived(QXmppCall*)), this, SLOT(HandleCallReceived(QXmppCall*)));
     Q_ASSERT(check);
 }
 
@@ -55,18 +55,18 @@ void CallExtension::Update(f64 frametime)
         calls_[call]->Update(frametime);
 }
 
-bool CallExtension::acceptCall(QString peerJid)
+bool CallExtension::AcceptCall(QString peerJid)
 {
-    if(!calls_.keys().contains(peerJid) || calls_[peerJid]->state() != Call::RingingState)
+    if(!calls_.keys().contains(peerJid) || calls_[peerJid]->CurrentState() != Call::RingingState)
         return false;
 
-    return calls_[peerJid]->accept();
+    return calls_[peerJid]->Accept();
 }
 
 // callType is ignored becouse videochannel is not implemented in QXmpp 0.3.0
-bool CallExtension::callUser(QString peerJid, QString peerResource, int callType)
+bool CallExtension::CallUser(QString peerJid, QString peerResource, int callType)
 {
-    if(!client_ || !client_->getUser(peerJid))
+    if(!client_ || !client_->GetUser(peerJid))
         return false;
 
     //UserItem* user_item = static_cast<UserItem*>(client_->getUser(peerJid));
@@ -83,14 +83,14 @@ bool CallExtension::callUser(QString peerJid, QString peerResource, int callType
     /// \todo Check if we miss a signal becouse QXmppCall signals are suscribed inside XMPP::Call constructor
     Call *call = new Call(framework_, qxmpp_call);
 
-    bool check = connect(call, SIGNAL(stateChanged(Call::State)), this, SLOT(handleCallStateChanged(Call::State)));
+    bool check = connect(call, SIGNAL(StateChanged(Call::CurrentState)), this, SLOT(HandleCallStateChanged(Call::CurrentState)));
     Q_ASSERT(check);
 
     calls_.insert(peerJid, call);
     return true;
 }
 
-bool CallExtension::callUser(QString peerJid, QString peerResource, QStringList callType)
+bool CallExtension::CallUser(QString peerJid, QString peerResource, QStringList callType)
 {
     int flags = 0;
 
@@ -106,50 +106,50 @@ bool CallExtension::callUser(QString peerJid, QString peerResource, QStringList 
             flags ^= 2;
     }
 
-    return callUser(peerJid, peerResource, flags);
+    return CallUser(peerJid, peerResource, flags);
 }
 
-bool CallExtension::disconnectCall(QString peerJid)
+bool CallExtension::DisconnectCall(QString peerJid)
 {
     if(!calls_.keys().contains(peerJid))
         return false;
 
-    calls_[peerJid]->hangup();
+    calls_[peerJid]->Hangup();
     return true;
 }
 
-bool CallExtension::suspendCall(QString peerJid)
+bool CallExtension::SuspendCall(QString peerJid)
 {
     if(!calls_.contains(peerJid))
         return false;
 
-    return calls_[peerJid]->suspend();
+    return calls_[peerJid]->Suspend();
 }
 
-QString CallExtension::getActiveCall()
+QString CallExtension::GetActiveCall()
 {
     QString call;
     foreach(call, calls_.keys())
     {
-        if(calls_[call]->state() == Call::ActiveState)
-            return calls_[call]->peerJid();
+        if(calls_[call]->CurrentState() == Call::ActiveState)
+            return calls_[call]->PeerJid();
     }
     return "";
 }
 
-bool CallExtension::setActiveCall(QString peerJid)
+bool CallExtension::SetActiveCall(QString peerJid)
 {
     if(!calls_.keys().contains(peerJid))
         return false;
 
-    if(calls_[peerJid]->state() != Call::SuspendedState)
+    if(calls_[peerJid]->CurrentState() != Call::SuspendedState)
         return false;
 
-    suspendCall(getActiveCall());
-    return calls_[peerJid]->resume();
+    SuspendCall(GetActiveCall());
+    return calls_[peerJid]->Resume();
 }
 
-void CallExtension::handleCallReceived(QXmppCall *qxmppCall)
+void CallExtension::HandleCallReceived(QXmppCall *qxmppCall)
 {
     QString from_jid = jidToBareJid(qxmppCall->jid());
 
@@ -159,17 +159,17 @@ void CallExtension::handleCallReceived(QXmppCall *qxmppCall)
     Call *call = new Call(framework_, qxmppCall);
     calls_.insert(from_jid, call);
 
-    emit callIncoming(from_jid);
+    emit CallIncoming(from_jid);
 }
 
-void CallExtension::handleCallDisconnected(Call *call)
+void CallExtension::HandleCallDisconnected(Call *call)
 {
-    emit callDisconnected(call->peerJid());
-    calls_.remove(call->peerJid());
+    emit CallDisconnected(call->PeerJid());
+    calls_.remove(call->PeerJid());
     delete call;
 }
 
-void CallExtension::handleCallStateChanged(Call::State state)
+void CallExtension::HandleCallStateChanged(Call::State state)
 {
     Call *call = qobject_cast<Call*>(sender());
     if(!call)
@@ -181,15 +181,15 @@ void CallExtension::handleCallStateChanged(Call::State state)
     case Call::ConnectingState:
         break;
     case Call::ActiveState:
-        emit callActive(call->peerJid());
+        emit CallActive(call->PeerJid());
         break;
     case Call::SuspendedState:
-        emit callSuspended(call->peerJid());
+        emit CallSuspended(call->PeerJid());
         break;
     case Call::DisconnectingState:
         break;
     case Call::FinishedState:
-        handleCallDisconnected(call);
+        HandleCallDisconnected(call);
         break;
     }
 }

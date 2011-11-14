@@ -29,23 +29,23 @@ class ChatExtension : public Extension
 public:
     ChatExtension();
     virtual ~ChatExtension();
-    virtual void initialize(Client *client);
+    virtual void Initialize(Client *client);
 
 public slots:
     //! Send message for remote party
     //! \param receiver Bare JabberID of the receiver (user@host.com)
     //! \param message Message to be sent
-    void sendMessage(QString receiver, QString message);
+    void SendMessage(QString receiver, QString message);
 
 private slots:
-    void handleMessageReceived(const QXmppMessage &message);
+    void HandleMessageReceived(const QXmppMessage &message);
 
 private:
     static QString extension_name_;
     Client *client_;
 
 signals:
-    void messageReceived(QString sender, QString message);
+    void MessageReceived(QString sender, QString message);
 };
 
 } // end of namespace: XMPP

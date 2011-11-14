@@ -29,16 +29,16 @@ ChatExtension::~ChatExtension()
 
 }
 
-void ChatExtension::initialize(Client *client)
+void ChatExtension::Initialize(Client *client)
 {
     client_ = client;
 
     bool check;
-    check = connect(client_->getQxmppClient(), SIGNAL(messageReceived(QXmppMessage)), this, SLOT(handleMessageReceived(QXmppMessage)));
+    check = connect(client_->GetQxmppClient(), SIGNAL(messageReceived(QXmppMessage)), this, SLOT(handleMessageReceived(QXmppMessage)));
     Q_ASSERT(check);
 }
 
-void ChatExtension::handleMessageReceived(const QXmppMessage &message)
+void ChatExtension::HandleMessageReceived(const QXmppMessage &message)
 {   
     if(message.type() == QXmppMessage::GroupChat)
         return;
@@ -50,15 +50,15 @@ void ChatExtension::handleMessageReceived(const QXmppMessage &message)
                          + "Message (sender = \"" + sender_jid.toStdString()
                          + "\", message =\"" + msg.toStdString() + "\"");
 
-    emit messageReceived(sender_jid, msg);
+    emit MessageReceived(sender_jid, msg);
 }
 
-void ChatExtension::sendMessage(QString receiver, QString message)
+void ChatExtension::SendMessage(QString receiver, QString message)
 {
     if(!client_)
         return;
 
-    client_->getQxmppClient()->sendMessage(receiver, message);
+    client_->GetQxmppClient()->sendMessage(receiver, message);
 }
 
 } // end of namespace: XMPP

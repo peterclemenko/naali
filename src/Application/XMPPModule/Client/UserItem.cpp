@@ -29,7 +29,7 @@ namespace XMPP
 
     }
 
-    void UserItem::checkAvailability()
+    void UserItem::CheckAvailability()
     {
         bool available = false;
 
@@ -37,7 +37,7 @@ namespace XMPP
         {
             available_ = false;
             LogDebug(bare_jid_.toStdString() + " changed availability to: " + (available_ ? "available" : "unavailable"));
-            emit availabilityChanged(available_);
+            emit AvailabilityChanged(available_);
             return;
         }
 
@@ -52,11 +52,11 @@ namespace XMPP
         {
             available_ = available;
             LogDebug(bare_jid_.toStdString() + " changed availability to: " + (available_ ? "available" : "unavailable"));
-            emit availabilityChanged(available_);
+            emit AvailabilityChanged(available_);
         }
     }
 
-    void UserItem::updatePresence(const QString &resource, const QXmppPresence &presence)
+    void UserItem::UpdatePresence(const QString &resource, const QXmppPresence &presence)
     {
         if(presence.type() == QXmppPresence::Available)
         {
@@ -72,22 +72,22 @@ namespace XMPP
                 resource_item.capabilities.append(capability);
 
             resources_.insert(resource, resource_item);
-            checkAvailability();
+            CheckAvailability();
         }
         else if(presence.type() == QXmppPresence::Unavailable)
         {
             if(resources_.contains(resource))
                 resources_.remove(resource);
-            checkAvailability();
+            CheckAvailability();
         }
     }
 
-    void UserItem::updateRosterItem(const QXmppRosterIq::Item &item)
+    void UserItem::UpdateRosterItem(const QXmppRosterIq::Item &item)
     {
         /// \note do we really need this at all?
     }
 
-    void UserItem::updateVCard(const QXmppVCardIq &vcard)
+    void UserItem::UpdateVCard(const QXmppVCardIq &vcard)
     {
         birthday_ = vcard.birthday().toString("dd.MM.yyyy");
         email_ = vcard.email();
@@ -96,12 +96,12 @@ namespace XMPP
         url_ = vcard.url();
     }
 
-    QStringList UserItem::getResources()
+    QStringList UserItem::GetResources()
     {
         return resources_.keys();
     }
 
-    QStringList UserItem::getCapabilities(QString resource)
+    QStringList UserItem::GetCapabilities(QString resource)
     {
         QStringList capabilities;
 

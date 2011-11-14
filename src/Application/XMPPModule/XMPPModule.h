@@ -58,14 +58,14 @@ public slots:
     //! Creates a new Client object
     //! \return QObject pointer to the Client
     //! \note Returned client is not connected to a server when created
-    QObject *newClient();
+    QObject *NewClient();
 
     //! Returns a pointer to the instance of of AccountManager
     //! \return QObject pointer to the AccountManager
-    QObject *getAccountManager();
+    QObject *GetAccountManager();
 
 private slots:
-    void handleClientDisconnect(Client *client);
+    void HandleClientDisconnect(Client *client);
 
 private:
     static std::string type_name_static_;

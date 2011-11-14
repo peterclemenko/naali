@@ -36,18 +36,18 @@ MucExtension::~MucExtension()
     }
 }
 
-void MucExtension::initialize(Client *client)
+void MucExtension::Initialize(Client *client)
 {
     client_ = client;
-    framework_ = client_->getFramework();
+    framework_ = client_->GetFramework();
 
-    client_->getQxmppClient()->addExtension(qxmpp_muc_manager_);
+    client_->GetQxmppClient()->addExtension(qxmpp_muc_manager_);
 
-    bool check = connect(qxmpp_muc_manager_, SIGNAL(invitationReceived(QString,QString,QString)), this, SLOT(handleInvitationReceived(QString,QString,QString)));
+    bool check = connect(qxmpp_muc_manager_, SIGNAL(InvitationReceived(QString,QString,QString)), this, SLOT(HandleInvitationReceived(QString,QString,QString)));
     Q_ASSERT(check);
 }
 
-void MucExtension::handleMessageReceived(const QXmppMessage &message)
+void MucExtension::HandleMessageReceived(const QXmppMessage &message)
 {
     QXmppMucRoom *room = qobject_cast<QXmppMucRoom*>(sender());
     if(!room)
@@ -57,13 +57,13 @@ void MucExtension::handleMessageReceived(const QXmppMessage &message)
 
 }
 
-void MucExtension::handleInvitationReceived(const QString &room, const QString &inviter, const QString &reason)
+void MucExtension::HandleInvitationReceived(const QString &room, const QString &inviter, const QString &reason)
 {
     LogDebug(extension_name_.toStdString() + ": Received invitation (room ="
                          + room.toStdString() + " inviter ="
                          + inviter.toStdString() + " reason = "
                          + reason.toStdString() +")");
-    emit invitationReceived(room, inviter, reason);
+    emit InvitationReceived(room, inviter, reason);
 }
 
 
@@ -83,83 +83,83 @@ void MucExtension::handleInvitationReceived(const QString &room, const QString &
         handleRoomAdded(room_jid, nickname);
 }*/
 
-void MucExtension::handleParticipantJoined(const QString &jid)
+void MucExtension::HandleParticipantJoined(const QString &jid)
 {
     QXmppMucRoom *room = qobject_cast<QXmppMucRoom*>(sender());
     if(!room)
         return;
 
-    emit userJoinedRoom(room->jid(), jid);
+    emit UserJoinedRoom(room->jid(), jid);
 }
 
-void MucExtension::handleParticipantLeft(const QString &jid)
+void MucExtension::HandleParticipantLeft(const QString &jid)
 {
     QXmppMucRoom *room = qobject_cast<QXmppMucRoom*>(sender());
     if(!room)
         return;
 
-    emit userLeftRoom(room->jid(), jid);
+    emit UserLeftRoom(room->jid(), jid);
 }
 
-void MucExtension::handleRoomJoined()
+void MucExtension::HandleRoomJoined()
 {
     QXmppMucRoom *room = qobject_cast<QXmppMucRoom*>(sender());
     if(!room)
         return;
 
     rooms_.append(room);
-    emit roomAdded(room->jid(), room->nickName());
+    emit RoomAdded(room->jid(), room->nickName());
 }
 
-bool MucExtension::joinRoom(QString roomJid, QString nickname, QString password)
+bool MucExtension::JoinRoom(QString roomJid, QString nickname, QString password)
 {
     QXmppMucRoom *room = qxmpp_muc_manager_->addRoom(roomJid);
     room->setNickName(nickname);
     room->setPassword(password);
 
-    bool check = connect(room, SIGNAL(joined()), this, SLOT(handleRoomJoined()));
+    bool check = connect(room, SIGNAL(joined()), this, SLOT(HandleRoomJoined()));
     Q_ASSERT(check);
 
     room->join();
 }
 
-bool MucExtension::leaveRoom(QString roomJid)
+bool MucExtension::LeaveRoom(QString roomJid)
 {
-    QXmppMucRoom *room = getRoom(roomJid);
+    QXmppMucRoom *room = GetRoom(roomJid);
     if(!room)
         return false;
 
     return room->leave("Bye!");
 }
 
-bool MucExtension::sendMessage(QString roomJid, QString message)
+bool MucExtension::SendMessage(QString roomJid, QString message)
 {
-    QXmppMucRoom *room = getRoom(roomJid);
+    QXmppMucRoom *room = GetRoom(roomJid);
     if(!room)
         return false;
 
     return room->sendMessage(message);
 }
 
-bool MucExtension::invite(QString roomJid, QString peerJid, QString reason)
+bool MucExtension::Invite(QString roomJid, QString peerJid, QString reason)
 {
-    QXmppMucRoom *room = getRoom(roomJid);
+    QXmppMucRoom *room = GetRoom(roomJid);
     if(!room)
         return false;
 
     return room->sendInvitation(peerJid, reason);
 }
 
-QStringList MucExtension::getParticipants(QString roomJid)
+QStringList MucExtension::GetParticipants(QString roomJid)
 {
-    QXmppMucRoom *room = getRoom(roomJid);
+    QXmppMucRoom *room = GetRoom(roomJid);
     if(!room)
         return QStringList();
 
     return room->participants();
 }
 
-QStringList MucExtension::getRooms() const
+QStringList MucExtension::GetRooms() const
 {
     QStringList rooms;
     foreach(QXmppMucRoom *room, rooms_)
@@ -169,7 +169,7 @@ QStringList MucExtension::getRooms() const
     return rooms;
 }
 
-QXmppMucRoom* MucExtension::getRoom(const QString &roomJid)
+QXmppMucRoom* MucExtension::GetRoom(const QString &roomJid)
 {
     foreach(QXmppMucRoom *room, rooms_)
     {

@@ -32,7 +32,7 @@ AccountManager::~AccountManager()
     SAFE_DELETE(accounts_);
 }
 
-QStringList AccountManager::getServers()
+QStringList AccountManager::GetServers()
 {
     QStringList list;
     QDomElement element = accounts_->documentElement().firstChildElement("account");
@@ -46,7 +46,7 @@ QStringList AccountManager::getServers()
     return list;
 }
 
-QStringList AccountManager::getUserJids(QString server)
+QStringList AccountManager::GetUserJids(QString server)
 {
     QStringList list;
     QDomElement element = accounts_->documentElement().firstChildElement("account");
@@ -60,7 +60,7 @@ QStringList AccountManager::getUserJids(QString server)
     return list;
 }
 
-QString AccountManager::getUserPassword(QString userJid, QString server)
+QString AccountManager::GetUserPassword(QString userJid, QString server)
 {
     QDomElement element = accounts_->documentElement().firstChildElement("account");
     while(!element.isNull())
@@ -69,7 +69,7 @@ QString AccountManager::getUserPassword(QString userJid, QString server)
         {
             QByteArray passwdEncryptedBa = QByteArray::fromBase64(
                     element.firstChildElement("password").text().toUtf8());
-            QString passwd = generateXor(passwdEncryptedBa, userJid.toUtf8());
+            QString passwd = GenerateXor(passwdEncryptedBa, userJid.toUtf8());
             return passwd;
         }
         element = element.nextSiblingElement("account");
@@ -78,7 +78,7 @@ QString AccountManager::getUserPassword(QString userJid, QString server)
     return "";
 }
 
-void AccountManager::addLoginData(QString userJid, QString server, QString password)
+void AccountManager::AddLoginData(QString userJid, QString server, QString password)
 {
     if(userJid.isEmpty() || server.isEmpty())
     {
@@ -110,7 +110,7 @@ void AccountManager::addLoginData(QString userJid, QString server, QString passw
 
     QDomElement newElementPasswd = accounts_->createElement("password");
     newElementPasswd.appendChild(accounts_->createTextNode(
-            generateXor(password.toUtf8(), userJid.toUtf8()).toBase64()));
+            GenerateXor(password.toUtf8(), userJid.toUtf8()).toBase64()));
     newElement.appendChild(newElementPasswd);
 
     QDomElement newElementServer = accounts_->createElement("server");
@@ -119,10 +119,10 @@ void AccountManager::addLoginData(QString userJid, QString server, QString passw
 
     accounts_->documentElement().appendChild(newElement);
 
-    saveToFile();
+    SaveToFile();
 }
 
-void AccountManager::loadFromFile()
+void AccountManager::LoadFromFile()
 {
     QFile file(accounts_path_ + accounts_filename_);
     if(file.open(QIODevice::ReadOnly))
@@ -131,7 +131,7 @@ void AccountManager::loadFromFile()
     }
 }
 
-void AccountManager::saveToFile()
+void AccountManager::SaveToFile()
 {
     QFile file(accounts_path_ + accounts_filename_);
     if(file.open(QIODevice::ReadWrite))
@@ -142,7 +142,7 @@ void AccountManager::saveToFile()
     }
 }
 
-QByteArray AccountManager::generateXor(const QByteArray &data, const QByteArray &key)
+QByteArray AccountManager::GenerateXor(const QByteArray &data, const QByteArray &key)
 {
     Q_ASSERT(!key.isEmpty());
 

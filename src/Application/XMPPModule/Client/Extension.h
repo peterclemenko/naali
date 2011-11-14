@@ -31,18 +31,18 @@ class Extension : public QObject
 
 public:
     virtual ~Extension() {}
-    explicit Extension(const QString &name);
+    explicit Extension(const QString &Name);
 
     //! Needs to be implemented in all extension implemenations
     //! Gets called in when Clients addExtension() is performed.
-    virtual void initialize(Client *client) = 0;
+    virtual void Initialize(Client *client) = 0;
 
     //! Not purely virtual. Implement if you need to sucsribe to
     //! frame ticks.
     virtual void Update(f64 frametime);
 
 public slots:
-    QString name() const;
+    QString Name() const;
 
 protected:
     const QString name_;

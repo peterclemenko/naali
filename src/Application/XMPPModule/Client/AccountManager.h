@@ -27,8 +27,8 @@ public:
     AccountManager(Framework* framework);
     ~AccountManager();
 
-    void loadFromFile();
-    void saveToFile();
+    void LoadFromFile();
+    void SaveToFile();
 
 public slots:
     //! Save login data
@@ -37,22 +37,22 @@ public slots:
     //! \param password User password
     //! \note IMPORTANT: Storing passwords uses weak Xor cipher. This is
     //!       not secure, and should be made very clear for the user.
-    void addLoginData(QString userJid, QString xmppServer, QString password);
+    void AddLoginData(QString userJid, QString xmppServer, QString password);
 
     //! Get list of XMPP Servers we have stored credentials for
     //! \return QStringList containing known servers
-    QStringList getServers();
+    QStringList GetServers();
 
     //! Get saved Jabber IDs
     //! \param xmppServer Server associated with the Jid
     //! \return QStringList containing saved Jids
-    QStringList getUserJids(QString xmppServer);
+    QStringList GetUserJids(QString xmppServer);
 
     //! Get password for Jabber ID
     //! \param userJid Jabber ID for querying the password
     //! \param xmppServer XMPP Server the Jid is associated with
     //! \return QString containing the user password
-    QString getUserPassword(QString userJid, QString xmppServer);
+    QString GetUserPassword(QString userJid, QString xmppServer);
 
 private slots:
 
@@ -61,7 +61,7 @@ private:
     //! \note Protects from the casual idiot browsing through user's settings
     //!       folder, but in no way secure. Need to implement tundra wide
     //!       passwords storing policy.
-    QByteArray generateXor(const QByteArray& data, const QByteArray& key);
+    QByteArray GenerateXor(const QByteArray& data, const QByteArray& key);
 
     QString accounts_path_;
     QString accounts_filename_;

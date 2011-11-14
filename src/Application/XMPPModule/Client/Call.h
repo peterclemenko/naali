@@ -28,37 +28,37 @@ public:
 public slots:
     //! Accept call
     //! bool true on success
-    bool accept();
+    bool Accept();
 
     //! Disconnect current call
     //! \return bool true for success
-    void hangup();
+    void Hangup();
 
     //! Puts the call in suspended state
     //! \return bool if call was succesfully suspended
-    bool suspend();
+    bool Suspend();
 
     //! Continues call from suspended state
     //! \return bool if call was succesfully continued
-    bool resume();
+    bool Resume();
 
     //! Get the Jabber ID for the other party of the conversation
     //! \return QString containing callees/callers Jabber ID
-    QString peerJid() const { return peer_jid_; }
+    QString PeerJid() const { return peer_jid_; }
 
     //! Returns state of the call
-    State state() const { return state_; };
+    State CurrentState() const { return state_; };
 
 
 private slots:
-    void handleCallTerminated();
-    void handleCallConnected();
-    void handleCallStateChanged(QXmppCall::State state);
-    void handleInboundVoice();
-    void handleOutboundVoice();
+    void HandleCallTerminated();
+    void HandleCallConnected();
+    void HandleCallStateChanged(QXmppCall::State state);
+    void HandleInboundVoice();
+    void HandleOutboundVoice();
 
 private:
-    void setState(Call::State state);
+    void SetState(Call::State state);
 
     Framework *framework_;
     SoundChannelPtr audio_channel_;
@@ -67,7 +67,7 @@ private:
     State state_;
 
 signals:
-    void stateChanged(Call::State state);
+    void StateChanged(Call::State state);
 };
 
 } // end of namespace: XMPP

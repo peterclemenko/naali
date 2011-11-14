@@ -38,7 +38,7 @@ void XMPPModule::Load()
 void XMPPModule::Initialize()
 {
     account_manager_ = new AccountManager(framework_);
-    account_manager_->loadFromFile();
+    account_manager_->LoadFromFile();
 }
 
 void XMPPModule::Uninitialize()
@@ -53,21 +53,21 @@ void XMPPModule::Update(f64 frametime)
     }
 }
 
-QObject* XMPPModule::newClient()
+QObject* XMPPModule::NewClient()
 {
     Client *client = new Client(framework_);
     clients_.append(client);
     return dynamic_cast<QObject*>(client);
 }
 
-QObject* XMPPModule::getAccountManager()
+QObject* XMPPModule::GetAccountManager()
 {
     if(account_manager_)
         return dynamic_cast<QObject*>(account_manager_);
     return 0;
 }
 
-void XMPPModule::handleClientDisconnect(Client *client)
+void XMPPModule::HandleClientDisconnect(Client *client)
 {
     //SAFE_DELETE(client);
 }

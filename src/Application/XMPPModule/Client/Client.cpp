@@ -33,22 +33,33 @@ namespace XMPP
     {
         xmpp_client_->logger()->setLoggingType(QXmppLogger::SignalLogging);
 
+        bool check;
+
         // -----Client signals-----
-        connect(xmpp_client_, SIGNAL(messageReceived(QXmppMessage)), this, SLOT(HandleMessageReceived(QXmppMessage)));
-        connect(xmpp_client_, SIGNAL(presenceReceived(QXmppPresence)), this, SLOT(HandlePresenceReceived(QXmppPresence)));
-        connect(xmpp_client_, SIGNAL(Connected()), this, SIGNAL(Connected()));
-        connect(xmpp_client_, SIGNAL(Disconnected()), this, SLOT(DisconnectFromServer()));
+        check = connect(xmpp_client_, SIGNAL(messageReceived(QXmppMessage)), this, SLOT(HandleMessageReceived(QXmppMessage)));
+        Q_ASSERT(check);
+        check = connect(xmpp_client_, SIGNAL(presenceReceived(QXmppPresence)), this, SLOT(HandlePresenceReceived(QXmppPresence)));
+        Q_ASSERT(check);
+        check = connect(xmpp_client_, SIGNAL(connected()), this, SIGNAL(Connected()));
+        Q_ASSERT(check);
+        check = connect(xmpp_client_, SIGNAL(disconnected()), this, SLOT(DisconnectFromServer()));
+        Q_ASSERT(check);
 
         // -----Rostermanager signals-----
-        connect(&xmpp_client_->rosterManager(), SIGNAL(rosterReceived()), this, SLOT(HandleRosterReceived()));
-        connect(&xmpp_client_->rosterManager(), SIGNAL(RosterChanged(QString)), this, SLOT(HandleRosterChanged(QString)));
-        connect(&xmpp_client_->rosterManager(), SIGNAL(PresenceChanged(QString,QString)), this, SLOT(HandlePresenceChanged(QString,QString)));
+        check = connect(&xmpp_client_->rosterManager(), SIGNAL(rosterReceived()), this, SLOT(HandleRosterReceived()));
+        Q_ASSERT(check);
+        check = connect(&xmpp_client_->rosterManager(), SIGNAL(rosterChanged(QString)), this, SLOT(HandleRosterChanged(QString)));
+        Q_ASSERT(check);
+        check = connect(&xmpp_client_->rosterManager(), SIGNAL(presenceChanged(QString,QString)), this, SLOT(HandlePresenceChanged(QString,QString)));
+        Q_ASSERT(check);
 
         // -----vCardmanager signals-----
-        connect(&xmpp_client_->vCardManager(), SIGNAL(vCardReceived(QXmppVCardIq)), this, SLOT(HandleVCardReceived(QXmppVCardIq)));
+        check = connect(&xmpp_client_->vCardManager(), SIGNAL(vCardReceived(QXmppVCardIq)), this, SLOT(HandleVCardReceived(QXmppVCardIq)));
+        Q_ASSERT(check);
 
         // -----Logger signals-----
-        connect(QXmppLogger::getLogger(), SIGNAL(message(QXmppLogger::MessageType,QString)), this, SLOT(HandleLogMessage(QXmppLogger::MessageType,QString)));
+        check = connect(QXmppLogger::getLogger(), SIGNAL(message(QXmppLogger::MessageType,QString)), this, SLOT(HandleLogMessage(QXmppLogger::MessageType,QString)));
+        Q_ASSERT(check);
     }
 
     Client::~Client()

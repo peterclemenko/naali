@@ -34,7 +34,7 @@ void ChatExtension::Initialize(Client *client)
     client_ = client;
 
     bool check;
-    check = connect(client_->GetQxmppClient(), SIGNAL(messageReceived(QXmppMessage)), this, SLOT(handleMessageReceived(QXmppMessage)));
+    check = connect(client_->GetQxmppClient(), SIGNAL(messageReceived(QXmppMessage)), this, SLOT(HandleMessageReceived(QXmppMessage)));
     Q_ASSERT(check);
 }
 

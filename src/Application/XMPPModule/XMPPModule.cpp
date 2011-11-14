@@ -15,7 +15,7 @@
 namespace XMPP
 {
 XMPPModule::XMPPModule() :
-    IModule("XMPPModule"),
+    IModule("XMPP"),
     account_manager_(0)
 {
 }

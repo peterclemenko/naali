@@ -43,7 +43,7 @@ void MucExtension::Initialize(Client *client)
 
     client_->GetQxmppClient()->addExtension(qxmpp_muc_manager_);
 
-    bool check = connect(qxmpp_muc_manager_, SIGNAL(InvitationReceived(QString,QString,QString)), this, SLOT(HandleInvitationReceived(QString,QString,QString)));
+    bool check = connect(qxmpp_muc_manager_, SIGNAL(invitationReceived(QString,QString,QString)), this, SLOT(HandleInvitationReceived(QString,QString,QString)));
     Q_ASSERT(check);
 }
 

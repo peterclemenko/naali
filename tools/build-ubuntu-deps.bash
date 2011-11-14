@@ -49,7 +49,7 @@ if lsb_release -c | egrep -q "lucid|maverick|natty|oneiric"; then
 	 ccache libqt4-dev python-dev freeglut3-dev \
 	 libxml2-dev cmake libalut-dev libtheora-dev \
 	 liboil0.3-dev mercurial unzip xsltproc \
-	 libspeex-dev nvidia-cg-toolkit svn $more
+	 libspeex-dev nvidia-cg-toolkit subversion $more
 fi
 
 what=bullet-2.77

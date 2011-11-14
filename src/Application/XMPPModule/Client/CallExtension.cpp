@@ -137,6 +137,11 @@ QString CallExtension::GetActiveCall()
     return "";
 }
 
+QStringList CallExtension::GetCalls() const
+{
+    return calls_.keys();
+}
+
 bool CallExtension::SetActiveCall(QString peerJid)
 {
     if(!calls_.keys().contains(peerJid))

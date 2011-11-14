@@ -55,9 +55,13 @@ public:
 
 
 public slots:
-    QObject *getClient(QString host);
-    QObject *newClient(QXmppConfiguration configuration);
-    QObject *newClient(QString xmppServer, QString userJid, QString password);
+    //! Creates a new Client object
+    //! \return QObject pointer to the Client
+    //! \note Returned client is not connected to a server when created
+    QObject *newClient();
+
+    //! Returns a pointer to the instance of of AccountManager
+    //! \return QObject pointer to the AccountManager
     QObject *getAccountManager();
 
 private slots:

@@ -26,7 +26,7 @@
 
 namespace XMPP
 {
-    Client::Client(Framework* framework, QXmppConfiguration &configuration) :
+    Client::Client(Framework* framework) :
         framework_(framework),
         xmpp_client_(new QXmppClient()),
         log_stream_(false)
@@ -54,8 +54,6 @@ namespace XMPP
 
         // -----Logger signals-----
         connect(QXmppLogger::getLogger(), SIGNAL(message(QXmppLogger::MessageType,QString)), this, SLOT(handleLogMessage(QXmppLogger::MessageType,QString)));
-
-        xmpp_client_->connectToServer(configuration, QXmppPresence::Available);
     }
 
     Client::~Client()
@@ -69,6 +67,21 @@ namespace XMPP
         Extension *extension;
         foreach(extension, extensions_)
             extension->Update(frametime);
+    }
+
+    void Client::ConnectToServer(const QXmppConfiguration &configuration)
+    {
+        xmpp_client_->connectToServer(configuration, QXmppPresence::Available);
+    }
+
+    void Client::connectToServer(const QString &xmppServer, const QString &userJid, const QString &userPassword)
+    {
+        QXmppConfiguration configuration;
+        configuration.setHost(xmppServer);
+        configuration.setJid(userJid);
+        configuration.setPassword(userPassword);
+        configuration.setKeepAliveTimeout(15);
+        ConnectToServer(configuration);
     }
 
     bool Client::addExtension(Extension *extension)

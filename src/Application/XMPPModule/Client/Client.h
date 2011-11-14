@@ -40,7 +40,7 @@ class Client : public QObject
 {
     Q_OBJECT
 public:
-    Client(Framework* framework, QXmppConfiguration &configuration);
+    Client(Framework* framework);
     ~Client();
 
     void Update(f64 frametime);
@@ -87,7 +87,7 @@ public slots:
     //! \param userJid User's Jabber ID
     //! \param userPassword User's password
     //! \param xmppServer XMPP Server (host:port)
-    void connectToServer(QString userJid, QString userPassword, QString xmppServer);
+    void connectToServer(const QString &xmppServer, const QString &userJid, const QString &userPassword);
 
     //! Get host associated with this connection
     //! \return QString current host (host)

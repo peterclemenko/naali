@@ -53,29 +53,9 @@ void XMPPModule::Update(f64 frametime)
     }
 }
 
-QObject* XMPPModule::getClient(QString host)
+QObject* XMPPModule::newClient()
 {
-    for(int i = 0; i < clients_.size(); i++)
-    {
-        if(QString::compare(clients_[i]->getHost(), host, Qt::CaseInsensitive) == 0)
-            return dynamic_cast<QObject*>(clients_[i]);
-    }
-    return 0;
-}
-
-QObject* XMPPModule::newClient(QString xmppServer, QString userJid, QString password)
-{
-    QXmppConfiguration configuration;
-    configuration.setHost(xmppServer);
-    configuration.setJid(userJid);
-    configuration.setPassword(password);
-    configuration.setKeepAliveTimeout(15);
-    return newClient(configuration);
-}
-
-QObject* XMPPModule::newClient(QXmppConfiguration configuration)
-{
-    Client *client = new Client(framework_, configuration);
+    Client *client = new Client(framework_);
     clients_.append(client);
     return dynamic_cast<QObject*>(client);
 }

@@ -23,11 +23,17 @@
 
 EC_MenuItem::EC_MenuItem(Scene *scene) :
     IComponent(scene),
-    phi(this,"Phi",0)
+    phi(this,"Phi",0),
+    dataitem_(0),
+    PivotPlaceable_(0)
 {
+    bool check;
     // Connect signals from IComponent
-    connect(this, SIGNAL(ParentEntitySet()), SLOT(PrepareMenuItem()), Qt::UniqueConnection);
-    connect(this, SIGNAL(AttributeChanged(IAttribute*, AttributeChange::Type)), SLOT(AttributeChanged(IAttribute*, AttributeChange::Type)));
+    check = connect(this, SIGNAL(ParentEntitySet()), SLOT(PrepareMenuItem()), Qt::UniqueConnection);
+    Q_ASSERT(check);
+
+    check = connect(this, SIGNAL(AttributeChanged(IAttribute*, AttributeChange::Type)), SLOT(AttributeChanged(IAttribute*, AttributeChange::Type)));
+    Q_ASSERT(check);
 }
 
 void EC_MenuItem::PrepareMenuItem()
@@ -58,8 +64,12 @@ bool EC_MenuItem::OpenSubMenu()
 
 void EC_MenuItem::SetDataItem(MenuDataItem *dataitemptr)
 {
+    bool check;
     dataitem_ = dataitemptr;
-    connect(dataitem_, SIGNAL(DataChanged()), SLOT(UpdateChangedData()));
+
+    check = connect(dataitem_, SIGNAL(DataChanged()), SLOT(UpdateChangedData()));
+    Q_ASSERT(check);
+
     meshreference_ = dataitem_->GetMeshRef();
     for(int i=0; i<dataitem_->GetMaterialRef().count();i++)
     {
@@ -115,8 +125,6 @@ void EC_MenuItem::SetMenuItemVisible()
         }
     }
 }
-
-
 
 EC_Mesh* EC_MenuItem::GetOrCreateMeshComponent()
 {

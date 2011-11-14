@@ -15,9 +15,9 @@ set (SOURCE_FILES ${CPP_FILES} ${H_FILES})
 # Qt4 Wrap
 QT4_WRAP_CPP(MOC_SRCS ${MOC_FILES})
 
-#use_package_bullet()
+use_package_bullet()
 # Core Foundation Interfaces Ui Input Scene Asset OgreRenderingModule TundraLogicModule RexCommon PhysicsModule
-use_core_modules (Framework Scene OgreRenderingModule)# SceneWidgetComponents)
+use_core_modules (Framework Scene OgreRenderingModule PhysicsModule)# SceneWidgetComponents)
 
 build_library (${TARGET_NAME} STATIC ${SOURCE_FILES} ${MOC_SRCS} )
 

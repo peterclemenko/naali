@@ -39,6 +39,10 @@ class UserItem;
 class Client : public QObject
 {
     Q_OBJECT
+    Q_PROPERTY(QString host READ GetHost);
+    Q_PROPERTY(QStringList roster READ GetRoster);
+    Q_PROPERTY(bool logstream READ GetStreamLogging WRITE SetStreamLogging);
+
 public:
     Client(Framework* framework);
     ~Client();
@@ -113,6 +117,9 @@ public slots:
     //! Set logging of the XML stream on/off
     //! \param state Boolean for on/off
     void SetStreamLogging(bool state);
+
+    //! Get the state of the stream logging
+    bool GetStreamLogging();
 
 private slots:
     void HandlePresenceChanged(const QString& userJid, const QString& resource);

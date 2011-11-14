@@ -17,6 +17,8 @@ namespace XMPP
 class Call : public QObject
 {
         Q_OBJECT
+        Q_PROPERTY(QString peerjid READ PeerJid);
+
 public:
     enum State { RingingState = 0, ConnectingState, ActiveState, SuspendedState, DisconnectingState, FinishedState };
 

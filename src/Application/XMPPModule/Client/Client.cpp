@@ -188,6 +188,11 @@ namespace XMPP
         log_stream_ = state;
     }
 
+    bool Client::GetStreamLogging()
+    {
+        return log_stream_;
+    }
+
     QObject* Client::GetUser(QString userJid)
     {
         if(users_.contains(userJid))

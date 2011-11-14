@@ -120,7 +120,7 @@ bool MucExtension::JoinRoom(QString roomJid, QString nickname, QString password)
     bool check = connect(room, SIGNAL(joined()), this, SLOT(HandleRoomJoined()));
     Q_ASSERT(check);
 
-    room->join();
+    return room->join();
 }
 
 bool MucExtension::LeaveRoom(QString roomJid)

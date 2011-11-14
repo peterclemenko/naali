@@ -22,10 +22,12 @@ namespace XMPP
 {
 class Client;
 
-//! Provides peer2peer SIP calls. Implements XEP-0166, XEP-0167 & XEP-0176.
+//! Provides p2p voip calls. Implements XEP-0166, XEP-0167 & XEP-0176.
 class CallExtension : public Extension
 {
     Q_OBJECT
+    Q_PROPERTY(QStringList calls READ GetCalls);
+    Q_PROPERTY(QString activecall READ GetActiveCall);
 
 public:
     CallExtension();

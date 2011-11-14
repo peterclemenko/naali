@@ -23,7 +23,6 @@ class UserItem : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QStringList resources READ GetResources);
-    Q_PROPERTY(QStringList capabilities READ GetCapabilities);
     Q_PROPERTY(QString jid READ Jid);
     Q_PROPERTY(QString birthday READ GetBirthday);
     Q_PROPERTY(QString email READ GetEmail);

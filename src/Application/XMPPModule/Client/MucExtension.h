@@ -29,6 +29,7 @@ class Client;
 class MucExtension : public Extension
 {
     Q_OBJECT
+    Q_PROPERTY(QStringList rooms READ GetRooms);
 
 public:
     MucExtension();

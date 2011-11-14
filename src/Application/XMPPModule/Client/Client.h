@@ -127,7 +127,6 @@ private slots:
 private:
     QXmppClient *xmpp_client_;
     QList<Extension*> extensions_;
-    QList<Extension*> available_extensions_; // All possible extensions in unititialized state
     QXmppConfiguration *current_configuration_;
     QMap<QString, UserItem*> users_;
     Framework* framework_;

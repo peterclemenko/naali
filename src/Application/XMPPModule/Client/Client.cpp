@@ -31,11 +31,6 @@ namespace XMPP
         xmpp_client_(new QXmppClient()),
         log_stream_(false)
     {
-        // Bit of a hackish way to store extensions. Feel free to implement better.
-        available_extensions_.append(new CallExtension());
-        available_extensions_.append(new ChatExtension());
-        available_extensions_.append(new MucExtension());
-
         xmpp_client_->logger()->setLoggingType(QXmppLogger::SignalLogging);
 
         // -----Client signals-----
@@ -88,7 +83,7 @@ namespace XMPP
     {
         if(extensions_.contains(extension))
         {
-            LogError("XMPPModule: Extension already initialized: " + extension->name().toStdString());
+            LogError("XMPPModule: Extension with name \"" + extension->name().toStdString() + "\" already initialized.");
             return false;
         }
 
@@ -103,40 +98,38 @@ namespace XMPP
     QObject* Client ::addExtension(const QString &extensionName)
     {
         Extension *extension = 0;
-        LogError("XMPPModule: addExtension called");
-	
-        for(int i = 0; i < available_extensions_.size(); i++)
-        {
-            if(available_extensions_[i]->name() == extensionName)
-            {
-                extension = available_extensions_[i];
-                available_extensions_.removeAt(i);
-            }
+
+        if(extensionName == "Chat") {
+            extension = new ChatExtension();
+        } else if(extensionName == "Muc") {
+            extension = new MucExtension();
+        } else if(extensionName == "Call") {
+            extension = new CallExtension();
         }
 
         if(!extension)
         {
-            LogError("XMPPModule: No extension found: " + extensionName.toStdString());
+            LogError("XMPPModule: No extension found with name \"" + extensionName.toStdString() + "\"");
             return 0;
         }
 
         if(!addExtension(extension))
+        {
+            SAFE_DELETE(extension);
             return 0;
+        }
 
-        LogError("XMPPModule: addExtension found " + extensionName.toStdString());
         return dynamic_cast<QObject*>(extension);
     }
 
     QObject* Client::getExtension(QString extensionName)
     {
-      LogError("XMPPModule: getExtension called, #extensions: " + ToString(extensions_.size()));
         for(int i = 0; i < extensions_.size(); i++)
         {
 	  if(extensions_[i]->name() == extensionName)
                 return dynamic_cast<QObject*>(extensions_[i]);
-	  else
-            LogError("XMPPModule: Looking for " + extensionName.toStdString() + " but this is " + extensions_[i]->name().toStdString());
         }
+        LogError("XMPPModule: No initialized extension found with name \"" + extensionName.toStdString() + "\"");
         return 0;
     }
 

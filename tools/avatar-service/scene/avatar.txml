@@ -1,0 +1,100 @@
+<!DOCTYPE Scene>
+<scene>
+ <entity id="1">
+  <component type="EC_Script" sync="1">
+   <attribute value="js" name="Type"/>
+   <attribute value="true" name="Run on load"/>
+   <attribute value="local://avatarapplication.js" name="Script ref"/>
+  </component>
+  <component type="EC_Name" sync="1">
+   <attribute value="AvatarScript" name="name"/>
+   <attribute value="" name="description"/>
+   <attribute value="false" name="user-defined"/>
+  </component>
+  <component type="EC_InputMapper" sync="1">
+   <attribute value="EC_InputMapper" name="Input context name"/>
+   <attribute value="102" name="Input context priority"/>
+   <attribute value="false" name="Take keyboard events over Qt"/>
+   <attribute value="false" name="Take mouse events over Qt"/>
+   <attribute value="" name="Mappings"/>
+   <attribute value="1" name="Action execution type"/>
+   <attribute value="1" name="Key modifiers enable"/>
+   <attribute value="true" name="Enable actions"/>
+   <attribute value="true" name="Trigger on keyrepeats"/>
+  </component>
+ </entity>
+ <entity id="2">
+  <component type="EC_Mesh" sync="1">
+   <attribute value="0,0,0,90,0,180,1,1,1" name="Transform"/>
+   <attribute value="file://fish.mesh" name="Mesh ref"/>
+   <attribute value="" name="Skeleton ref"/>
+   <attribute value="" name="Mesh materials"/>
+   <attribute value="0" name="Draw distance"/>
+   <attribute value="true" name="Cast shadows"/>
+  </component>
+  <component type="EC_Name" sync="1">
+   <attribute value="Fish" name="name"/>
+   <attribute value="" name="description"/>
+   <attribute value="false" name="user-defined"/>
+  </component>
+  <component type="EC_Placeable" sync="1">
+   <attribute value="6.22041,12.1331,1.59841,-4.40204,12.4777,-84.1942,1,1,1" name="Transform"/>
+   <attribute value="false" name="Show bounding box"/>
+   <attribute value="true" name="Visible"/>
+  </component>
+  <component type="EC_RigidBody" sync="1">
+   <attribute value="100" name="Mass"/>
+   <attribute value="6" name="Shape type"/>
+   <attribute value="1 1 1" name="Size"/>
+   <attribute value="" name="Collision mesh ref"/>
+   <attribute value="0.5" name="Friction"/>
+   <attribute value="0" name="Restitution"/>
+   <attribute value="0" name="Linear damping"/>
+   <attribute value="0" name="Angular damping"/>
+   <attribute value="1 1 1" name="Linear factor"/>
+   <attribute value="1 1 1" name="Angular factor"/>
+   <attribute value="false" name="Phantom"/>
+   <attribute value="true" name="Draw Debug"/>
+   <attribute value="0.0133363567 -0.0115545318 0.00278809667" name="Linear velocity"/>
+   <attribute value="-0.778453588 -0.110972613 -0.0720468611" name="Angular velocity"/>
+   <attribute value="true" name="Gravity"/>
+  </component>
+ </entity>
+ <entity id="3">
+  <component type="EC_Mesh" sync="1">
+   <attribute value="0,0,0,90,0,0,20,0.2,20" name="Transform"/>
+   <attribute value="file://floor.mesh" name="Mesh ref"/>
+   <attribute value="" name="Skeleton ref"/>
+   <attribute value="" name="Mesh materials"/>
+   <attribute value="0" name="Draw distance"/>
+   <attribute value="true" name="Cast shadows"/>
+  </component>
+  <component type="EC_Name" sync="1">
+   <attribute value="Floor" name="name"/>
+   <attribute value="" name="description"/>
+   <attribute value="false" name="user-defined"/>
+  </component>
+  <component type="EC_Placeable" sync="1">
+   <attribute value="0,0,0,0,0,0,1,1,1" name="Transform"/>
+   <attribute value="false" name="Show bounding box"/>
+   <attribute value="true" name="Visible"/>
+  </component>
+  <component type="EC_RigidBody" sync="1">
+   <attribute value="0" name="Mass"/>
+   <attribute value="0" name="Shape type"/>
+   <attribute value="39 39 0.400000006" name="Size"/>
+   <attribute value="" name="Collision mesh ref"/>
+   <attribute value="0.5" name="Friction"/>
+   <attribute value="0" name="Restitution"/>
+   <attribute value="0" name="Linear damping"/>
+   <attribute value="0" name="Angular damping"/>
+   <attribute value="1 1 1" name="Linear factor"/>
+   <attribute value="1 1 1" name="Angular factor"/>
+   <attribute value="false" name="Phantom"/>
+   <attribute value="true" name="Draw Debug"/>
+   <attribute value="0 0 0" name="Linear velocity"/>
+   <attribute value="0 0 0" name="Angular velocity"/>
+   <attribute value="true" name="Gravity"/>
+  </component>
+ </entity>
+</scene>

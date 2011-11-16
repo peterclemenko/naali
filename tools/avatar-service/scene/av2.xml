@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Template XML file for avatar parameters -->
+<avatar>
+    <!-- version string for this file -->
+    <version>0.2</version>
+    <base mesh="models/swat/models/swat.dae" />
+    <appearance height="0.200000" weight="1" />
+    <transformation position="0 0 0" rotation="84 85 86 87" scale="1 1 1" />
+</avatar>

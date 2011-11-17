@@ -44,7 +44,7 @@ use_package (QXMPP)
 use_package (SPEEX)
 
 use_app_modules (XMPPModule)
-use_core_modules (Framework Audio)
+use_core_modules (Framework Audio Math)
 
 build_library (${TARGET_NAME} SHARED ${SOURCE_FILES} ${MOC_SRCS} ${UI_SRCS} ${RESOURCE_SRCS})
 

@@ -764,7 +764,7 @@ void EC_RigidBody::AssertAuthority(bool yesno)
     got_authority_ = yesno;
 }
 
-bool EC_RigidBody::HasAuthority()
+bool EC_RigidBody::HasAuthority() const
 {
     if (!world_)
 	return false;

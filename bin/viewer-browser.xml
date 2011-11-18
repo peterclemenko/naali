@@ -21,6 +21,7 @@
   <plugin path="VlcPlugin" />
   <plugin path="UpdateModule" />
   <plugin path="XMPPModule" />                  <!-- This manly module doesn't depend on anyone -->
+  <plugin path="QMLPlugin" />                   <!-- Depends on OgreRenderingModule and SceneWidgetComponents  -->
   
   <!-- The following are commented out as they are not a part of the default build -->
   <!-- <plugin path="CAVEStereoModule" /> -->           <!-- Depends on OgreRenderingModule and TundraLogicModule -->

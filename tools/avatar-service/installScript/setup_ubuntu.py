@@ -24,7 +24,7 @@ rexBinDir = rex + "/naali/bin/" #
 GIT_SOURCE = "git://github.com/Lehtiz/Avatar-service.git"
 # default apache webroot
 WEB_ROOT = "/var/www/"
-AVATAR_ROOT = WEB_ROOT + "avatar/"
+AVATAR_ROOT = WEB_ROOT + "avatar-service/"
 
 MYSQL_HOST = "localhost"
 #mysql root details set during install
@@ -69,7 +69,7 @@ def installPrograms():
     subprocess.call("sudo apt-get update", shell=True)
 
     #preq for mysql installation parameters, git sources, nodejs for glge build
-    subprocess.call("sudo apt-get -y install debconf-utils git nodejs", shell=True)
+    subprocess.call("sudo apt-get -y install debconf-utils git nodejs python-eventlet", shell=True)
     
     #apache2, php
     subprocess.call("sudo apt-get -y install apache2 php5-mysql libapache2-mod-php5", shell=True)

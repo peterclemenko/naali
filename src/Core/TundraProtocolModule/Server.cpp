@@ -45,7 +45,7 @@ Server::Server(TundraLogicModule* owner) :
     // will be of cryptographic quality, which will make the UUID unique. Otherwise,
     // the numbers of the UUID will be obtained from the local pseudo-random number generator.
     // On a Windows platform, a GUID is generated, which almost certainly will be unique, on this or any other system, networked or not.
-    sceneID_ = QUuid::createUuid().toString().remove(QRegExp("[{}]"));
+    sceneID_ = QUuid::createUuid().toString().remove(QRegExp("[{}]")).remove("-");
 }
 
 Server::~Server()

@@ -101,7 +101,7 @@ public slots:
     void SetMenuItemWidget(QWidget *data, int subMeshIndex = 0);
 
     //! Setter for EC_Placeable parameters
-    void SetParentMenuContainer(ComponentPtr);
+//    void SetParentMenuContainer(ComponentPtr);
 
     //! Get parent entitys EC_Mesh component or create one if not present.
     EC_Mesh* GetOrCreateMeshComponent();

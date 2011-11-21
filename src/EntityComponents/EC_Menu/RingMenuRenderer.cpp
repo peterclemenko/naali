@@ -30,6 +30,7 @@ RingMenuRenderer::RingMenuRenderer(EC_MenuContainer *menucontainer, MenuDataMode
 {
     //LogInfo("RingMenuRenderer constructor");
     menuContainer_ = menucontainer;
+    menuContainer_->SetMenuContainerPosition(float3(0,0,-20));
     scrollerTimer_ = new QTimer();
     QObject::connect(scrollerTimer_, SIGNAL(timeout()), this, SLOT(KineticScroller()));
 

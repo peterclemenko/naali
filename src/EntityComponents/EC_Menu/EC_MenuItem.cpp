@@ -91,7 +91,7 @@ void EC_MenuItem::SetMenuItemPosition(float3 position)
 {
     if (PivotPlaceable_)
     {
-        PivotPlaceable_->SetPosition(position);
+//        PivotPlaceable_->SetPosition(position);
         //LogInfo("Moving menuitem, pivotplaceable. Position: "+ToString(position));
     }
     else
@@ -101,13 +101,21 @@ void EC_MenuItem::SetMenuItemPosition(float3 position)
     }
 }
 
-void EC_MenuItem::SetParentMenuContainer(ComponentPtr MenuContainer)
-{
-    //setter-function for setting entity position.
-    EC_Placeable *placeable = GetOrCreatePlaceableComponent();
-    if (placeable && MenuContainer)
-        placeable->setParent(MenuContainer.get());
-}
+//void EC_MenuItem::SetParentMenuContainer(ComponentPtr parentPlaceable)
+//{
+//    //setter-function for setting entity position.
+//    EC_Placeable *placeable = GetOrCreatePlaceableComponent();
+//    if (placeable && parentPlaceable)
+//    {
+//        /// \todo hack for now..
+//        Entity *temp = parentPlaceable.get()->ParentEntity();
+////        LogInfo("parent entity ptr: "+ToString(temp));
+//        //placeable->SetParent(temp);
+
+//    }
+//    else
+//        LogError("No placeable or parent placeable available!");
+//}
 
 
 void EC_MenuItem::SetMenuItemVisible()
@@ -129,6 +137,7 @@ void EC_MenuItem::SetMenuItemVisible()
 EC_Mesh* EC_MenuItem::GetOrCreateMeshComponent()
 {
     IComponent *iComponent =  ParentEntity()->GetOrCreateComponent("EC_Mesh", AttributeChange::LocalOnly, false).get();
+    //IComponent *iComponent =  ParentEntity()->GetOrCreateComponent("EC_Mesh").get();
     if (iComponent)
     {
         EC_Mesh *mesh = dynamic_cast<EC_Mesh*>(iComponent);
@@ -144,6 +153,7 @@ EC_Mesh* EC_MenuItem::GetOrCreateMeshComponent()
 EC_Placeable *EC_MenuItem::GetOrCreatePlaceableComponent()
 {
     IComponent *iComponent = ParentEntity()->GetOrCreateComponent("EC_Placeable", AttributeChange::LocalOnly, false).get();
+    //IComponent *iComponent = ParentEntity()->GetOrCreateComponent("EC_Placeable").get();
     if(iComponent)
     {
         EC_Placeable *placeable = dynamic_cast<EC_Placeable*>(iComponent);

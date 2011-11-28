@@ -267,6 +267,7 @@ void Client::CheckLogin()
     case ConnectionPending:
         if ((connection) && (connection->GetConnectionState() == kNet::ConnectionOK))
         {
+            ::LogInfo("Connection pending!");
             loginstate_ = ConnectionEstablished;
             MsgLogin msg;
             emit AboutToConnect(); // This signal is used as a 'function call'. Any interested party can fill in
@@ -280,6 +281,7 @@ void Client::CheckLogin()
         // If we have logged in, but connection dropped, prepare to resend login
         if ((!connection) || (connection->GetConnectionState() != kNet::ConnectionOK))
         {
+            ::LogInfo("LoggedIN!");
             loginstate_ = ConnectionPending;
         }
         break;
@@ -355,11 +357,13 @@ void Client::HandleLoginReply(MessageConnection* source, const MsgLoginReply& ms
         // Note: create scene & send info of login success only on first connection, not on reconnect
         if (!reconnect_)
         {
+            ::LogInfo("Client setting identifier!");
+            owner_->GetKristalliModule()->SetIdentifier(sceneName);
             // Create a non-authoritative scene for the client
             ScenePtr scene = framework_->Scene()->CreateScene(sceneName, true, false);
 
 //            framework_->Scene()->SetDefaultScene(scene);
-            owner_->GetSyncManager()->RegisterToScene(scene);
+            //owner_->GetSyncManager()->RegisterToScene(scene);
             
             UserConnectedResponseData responseData;
             if (msg.loginReplyData.size() > 0)

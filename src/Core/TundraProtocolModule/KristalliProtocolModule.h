@@ -9,6 +9,8 @@
 #include "kNet.h"
 
 #include <QObject>
+#include <QMap>
+#include <QMutableMapIterator>
 
 #ifdef KNET_USE_QT
 #include <QPointer>
@@ -58,7 +60,7 @@ namespace KristalliProtocol
         void SubscribeToNetworkEvents();
 
         /// Return message connection, for use by other modules (null if no connection made)
-        kNet::MessageConnection *GetMessageConnection() { return serverConnection.ptr(); }
+        kNet::MessageConnection *GetMessageConnection();
         
         /// Return server, for use by other modules (null if not running)
         kNet::NetworkServer* GetServer() const { return server; }
@@ -78,6 +80,9 @@ namespace KristalliProtocol
 
         /// What trasport layer to use. Read on startup from --protocol udp/tcp/sctp. Defaults to TCP if no start param was given.
         kNet::SocketTransportLayer defaultTransport;
+
+        /// Sets serverConnection ID to match server/client scene name on login.
+        void SetIdentifier(const QString identifier);
 
 #ifdef KNET_USE_QT
 public slots:
@@ -106,6 +111,7 @@ public slots:
         int reconnectAttempts;
 
         void PerformConnection();
+        void PerformReconnection(QMutableMapIterator<QString, Ptr(kNet::MessageConnection)> &, QString key);
 
         /// Allocate a  connection ID for new connection
         u8 AllocateNewConnectionID() const;
@@ -127,6 +133,27 @@ public slots:
         
         /// Users that are connected to server
         UserConnectionList connections;
+
+        /// Messageconnection properties array: IP
+        QMap<QString, std::string> serverIp_map_;
+
+        /// Messageconnection properties array: Port
+        QMap<QString, unsigned short> serverPort_map_;
+
+        /// Messageconnection properties array: serverTransport
+        QMap<QString, kNet::SocketTransportLayer> serverTransport_map_;
+
+        /// Messageconnections properties array: reconnectAttempts
+        QMap<QString, int> reconnectAttempts_map_;
+
+        /// Messageconnections properties array: Timers
+        QMap<QString, kNet::PolledTimer> reconnectTimer_map_;
+
+        /// Messageconnections properties array: Messageconnections
+        QMap<QString, Ptr(kNet::MessageConnection) > serverConnection_map_;
+
+        /// Multiconnection update method
+        void ProcessConnections();
 #ifdef KNET_USE_QT
         QPointer<kNet::NetworkDialog> networkDialog;
 #endif

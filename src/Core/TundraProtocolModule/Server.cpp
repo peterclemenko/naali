@@ -46,6 +46,8 @@ Server::Server(TundraLogicModule* owner) :
     // the numbers of the UUID will be obtained from the local pseudo-random number generator.
     // On a Windows platform, a GUID is generated, which almost certainly will be unique, on this or any other system, networked or not.
     sceneID_ = QUuid::createUuid().toString().remove(QRegExp("[{}]")).remove("-");
+    // for now calculate CRC-16 from QUUID to reduce packet size.
+    sceneID_.setNum(qChecksum(sceneID_.toAscii(),16),16);
 }
 
 Server::~Server()

@@ -554,8 +554,9 @@ void KristalliProtocolModule::SetIdentifier(const QString identifier)
 
 kNet::MessageConnection * KristalliProtocolModule::GetMessageConnection()
 {
+    // Just wait for connection to be established and stored to connection map for now.
     if (serverConnection_map_.isEmpty())
-        return serverConnection.ptr();
+        return 0;
     else
     {
         QMap<QString, Ptr(kNet::MessageConnection)>::iterator iter = serverConnection_map_.begin();

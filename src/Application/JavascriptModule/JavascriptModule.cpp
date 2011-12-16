@@ -147,7 +147,7 @@ void JavascriptModule::ScriptAssetsChanged(const std::vector<ScriptAssetPtr>& ne
 
     // First clean up any previous running script from EC_Script, if any exists.
 
-    if (dynamic_cast<JavascriptInstance*>(sender->GetScriptInstance()))
+    if (dynamic_cast<JavascriptInstance*>(sender->ScriptInstance()))
         sender->SetScriptInstance(0);
 
     if (newScripts[0]->Name().endsWith(".js")) // We're positively using QtScript.
@@ -331,7 +331,7 @@ void JavascriptModule::CreateScriptObject(EC_Script* app, EC_Script* instance, c
     if (!instance->ShouldRun())
         return;
     
-    JavascriptInstance* jsInstance = dynamic_cast<JavascriptInstance*>(app->GetScriptInstance());
+    JavascriptInstance* jsInstance = dynamic_cast<JavascriptInstance*>(app->ScriptInstance());
     if (!jsInstance || !jsInstance->IsEvaluated())
         return;
     
@@ -374,7 +374,7 @@ void JavascriptModule::CreateScriptObject(EC_Script* app, EC_Script* instance, c
     }
     
     // Store the object to the container
-    objectContainer.setProperty(instance->GetScriptObjectKey(), object);
+    objectContainer.setProperty(instance->ScriptObjectKey(), object);
     
     // Remember that the component has a script object created from this application
     instance->SetScriptApplication(app);
@@ -382,11 +382,11 @@ void JavascriptModule::CreateScriptObject(EC_Script* app, EC_Script* instance, c
 
 void JavascriptModule::RemoveScriptObject(EC_Script* instance)
 {
-    EC_Script* app = instance->GetScriptApplication();
+    EC_Script* app = instance->ScriptApplication();
     if (!app)
         return;
     
-    JavascriptInstance* jsInstance = dynamic_cast<JavascriptInstance*>(app->GetScriptInstance());
+    JavascriptInstance* jsInstance = dynamic_cast<JavascriptInstance*>(app->ScriptInstance());
     if (!jsInstance || !jsInstance->IsEvaluated())
         return;
     
@@ -400,7 +400,7 @@ void JavascriptModule::RemoveScriptObject(EC_Script* instance)
         return;
     
     // Delete the existing object if any
-    QString objectKey = instance->GetScriptObjectKey();
+    QString objectKey = instance->ScriptObjectKey();
     QScriptValue existingObject = objectContainer.property(objectKey);
     if (existingObject.isObject())
     {
@@ -428,7 +428,7 @@ void JavascriptModule::CreateScriptObjects(EC_Script* app)
     if (thisAppName.isEmpty())
         return;
 
-    JavascriptInstance* jsInstance = dynamic_cast<JavascriptInstance*>(app->GetScriptInstance());
+    JavascriptInstance* jsInstance = dynamic_cast<JavascriptInstance*>(app->ScriptInstance());
     if (!jsInstance || !jsInstance->IsEvaluated())
     {
         LogError("CreateScriptObjects: the application EC_Script does not have a script engine that has already evaluated its code");

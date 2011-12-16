@@ -156,7 +156,7 @@ void TundraLogicModule::Load()
 
 void TundraLogicModule::Initialize()
 {
-    syncManager_ = boost::shared_ptr<SyncManager>(new SyncManager(this));
+    //syncManager_ = boost::shared_ptr<SyncManager>(new SyncManager(this));
     client_ = boost::shared_ptr<Client>(new Client(this));
     server_ = boost::shared_ptr<Server>(new Server(this));
     
@@ -231,7 +231,7 @@ void TundraLogicModule::Initialize()
             autoStartServerPort_ = GetFramework()->Config()->Get(configData).toInt();
     }
     
-    if (framework_->HasCommandLineParameter("--netrate"))
+    /*if (framework_->HasCommandLineParameter("--netrate"))
     {
         QStringList rateParam = framework_->CommandLineParameters("--netrate");
         if (rateParam.size() > 0)
@@ -243,13 +243,17 @@ void TundraLogicModule::Initialize()
             else
                 LogError("--netrate parameter is not a valid integer.");
         }
-    }
+    }*/
+
+    connect(framework_->Scene(), SIGNAL(SceneAdded(QString)), this, SLOT(registerSyncManager(QString)));
 }
 
 void TundraLogicModule::Uninitialize()
 {
     kristalliModule_ = 0;
-    syncManager_.reset();
+    //syncManager_.reset();
+    foreach (SyncManager *sm, syncManagers_)
+        delete sm;
     client_.reset();
     server_.reset();
 }
@@ -309,12 +313,22 @@ void TundraLogicModule::Update(f64 frametime)
     if (server_)
         server_->Update(frametime);
     // Run scene sync
-    if (syncManager_)
-        syncManager_->Update(frametime);
+    if (!syncManagers_.empty())
+        foreach (SyncManager *sm, syncManagers_)
+            sm->Update(frametime);
     // Run scene interpolation
     Scene *scene = GetFramework()->Scene()->MainCameraScene();
     if (scene)
         scene->UpdateAttributeInterpolations(frametime);
+}
+
+void TundraLogicModule::registerSyncManager(const QString name)
+{
+    SyncManager *sm = new SyncManager(this);
+    ScenePtr newScene = framework_->Scene()->GetScene(name);
+    sm->RegisterToScene(newScene);
+    syncManagers_.append(sm);
+
 }
 
 void TundraLogicModule::LoadStartupScene()

@@ -19,16 +19,7 @@
 #include "OgreModuleFwd.h"
 #include "SceneFwd.h"
 #include "InputFwd.h"
-
-//#include "Declare_EC.h"
-
-//#include "EC_Placeable.h"
-
-//#include "SceneFwd.h"
-//#include "InputFwd.h"
-
-//#include "CoreTypes.h"
-
+#include "Math/float3.h"
 
 #include <QString>
 #include <QTimer>
@@ -61,11 +52,6 @@ Registered by RexLogic::RexLogicModule.
 </table>
 */
 
-//namespace Scene
-//{
-//    class Entity;
-//}
-
 class IAttribute;
 class MenuRendererInterface;
 class EC_Placeable;
@@ -95,9 +81,6 @@ public:
     Q_PROPERTY(bool PhysicsEnabled READ getPhysicsEnabled WRITE setPhysicsEnabled)
     DEFINE_QPROPERTY_ATTRIBUTE(bool, PhysicsEnabled)
 
-//    Q_PROPERTY(bool runOnLoad READ getrunOnLoad WRITE setrunOnLoad);
-//    DEFINE_QPROPERTY_ATTRIBUTE(bool, runOnLoad);
-
 public slots:
     void Initialize();
     void OnAttributeUpdated(IAttribute* attribute);
@@ -113,23 +96,19 @@ public slots:
 
     void GetOrCreateRigidBody(Entity *entity);
 
-
-private slots:
-    void EntityClicked(Entity *entity, Qt::MouseButton button, RaycastResult *raycastResult);
-    void EntityMouseMove(Entity *entity, Qt::MouseButton button, RaycastResult *raycastResult);
-    void EntityClickReleased(Entity *entity, Qt::MouseButton button, RaycastResult *raycastResult);
-
-    void SetMenuContainerPosition();
-
+    /// Set position for MenuContainer
+    /** @param distance Menu distance from camera.
+        */
+    void SetMenuContainerPosition(float3 distance);
 
 private:
-    //Framework *framework; ///< Framework.
     InputContextPtr input; ///< Input context.
     OgreWorldWeakPtr ogreWorld; ///< OgreWorld.
     MenuDataModel *menuDataModel_; ///< DataModel
     MenuRendererInterface *menuRenderer_; ///< MenuRenderer
 
     EC_Placeable* GetOrCreatePlaceableComponent();
+    EC_Placeable* GetOrCreatePlaceableComponent(Entity *entity);
 
 };
 

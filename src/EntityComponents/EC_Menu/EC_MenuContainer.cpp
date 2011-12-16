@@ -27,17 +27,12 @@
 #include "AttributeMetadata.h"
 #include "LoggingFunctions.h"
 
-//#include "FrameworkFwd.h"
-//#include "SceneFwd.h"
-//#include "InputFwd.h"
 #include "OgreWorld.h"
 #include "SceneInteract.h"
 #include "SceneAPI.h"
 #include "InputAPI.h"
 
 #include "Math/float3.h"
-
-//#include "EC_WidgetCanvas.h"
 
 #include <QtGui>
 
@@ -89,30 +84,6 @@ EC_MenuContainer::~EC_MenuContainer()
     delete menuDataModel_;
 }
 
-void EC_MenuContainer::EntityClicked(Entity *entity, Qt::MouseButton button, RaycastResult *result)
-{
-//    if (menuRenderer_)
-//        menuRenderer_->EntityClicked(entity, button, result);
-//    else
-//        LogError("MenuRenderer uninitialized!");
-}
-
-void EC_MenuContainer::EntityMouseMove(Entity *entity, Qt::MouseButton button, RaycastResult *result)
-{
-//    if (menuRenderer_)
-//        menuRenderer_->EntityMouseMove(entity, button, result);
-//    else
-//        LogError("MenuRenderer uninitialized!");
-}
-
-void EC_MenuContainer::EntityClickReleased(Entity *entity, Qt::MouseButton button, RaycastResult *result)
-{
-//    if (menuRenderer_)
-//        menuRenderer_->EntityClickReleased(entity, button, result);
-//    else
-//        LogError("MenuRenderer uninitialized!");
-}
-
 void EC_MenuContainer::Initialize()
 {
     //LogInfo("Container datamodelPtr: "+ToString(menuDataModel_));
@@ -144,13 +115,10 @@ void EC_MenuContainer::ActivateMenu()
             break;
         }
     }
-
-    SetMenuContainerPosition();
 }
 
-void EC_MenuContainer::SetMenuContainerPosition()
+void EC_MenuContainer::SetMenuContainerPosition(float3 distance)
 {
-    float3 distance;
     float3 ownEntityPos;
     EC_Placeable *cameraPlaceable=0;
 
@@ -159,9 +127,6 @@ void EC_MenuContainer::SetMenuContainerPosition()
     EntityPtr avatarCameraPtr = scene->GetEntityByName("AvatarCamera");
     EntityPtr freeLookCameraPtr = scene->GetEntityByName("FreeLookCamera");
     //Offset for menu from camera coordinates
-    distance.x=0;
-    distance.y=0;
-    distance.z=-10;
 
 
     if (avatarCameraPtr)
@@ -178,6 +143,8 @@ void EC_MenuContainer::SetMenuContainerPosition()
         LogInfo("freeLookCamera is active");
         LogInfo(ToString(cameraPlaceable->WorldPosition()));
     }
+
+    distance = cameraPlaceable->WorldOrientation() * distance;
 
     if (cameraPlaceable)
     {
@@ -224,6 +191,7 @@ QObject* EC_MenuContainer::GetMenuDataModel()
 EC_MenuItem* EC_MenuContainer::CreateMenuItem()
 {
     ComponentPtr parent = ParentEntity()->GetOrCreateComponent("EC_Placeable", AttributeChange::LocalOnly, false);
+    //ComponentPtr parent = ParentEntity()->GetOrCreateComponent("EC_Placeable");
     return CreateMenuItem(parent);
 }
 
@@ -231,6 +199,7 @@ EC_MenuItem* EC_MenuContainer::CreateMenuItem(ComponentPtr parentPlaceable)
 {
     Scene *scene = GetFramework()->Scene()->MainCameraScene();
     EntityPtr entity_ = scene->CreateEntity(scene->NextFreeIdLocal(), QStringList(), AttributeChange::LocalOnly, false);
+    //EntityPtr entity_ = scene->CreateEntity(scene->NextFreeId(), QStringList());
 
     //LogInfo("Pointer " + ToString(entity_));
     if (!entity_)
@@ -238,15 +207,21 @@ EC_MenuItem* EC_MenuContainer::CreateMenuItem(ComponentPtr parentPlaceable)
     else
     {
         Entity *MenuItemEntity = entity_.get();
+
+        EC_Placeable *itemPlaceable = GetOrCreatePlaceableComponent(MenuItemEntity);
+        itemPlaceable->SetParent(parentPlaceable.get()->ParentEntity(), false);
+
         IComponent *iComponent = MenuItemEntity->GetOrCreateComponent("EC_MenuItem", AttributeChange::LocalOnly, false).get();
+        //IComponent *iComponent = MenuItemEntity->GetOrCreateComponent("EC_MenuItem").get();
 
         if (iComponent)
         {
             EC_MenuItem *menuItem = dynamic_cast<EC_MenuItem*>(iComponent);
 
             //Sets parent entity for menuItem-entitys placeable component
-            menuItem->SetParentMenuContainer(parentPlaceable);
+            //menuItem->SetParentMenuContainer(parentPlaceable);
             scene->EmitEntityCreated(MenuItemEntity, AttributeChange::LocalOnly);
+            //scene->EmitEntityCreated(MenuItemEntity, AttributeChange::Default);
 
             return menuItem;
         }
@@ -261,7 +236,10 @@ EC_MenuItem* EC_MenuContainer::CreateMenuItem(ComponentPtr parentPlaceable)
 void EC_MenuContainer::GetOrCreateRigidBody(Entity *entity)
 {
     if (entity)
+    {
         entity->GetOrCreateComponent("EC_RigidBody", AttributeChange::LocalOnly, false).get();
+        //entity->GetOrCreateComponent("EC_RigidBody").get();
+    }
     else
         LogError("Invalid entity pointer!");
 }
@@ -278,12 +256,6 @@ void EC_MenuContainer::HandleMouseEvent(MouseEvent *event)
         if (!result)
             return;
 
-        //debug prints
-//        if (result->entity)
-//            LogInfo("Entity hit:"+result->entity->Name());
-//        else
-//            LogInfo("none");
-
         if (menuRenderer_)
             menuRenderer_->HandleMouseInput(event, result);
         else
@@ -293,10 +265,14 @@ void EC_MenuContainer::HandleMouseEvent(MouseEvent *event)
 
 EC_Placeable* EC_MenuContainer::GetOrCreatePlaceableComponent()
 {
-    if (!ParentEntity())
+    GetOrCreatePlaceableComponent(ParentEntity());
+}
+
+EC_Placeable* EC_MenuContainer::GetOrCreatePlaceableComponent(Entity *entity)
+{
+    if (!entity)
             return 0;
-    //IComponent *iComponent = parent->GetOrCreateComponentRaw(EC_3DCanvas::TypeNameStatic(), AttributeChange::LocalOnly, false);
-    IComponent *iComponent = ParentEntity()->GetOrCreateComponent("EC_Placeable", AttributeChange::LocalOnly, false).get();
+    IComponent *iComponent = entity->GetOrCreateComponent("EC_Placeable", AttributeChange::LocalOnly, false).get();
     EC_Placeable *placeable = dynamic_cast<EC_Placeable*>(iComponent);
 
     return placeable;

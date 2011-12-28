@@ -122,11 +122,11 @@ public slots:
         
         /// This variable stores the server ip address we are desiring to connect to.
         /// This is used to remember where we need to reconnect in case the connection goes down.
-        std::string serverIp;
+        /*std::string serverIp;
         /// Store the port number we are desiring to connect to. Used for reconnecting
         unsigned short serverPort;
         /// Store the transport type. Used for reconnecting
-        kNet::SocketTransportLayer serverTransport;
+        kNet::SocketTransportLayer serverTransport;*/
         
         kNet::Network network;
         kNet::NetworkServer *server;
@@ -152,8 +152,6 @@ public slots:
         /// Messageconnections properties array: Messageconnections
         QMap<QString, Ptr(kNet::MessageConnection) > serverConnection_map_;
 
-        /// Multiconnection update method
-        void ProcessConnections();
 #ifdef KNET_USE_QT
         QPointer<kNet::NetworkDialog> networkDialog;
 #endif

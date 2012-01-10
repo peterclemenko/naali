@@ -4,7 +4,7 @@ import urllib
 
 from PIL import Image
 import getopt
-import simplify
+import mesh_transform
 
 
 class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
@@ -31,6 +31,7 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
             try: self.asset, self.params = self.asset.split("&", 1)
             except ValueError: self.params = None
         except ValueError: self.asset = None
+	self.asset = self.asset[:-1] # Remove trailing slash
 
         self.logMessage("URL: '"+self.baseurl+"'")
         self.logMessage("asset: '"+str(self.asset)+"'")
@@ -116,16 +117,20 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
         #self.pushData(localfile, "model/mesh")
 	if self.p_LOD == 1:
             parameter=1
- 	    self.pushData(simplify.process(localfile, parameter), "model/mesh")
+ 	    result, file = mesh_transform.process(localfile, parameter)
+ 	    self.pushData(file, "model/mesh")
         if self.p_LOD == 2:
             parameter=2
-	    self.pushData(simplify.process(localfile, parameter), "model/mesh")
+ 	    result, file = mesh_transform.process(localfile, parameter)
+ 	    self.pushData(file, "model/mesh")
         if self.p_LOD == 3:
             parameter=3
-	    self.pushData(simplify.process(localfile, parameter), "model/mesh")
+ 	    result, file = mesh_transform.process(localfile, parameter)
+ 	    self.pushData(file, "model/mesh")
         if self.p_LOD == 4:
             parameter=4
-	    self.pushData(simplify.process(localfile, parameter), "model/mesh")
+ 	    result, file = mesh_transform.process(localfile, parameter)
+ 	    self.pushData(file, "model/mesh")
         if self.p_LOD == 5:
 	    parameter=5
             # LOD=5 shall mean unaltered original asset

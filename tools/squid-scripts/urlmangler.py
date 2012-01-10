@@ -39,23 +39,26 @@ while 1:
     url_temp = url_temp.strip()
     f.write("Received string from stdin: " + url_temp + "\n")
 
+    #print url_temp
+    #sys.stdout.flush()
+    #f.flush()
+    #continue
+
     t_url = url_temp.split(" ", 1)
     url = t_url[0]
     #f.write("Split URL: " + str(url) + "\n")
     t_head = url.split("?", 1)
     head = t_head[0]
+    if head.endswith("/"): head = head[:-1] # Remove trailing slash
     #f.write("URL Head is: "+ str(head) + "\n")
 
     # We shall redirect all images, and all meshes into translator. Other assets
     # will go pass through, as-is.
-    #
-    # at the moment we intend to support these filetypes:
-    #  - images: png, jpg, gif, tga
-    #  - meshes: mesh
 
     rewrite_url = ""
     for i in [ ".png", ".jpg", ".jpeg", ".tga", ".gif", ".mesh" ]:
         if head.endswith(i):
+            url = url.replace("?", "&")
             #f.write("Found translatable asset in the URL. Type: '"+str(i)+"'\n")
             rewrite_url = translator_prefix + url[len("http://"):len(url)]
             f.write("Translated URL: "+str(rewrite_url)+"\n")

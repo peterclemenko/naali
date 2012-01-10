@@ -1,4 +1,4 @@
-import BaseHTTPServer
+import BaseHTTPServer, SocketServer, threading
 import sys, os
 import urllib
 
@@ -36,6 +36,7 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.logMessage("URL: '"+self.baseurl+"'")
         self.logMessage("asset: '"+str(self.asset)+"'")
         self.logMessage("params: '"+str(self.params)+"'")
+        #self.logMessage("current thread: '"+str(threading.current_thread())+"'")
 
         if self.asset == None or self.params == None:
             return
@@ -197,6 +198,9 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
                 self.handleMeshAndResponse(local_filename, t)
 
 
+class MyHTTPServer(SocketServer.ThreadingMixIn, BaseHTTPServer.HTTPServer):
+    pass
+
 if __name__ == "__main__": # if run standalone
     try:
         opts, args = getopt.getopt(sys.argv[1:], "uh", ["urlparsertest", "httpserver"])
@@ -220,7 +224,7 @@ if __name__ == "__main__": # if run standalone
             sys.exit()
         elif o in ("-h", "--httpserver"):
             PORT = 8000
-            httpd = BaseHTTPServer.HTTPServer(("", PORT), Handler)
+            httpd = MyHTTPServer(("", PORT), Handler)
             print "serving at port", PORT
             httpd.serve_forever()
         else:

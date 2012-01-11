@@ -31,7 +31,7 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
             try: self.asset, self.params = self.asset.split("&", 1)
             except ValueError: self.params = None
         except ValueError: self.asset = None
-	self.asset = self.asset[:-1] # Remove trailing slash
+        if self.asset[-1] == "/": self.asset = self.asset[:-1] # Remove trailing slash
 
         self.logMessage("URL: '"+self.baseurl+"'")
         self.logMessage("asset: '"+str(self.asset)+"'")

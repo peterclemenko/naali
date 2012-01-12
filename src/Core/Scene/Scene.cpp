@@ -194,7 +194,8 @@ void Scene::RemoveAllEntities(bool send_events, AttributeChange::Type change)
     EntityList stashed_entities;
     while(it != entities_.end())
     {
-	if (it->second->KeepOverDisconnect())
+        // TODO: For now do not allow entities to keepOverDisconnect. This way removes crash on disconnect. Rethink this method?! -- Jukka V-A
+        if (it->second->KeepOverDisconnect() && 0)
 	{
 	    stashed_entities.push_back(it->second);
 	} else

@@ -178,6 +178,8 @@ void Client::Login(const QString& address, unsigned short port, kNet::SocketTran
     owner_->GetKristalliModule()->Connect(address.toStdString().c_str(), port, protocol);
     loginstate_ = ConnectionPending;
     client_id_ = 0;
+    // Save clientId, reconnect, loginstate etc
+    saveProperties();
 }
 
 void Client::Logout()
@@ -205,7 +207,7 @@ void Client::DelayedLogout()
 
 void Client::DoLogout(bool fail)
 {
-    if (loginstate_ != NotConnected)
+    if (loginstate_list_.begin().value() != NotConnected)
     {
         if (GetConnection())
         {
@@ -215,6 +217,10 @@ void Client::DoLogout(bool fail)
         
         loginstate_ = NotConnected;
         client_id_ = 0;
+        loginstate_list_.clear();
+        client_id_list_.clear();
+        reconnect_list_.clear();
+        properties_list_.clear();
                 
         emit Disconnected();
     }
@@ -281,31 +287,41 @@ QString Client::LoginPropertiesAsXml() const
 
 void Client::CheckLogin()
 {
-    kNet::MessageConnection* connection = GetConnection();
-    
-    switch (loginstate_)
+    // Using iterators to process through all properties for established connections
+    QMutableMapIterator<QString, ClientLoginState> loginstateIterator(loginstate_list_);
+    QMapIterator<QString, std::map<QString, QString> > propertiesIterator(properties_list_);
+    QMapIterator<QString, Ptr(kNet::MessageConnection)> connectionIterator = owner_->GetKristalliModule()->GetConnectionArray();
+
+    // Checklogin only happens if atleast one connection is made in KristalliProtocolModule and set to ConnectionOK state.
+    while (connectionIterator.hasNext() && loginstateIterator.hasNext())
     {
-    case ConnectionPending:
-        if ((connection) && (connection->GetConnectionState() == kNet::ConnectionOK))
+        connectionIterator.next();
+        propertiesIterator.next();
+        loginstateIterator.next();
+        //::LogInfo("Processing connection: " + connectionIterator.key() + " and loginstate: " + loginstateIterator.key());
+
+        switch (loginstateIterator.value())
         {
-            ::LogInfo("Connection pending!");
-            loginstate_ = ConnectionEstablished;
-            MsgLogin msg;
-            emit AboutToConnect(); // This signal is used as a 'function call'. Any interested party can fill in
-            // new content to the login properties of the client object, which will then be sent out on the line below.
-            msg.loginData = StringToBuffer(LoginPropertiesAsXml().toStdString());
-            connection->Send(msg);
+        case ConnectionPending:
+            if ((connectionIterator.value().ptr()) && (connectionIterator.value().ptr()->GetConnectionState() == kNet::ConnectionOK))
+            {
+                Ptr(kNet::MessageConnection) messageSender = connectionIterator.value();
+                loginstateIterator.value() = ConnectionEstablished;
+                MsgLogin msg;
+                emit AboutToConnect(); // This signal is used as a 'function call'. Any interested party can fill in
+                // new content to the login properties of the client object, which will then be sent out on the line below.
+                properties = propertiesIterator.value();
+                msg.loginData = StringToBuffer(LoginPropertiesAsXml().toStdString());
+                messageSender.ptr()->Send(msg);
+            }
+            break;
+        case LoggedIn:
+            // If we have logged in, but connection dropped, prepare to resend login
+            if ((!connectionIterator.value().ptr()) || (connectionIterator.value().ptr()->GetConnectionState() != kNet::ConnectionOK))
+                loginstateIterator.value() = ConnectionPending;
+            break;
+
         }
-        break;
-    
-    case LoggedIn:
-        // If we have logged in, but connection dropped, prepare to resend login
-        if ((!connection) || (connection->GetConnectionState() != kNet::ConnectionOK))
-        {
-            ::LogInfo("LoggedIN!");
-            loginstate_ = ConnectionPending;
-        }
-        break;
     }
 }
 
@@ -378,7 +394,7 @@ void Client::HandleLoginReply(MessageConnection* source, const MsgLoginReply& ms
         // Note: create scene & send info of login success only on first connection, not on reconnect
         if (!reconnect_)
         {
-            ::LogInfo("Client setting identifier!");
+            // This sets identifier in KristalliProtocolModule for this particular connection
             owner_->GetKristalliModule()->SetIdentifier(sceneName);
             // Create a non-authoritative scene for the client
             ScenePtr scene = framework_->Scene()->CreateScene(sceneName, true, false);
@@ -403,6 +419,7 @@ void Client::HandleLoginReply(MessageConnection* source, const MsgLoginReply& ms
                 scene->RemoveAllEntities(true, AttributeChange::LocalOnly);
         }
         reconnect_ = true;
+        saveProperties(sceneName);
     }
     else
     {
@@ -419,6 +436,48 @@ void Client::HandleClientJoined(MessageConnection* source, const MsgClientJoined
 
 void Client::HandleClientLeft(MessageConnection* source, const MsgClientLeft& msg)
 {
+}
+
+void Client::saveProperties(const QString name)
+{
+    if (name != "NEW")
+    {
+        // Container for all the connections loginstates
+        loginstate_list_.insert(name, loginstate_);
+        // Container for all the connections reconnect bool value
+        reconnect_list_.insert(name, reconnect_);
+        // Container for all the connections clientID values
+        client_id_list_.insert(name, client_id_);
+        // Container for all the connections properties
+        properties_list_.insert(name, properties_list_["NEW"]);
+        // Container for all the connections loginstates
+        loginstate_list_.remove("NEW");
+        loginstate_ = NotConnected;
+        // Container for all the connections reconnect bool value
+        reconnect_list_.remove("NEW");
+        reconnect_ = false;
+        // Container for all the connections clientID values
+        client_id_list_.remove("NEW");
+        // Container for all the connections properties
+        properties_list_.remove("NEW");
+        properties.clear();
+    }
+    else
+    {
+        // Container for all the connections loginstates
+        loginstate_list_.insert(name, loginstate_);
+        loginstate_ = NotConnected;
+        // Container for all the connections reconnect bool value
+        reconnect_list_.insert(name, reconnect_);
+        reconnect_ = false;
+        // Container for all the connections clientID values
+        client_id_list_.insert(name, client_id_);
+        client_id_ = 0;
+        // Container for all the connections properties
+        properties_list_.insert(name, properties);
+        properties.clear();
+    }
+
 }
 
 }

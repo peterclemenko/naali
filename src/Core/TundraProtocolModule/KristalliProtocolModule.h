@@ -84,6 +84,9 @@ namespace KristalliProtocol
         /// Sets serverConnection ID to match server/client scene name on login.
         void SetIdentifier(const QString identifier);
 
+        /// Returns iterator to serverConnection_map_
+        QMapIterator<QString, Ptr(kNet::MessageConnection)> GetConnectionArray() { return QMapIterator<QString, Ptr(kNet::MessageConnection)> (serverConnection_map_); }
+
 #ifdef KNET_USE_QT
 public slots:
         void OpenKNetLogWindow();

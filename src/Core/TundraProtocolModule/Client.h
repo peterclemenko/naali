@@ -12,6 +12,7 @@
 #include <map>
 #include <QObject>
 #include <QUrl>
+#include <QMap>
 
 struct MsgLogin;
 struct MsgLoginReply;
@@ -156,6 +157,9 @@ private slots:
     void DelayedLogout();
 
 private:
+    /// Saves connection properties to Containers
+    void saveProperties(const QString name = "NEW");
+
     /// Handles pending login to server
     void CheckLogin();
 
@@ -175,6 +179,15 @@ private:
     TundraLogicModule* owner_; ///< Owning module
     Framework* framework_; ///< Framework pointer
     QString sceneName;
+
+    // Container for all the connections loginstates
+    QMap<QString,ClientLoginState> loginstate_list_;
+    // Container for all the connections properties
+    QMap< QString, std::map<QString, QString> > properties_list_;
+    // Container for all the connections reconnect bool value
+    QMap<QString, bool> reconnect_list_;
+    // Container for all the connections clientID values
+    QMap<QString, u8> client_id_list_;
 };
 
 }

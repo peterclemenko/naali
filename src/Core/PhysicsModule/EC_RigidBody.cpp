@@ -414,6 +414,7 @@ void EC_RigidBody::RemoveBody()
 {
     if ((body_) && (world_))
     {
+        // TODO: Sometimes crashes here on disconnect with multiconnection specific changes. Find out why. -- Jukka V-A
         world_->GetWorld()->removeRigidBody(body_);
         delete body_;
         body_ = 0;

@@ -119,7 +119,7 @@ bool Server::Start(unsigned short port, const QString &protocol)
     // Create the default server scene
     ScenePtr scene = framework_->Scene()->CreateScene(sceneID_, true, true);
 //    framework_->Scene()->SetDefaultScene(scene);
-    owner_->GetSyncManager()->RegisterToScene(scene);
+    //owner_->GetSyncManager()->RegisterToScene(scene);
 
     emit ServerStarted();
 

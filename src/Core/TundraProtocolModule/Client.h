@@ -68,7 +68,7 @@ public:
 
     /// Returns the underlying kNet MessageConnection object that represents this connection.
     /// This function may return null in the case the connection is not active.
-    kNet::MessageConnection* GetConnection();
+    kNet::MessageConnection* GetConnection(const QString&);
 
     /// Logout immediately and delete the client scene content
     /// @param fail Pass in true if the logout was due to connection/login failure. False, if the connection was aborted deliberately by the client.
@@ -96,10 +96,10 @@ public slots:
 
     /// Disconnects the client from the current server, and also deletes all contents from the client scene.
     /** Delays the logout by one frame, so it is safe to call from scripts. */
-    void Logout();
+    void Logout(const QString&);
 
     /// Fails the current connection, to test for net hiccups and reconnect.
-    void FailConnection();
+    void FailConnection(const QString&);
 
     /// Returns client connection ID (from loginreply message). Is zero if not connected
     int GetConnectionID() const { return client_id_; }
@@ -188,6 +188,8 @@ private:
     QMap<QString, bool> reconnect_list_;
     // Container for all the connections clientID values
     QMap<QString, u8> client_id_list_;
+    // Scene to be disconnected
+    QString discScene;
 };
 
 }

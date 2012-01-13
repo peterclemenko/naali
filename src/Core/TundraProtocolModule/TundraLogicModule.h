@@ -67,7 +67,7 @@ public slots:
     void Connect(QString address, int port, QString protocol, QString username, QString password);
 
     /// Disconnects from server.
-    void Disconnect();
+    void Disconnect(const QString&);
 
     /// Saves scene to an XML file
     /// @param asBinary If true, saves as .tbin. Otherwise saves as .txml.

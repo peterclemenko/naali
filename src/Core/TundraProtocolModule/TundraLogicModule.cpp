@@ -177,7 +177,7 @@ void TundraLogicModule::Initialize()
 
     framework_->Console()->RegisterCommand("disconnect",
         "Disconnects from a server.",
-        this, SLOT(Disconnect()));
+        this, SLOT(Disconnect(QString)));
 
     framework_->Console()->RegisterCommand("savescene",
         "Saves scene into XML or binary. Usage: savescene(filename,asBinary=false,saveTemporaryEntities=false,saveLocalEntities=true)",
@@ -433,9 +433,9 @@ void TundraLogicModule::Connect(QString address, int port, QString protocol, QSt
     client_->Login(address, port, username, password, protocol);
 }
 
-void TundraLogicModule::Disconnect()
+void TundraLogicModule::Disconnect(const QString &name)
 {
-    client_->Logout();
+    client_->Logout(name);
 }
 
 void TundraLogicModule::SaveScene(QString filename, bool asBinary, bool saveTemporaryEntities, bool saveLocalEntities)

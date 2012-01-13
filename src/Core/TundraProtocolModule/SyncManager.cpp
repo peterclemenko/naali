@@ -434,11 +434,11 @@ void SyncManager::OnActionTriggered(Entity *entity, const QString &action, const
         msg.parameters.push_back(p);
     }
 
-    if (!isServer && ((type & EntityAction::Server) != 0 || (type & EntityAction::Peers) != 0) && owner_->GetClient()->GetConnection())
+    if (!isServer && ((type & EntityAction::Server) != 0 || (type & EntityAction::Peers) != 0) && owner_->GetClient()->GetConnection(QString::fromStdString(sceneUUID)))
     {
         // send without Local flag
         msg.executionType = (u8)(type & ~EntityAction::Local);
-        owner_->GetClient()->GetConnection()->Send(msg);
+        owner_->GetClient()->GetConnection(QString::fromStdString(sceneUUID))->Send(msg);
     }
 
     if (isServer && (type & EntityAction::Peers) != 0)
@@ -504,7 +504,7 @@ void SyncManager::Update(f64 frametime)
     else
     {
         // If we are client, process just the server sync state
-        kNet::MessageConnection* connection = owner_->GetKristalliModule()->GetMessageConnection();
+        kNet::MessageConnection* connection = owner_->GetKristalliModule()->GetMessageConnection(QString::fromStdString(sceneUUID));
         if (connection)
             ProcessSyncState(connection, &server_syncstate_);
     }

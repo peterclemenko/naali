@@ -38,6 +38,7 @@ Client::Client(TundraLogicModule* owner) :
     reconnect_(false),
     client_id_(0)
 {
+    discScene = "\0";
 }
 
 Client::~Client()
@@ -182,22 +183,33 @@ void Client::Login(const QString& address, unsigned short port, kNet::SocketTran
     saveProperties();
 }
 
-void Client::Logout()
+void Client::Logout(const QString &name)
 {
+    discScene = name;
     QTimer::singleShot(1, this, SLOT(DelayedLogout()));
 }
 
-void Client::FailConnection()
+void Client::FailConnection(const QString &name)
 {
-  if (GetConnection())
-  {
-      owner_->GetKristalliModule()->serverConnection->Disconnect();
-      ::LogInfo("Broke connection as requested");
-  }
-  loginstate_ = NotConnected;
-  client_id_ = 0;
-  
-  emit Disconnected();
+    QMapIterator<QString, Ptr(kNet::MessageConnection)> connectionIterator = owner_->GetKristalliModule()->GetConnectionArray();
+    while (connectionIterator.hasNext())
+    {
+        connectionIterator.next();
+        if (connectionIterator.key() == name)
+        {
+            if (connectionIterator.value())
+            {
+                Ptr(kNet::MessageConnection) msgCon = connectionIterator.value();
+                msgCon.ptr()->Disconnect();
+                ::LogInfo("Broke connection " + name +" as requested");
+            }
+            loginstate_list_[name] = NotConnected;
+            client_id_list_[name] = 0;
+
+            emit Disconnected();
+            return;
+        }
+    }
 }
 
 void Client::DelayedLogout()
@@ -207,21 +219,19 @@ void Client::DelayedLogout()
 
 void Client::DoLogout(bool fail)
 {
-    if (loginstate_list_.begin().value() != NotConnected)
+    if (loginstate_list_[discScene]!= NotConnected)
     {
-        if (GetConnection())
+        if (GetConnection(discScene))
         {
-            owner_->GetKristalliModule()->Disconnect();
+            owner_->GetKristalliModule()->Disconnect(discScene);
             ::LogInfo("Disconnected");
         }
-        
-        loginstate_ = NotConnected;
-        client_id_ = 0;
-        loginstate_list_.clear();
-        client_id_list_.clear();
-        reconnect_list_.clear();
-        properties_list_.clear();
-                
+
+        loginstate_list_.remove(discScene);
+        client_id_list_.remove(discScene);
+        reconnect_list_.remove(discScene);
+        properties_list_.remove(discScene);
+
         emit Disconnected();
     }
     
@@ -232,19 +242,22 @@ void Client::DoLogout(bool fail)
     }
     else // An user deliberately disconnected from the world, and not due to a connection error.
     {
-        framework_->Scene()->RemoveScene(sceneName);
+        framework_->Scene()->RemoveScene(discScene);
 
         // Clear all the login properties we used for this session, so that the next login session will start from an
         // empty set of login properties (just-in-case).
-        properties.clear();
+        properties_list_.remove(discScene);
     }
 
-    KristalliProtocol::KristalliProtocolModule *kristalli = framework_->GetModule<KristalliProtocol::KristalliProtocolModule>();
-    disconnect(kristalli, SIGNAL(NetworkMessageReceived(kNet::MessageConnection *, kNet::message_id_t, const char *, size_t)), 
-        this, SLOT(HandleKristalliMessage(kNet::MessageConnection*, kNet::message_id_t, const char*, size_t)));
+    if (loginstate_list_.isEmpty())
+    {
+        KristalliProtocol::KristalliProtocolModule *kristalli = framework_->GetModule<KristalliProtocol::KristalliProtocolModule>();
+        disconnect(kristalli, SIGNAL(NetworkMessageReceived(kNet::MessageConnection *, kNet::message_id_t, const char *, size_t)),
+                   this, SLOT(HandleKristalliMessage(kNet::MessageConnection*, kNet::message_id_t, const char*, size_t)));
 
-    disconnect(kristalli, SIGNAL(ConnectionAttemptFailed()), this, SLOT(OnConnectionAttemptFailed()));
-
+        disconnect(kristalli, SIGNAL(ConnectionAttemptFailed()), this, SLOT(OnConnectionAttemptFailed()));
+    }
+    discScene = "\0";
     ::LogInfo("Client logged out.");
 }
 
@@ -325,9 +338,9 @@ void Client::CheckLogin()
     }
 }
 
-kNet::MessageConnection* Client::GetConnection()
+kNet::MessageConnection* Client::GetConnection(const QString &name)
 {
-    return owner_->GetKristalliModule()->GetMessageConnection();
+    return owner_->GetKristalliModule()->GetMessageConnection(name);
 }
 
 void Client::OnConnectionAttemptFailed()
@@ -353,31 +366,44 @@ void Client::OnConnectionAttemptFailed()
 
 void Client::HandleKristalliMessage(MessageConnection* source, message_id_t id, const char* data, size_t numBytes)
 {
-    if (source != GetConnection())
+    QMapIterator<QString, Ptr(kNet::MessageConnection)> sourceIterator = owner_->GetKristalliModule()->GetConnectionArray();
+
+    // check if any of the client's messageConnections send the message
+    while (sourceIterator.hasNext())
     {
-        ::LogWarning("Client: dropping message " + ToString(id) + " from unknown source");
-        return;
+        sourceIterator.next();
+
+        if (source == sourceIterator.value().ptr())
+            break;
+        else if (source != sourceIterator.value().ptr() && sourceIterator.hasNext())
+            continue;
+        else
+        {
+            ::LogWarning("Client: dropping message " + ToString(id) + " from unknown source");
+            return;
+        }
+
     }
     
     switch (id)
     {
     case cLoginReplyMessage:
-        {
-            MsgLoginReply msg(data, numBytes);
-            HandleLoginReply(source, msg);
-        }
+    {
+        MsgLoginReply msg(data, numBytes);
+        HandleLoginReply(source, msg);
+    }
         break;
     case cClientJoinedMessage:
-        {
-            MsgClientJoined msg(data, numBytes);
-            HandleClientJoined(source, msg);
-        }
+    {
+        MsgClientJoined msg(data, numBytes);
+        HandleClientJoined(source, msg);
+    }
         break;
     case cClientLeftMessage:
-        {
-            MsgClientLeft msg(data, numBytes);
-            HandleClientLeft(source, msg);
-        }
+    {
+        MsgClientLeft msg(data, numBytes);
+        HandleClientLeft(source, msg);
+    }
         break;
     }
     emit NetworkMessageReceived(id, data, numBytes);
@@ -399,7 +425,7 @@ void Client::HandleLoginReply(MessageConnection* source, const MsgLoginReply& ms
             // Create a non-authoritative scene for the client
             ScenePtr scene = framework_->Scene()->CreateScene(sceneName, true, false);
 
-//            framework_->Scene()->SetDefaultScene(scene);
+            //framework_->Scene()->SetDefaultScene(scene);
             //owner_->GetSyncManager()->RegisterToScene(scene);
             
             UserConnectedResponseData responseData;

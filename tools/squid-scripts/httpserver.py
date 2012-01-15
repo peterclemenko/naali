@@ -31,7 +31,10 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
             try: self.asset, self.params = self.asset.split("&", 1)
             except ValueError: self.params = None
         except ValueError: self.asset = None
-        if self.asset[-1] == "/": self.asset = self.asset[:-1] # Remove trailing slash
+        try:
+            if self.asset[-1] == "/": self.asset = self.asset[:-1] # Remove trailing slash
+        except TypeError:
+            pass
 
         self.logMessage("URL: '"+self.baseurl+"'")
         self.logMessage("asset: '"+str(self.asset)+"'")
@@ -65,16 +68,27 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
               pushes the data from a file which is given as a parameter. File is treated as binary
               stream and is pushed as is.
         """
+        import hashlib, base64
         try: f = open(localfile)
         except IOError:
             self.send_response(404)
             self.logMessage("pushData() file open failed! Sending 404")
             return
-        self.send_response(200)
-        self.send_header("Content-type", mimetype)
-        self.end_headers()
-        self.wfile.write(f.read())
+        data = f.read() # Fixme: very big files will cause a jam
         f.close()
+        md5 = hashlib.md5()
+        md5.update(data)
+        #self.send_response(200)
+        #self.send_header("Content-type", mimetype)
+        self.send_response(200)
+        self.send_header("Location", "http://chiru.cie.fi/lallatilaa.png")
+        self.send_header("Content-Type", mimetype)
+        self.send_header("Content-Length", os.path.getsize(localfile))
+        self.send_header("Cache-Control", "public")
+        self.send_header("Content-MD5", base64.b64encode(md5.digest()))
+        self.end_headers()
+        self.wfile.write(data)
+        #f.close()
         os.remove(localfile)
         self.logMessage("data push successful with mimetype: "+str(mimetype))
 

@@ -1,6 +1,7 @@
 import BaseHTTPServer, SocketServer, threading
 import sys, os
-import urllib
+import urllib, urllib2
+import subprocess, bz2
 
 from PIL import Image
 import getopt
@@ -61,7 +62,7 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
             else:
                 self.logMessage("Errorneous param '"+str(p)+"'. Ignoring!")
 
-    def pushData(self, localfile, mimetype):
+    def pushData(self, localfile, mimetype, originalurl, suffix, newsuffix, headers):
         """ pushData(localfile, mimetype):
             - This method finalizes the asset transfer, once the asset has been manipulated first.
             - It formulates the HTTP response, fills in the header according to mimetype, and finally
@@ -78,21 +79,66 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
         f.close()
         md5 = hashlib.md5()
         md5.update(data)
-        #self.send_response(200)
-        #self.send_header("Content-type", mimetype)
         self.send_response(200)
-        self.send_header("Location", "http://chiru.cie.fi/lallatilaa.png")
+        self.send_header("Location", originalurl[:-len(suffix)]+newsuffix)
         self.send_header("Content-Type", mimetype)
         self.send_header("Content-Length", os.path.getsize(localfile))
         self.send_header("Cache-Control", "public")
         self.send_header("Content-MD5", base64.b64encode(md5.digest()))
         self.end_headers()
         self.wfile.write(data)
-        #f.close()
-        os.remove(localfile)
+        os.unlink(localfile)
         self.logMessage("data push successful with mimetype: "+str(mimetype))
 
-    def handleImageAndResponse(self, localfile, imagetype):
+###############################################################################
+# Image manipulation code
+#
+
+    def handleImageAndResponse_Profile1(self, originalurl, localfile, mimetype, suffix, headers):
+        """ This is the profile which translates all images into ETC1 and uses bzip2 to compress them
+        """
+        self.logMessage("LOD=%d, profile=%d, scaling image" % (self.p_LOD, self.p_Profile))
+        if self.p_LOD == 1:
+            subprocess.call(["python", "img_transform.py", "-i", str(localfile), "-o", str(localfile)+".ppm", "-f", "ppm", "-p", "6"])
+        if self.p_LOD == 2:
+            subprocess.call(["python", "img_transform.py", "-i", str(localfile), "-o", str(localfile)+".ppm", "-f", "ppm", "-p", "13"])
+        if self.p_LOD == 3:
+            subprocess.call(["python", "img_transform.py", "-i", str(localfile), "-o", str(localfile)+".ppm", "-f", "ppm", "-p", "25"])
+        if self.p_LOD == 4:
+            subprocess.call(["python", "img_transform.py", "-i", str(localfile), "-o", str(localfile)+".ppm", "-f", "ppm", "-p", "50"])
+        if self.p_LOD == 5:
+            subprocess.call(["python", "img_transform.py", "-i", str(localfile), "-o", str(localfile)+".ppm", "-f", "ppm", "-p", "100"])
+        self.logMessage("LOD=%d, packing to ETC1" % self.p_LOD)
+        subprocess.call(["./etcpack/etcpack", str(localfile)+".ppm", str(localfile)+".pkm"])
+        os.unlink(str(localfile)+".ppm")
+        self.logMessage("LOD=%d, bzip2" % self.p_LOD)
+        bf = bz2.BZ2File(str(localfile)+".pkm.bz2", "w")
+        f = open(str(localfile)+".pkm")
+        bf.write(f.read())
+        f.close()
+        bf.close()
+        os.unlink(str(localfile)+".pkm")
+        self.logMessage("done compression")
+        self.pushData(str(localfile)+".pkm.bz2", "image/"+mimetype, originalurl, suffix, "pkm.bz2", headers)
+
+    def handleImageAndResponse_Profile2(self, originalurl, localfile, mimetype, suffix, headers):
+        """ This is the profile which scales down all images and keeps original format
+        """
+        self.logMessage("LOD=%d, profile=%d, scaling image" % (self.p_LOD, self.p_Profile))
+        if self.p_LOD == 1:
+            subprocess.call(["python", "img_transform.py", "-i", str(localfile), "-o", str(localfile)+"."+suffix, "-f", mimetype, "-p", "6" ])
+        if self.p_LOD == 2:
+            subprocess.call(["python", "img_transform.py", "-i", str(localfile), "-o", str(localfile)+"."+suffix, "-f", mimetype, "-p", "13"])
+        if self.p_LOD == 3:
+            subprocess.call(["python", "img_transform.py", "-i", str(localfile), "-o", str(localfile)+"."+suffix, "-f", mimetype, "-p", "25"])
+        if self.p_LOD == 4:
+            subprocess.call(["python", "img_transform.py", "-i", str(localfile), "-o", str(localfile)+"."+suffix, "-f", mimetype, "-p", "50"])
+        if self.p_LOD == 5:
+            self.pushData(str(localfile), "image/"+mimetype, originalurl, suffix, suffix, headers)
+            return
+        self.pushData(str(localfile)+"."+suffix, "image/"+mimetype, originalurl, suffix, suffix, headers)
+
+    def handleImageAndResponse(self, originalurl, localfile, mimetype, suffix, headers):
         """ handleImageAndResponse(localfile, imagetye):
             - This method will be called once the incoming asset is recognized to be one of
               the supported image formats.
@@ -100,57 +146,43 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
             - Once the file manipulation has been completed, it will be saved into temporary
               directory, and sent to requester via pushData() method.
         """
-        import subprocess
         try: image = Image.open(localfile)
         except IOError:
             self.send_response(404)
             self.logMessage("PIL image loading failed")
             return
-        if self.p_LOD == 1:
-            subprocess.call(["python", "img_transform.py", "-i", str(localfile), "-o", str(localfile)+"."+str(imagetype), "-p", "6", "-q", "35"])
-        if self.p_LOD == 2:
-            subprocess.call(["python", "img_transform.py", "-i", str(localfile), "-o", str(localfile)+"."+str(imagetype), "-p", "13", "-q", "35"])
-        if self.p_LOD == 3:
-            subprocess.call(["python", "img_transform.py", "-i", str(localfile), "-o", str(localfile)+"."+str(imagetype), "-p", "25", "-q", "35"])
-        if self.p_LOD == 4:
-            subprocess.call(["python", "img_transform.py", "-i", str(localfile), "-o", str(localfile)+"."+str(imagetype), "-p", "50", "-q", "35"])
-        if self.p_LOD == 5:
-            # LOD=5 shall mean unaltered original asset
-            self.pushData(localfile, "image/"+imagetype)
+        if self.p_Profile == 1: # scale + ETC1 + bzip2
+            self.handleImageAndResponse_Profile1(originalurl, localfile, mimetype, suffix, headers)
             return
-        #image.save(localfile, imagetype)
-        #self.pushData(localfile, "image/"+imagetype)
-        self.pushData(localfile+"."+imagetype, "image/"+imagetype)
-        # Hax: always return jpeg
-        #image.save(localfile+".jpg", "jpeg")
-        #self.pushData(localfile+".jpg", "image/jpeg")
+        else: # Scaling only, format kept (this is also default, if profile is not defined)
+            self.handleImageAndResponse_Profile2(originalurl, localfile, mimetype, suffix, headers)
+            return
 
-    def handleMeshAndResponse(self, localfile, meshtype):
+###############################################################################
+# Mesh manipulation code
+#
+
+    def handleMeshAndResponse_Profile1(self, originalurl, localfile, mimetype, suffix, headers):
+        """ handleMeshAndReponse_Profile1(): This is the mesh detail reduction filter which
+            drops the vertex and face detail in percentage steps
+        """
+        if self.p_LOD == 5: # LOD 5 = original asset
+            self.pushData(localfile, "model/mesh", originalurl, "mesh", "mesh", headers)
+        else:
+            result, f = mesh_transform.process(localfile, self.p_LOD)
+            self.pushData(f, "model/mesh", originalurl, "mesh", "mesh", headers)
+
+    def handleMeshAndResponse(self, originalurl, localfile, mimetype, suffix, headers):
         """ handleMeshAndReponse(localfile, meshtype):
             - TBD
         """
-        #self.pushData(localfile, "model/mesh")
-	if self.p_LOD == 1:
-            parameter=1
- 	    result, file = mesh_transform.process(localfile, parameter)
- 	    self.pushData(file, "model/mesh")
-        if self.p_LOD == 2:
-            parameter=2
- 	    result, file = mesh_transform.process(localfile, parameter)
- 	    self.pushData(file, "model/mesh")
-        if self.p_LOD == 3:
-            parameter=3
- 	    result, file = mesh_transform.process(localfile, parameter)
- 	    self.pushData(file, "model/mesh")
-        if self.p_LOD == 4:
-            parameter=4
- 	    result, file = mesh_transform.process(localfile, parameter)
- 	    self.pushData(file, "model/mesh")
-        if self.p_LOD == 5:
-	    parameter=5
-            # LOD=5 shall mean unaltered original asset
-            self.pushData(localfile, "model/mesh")
-	return
+        # For meshes, only one profile is implemented. Hence, we do not (yet) check for the profile value
+        # instead execute the profile 1 implementation
+        self.handleMeshAndResponse_Profile1(originalurl, localfile, mimetype, suffix, headers)
+
+###############################################################################
+# HTTP GET request handler
+#
 
     def do_GET(self):
         """ do_GET(): custom handler for HTTP GET method
@@ -175,14 +207,17 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.baseurl = ""
         self.asset = ""
         self.params = ""
-        self.p_LOD = 5
-        self.p_Profile = 1
+        self.p_LOD = 5              # Defaults are LOD=5 (prefer no change in the image contents)
+        self.p_Profile = 2          # and Profile = 2 (keep original image format and scale only if needed)
 
         self.logMessage("---")
         self.logMessage("Incoming URL: '"+self.path)
         self.parseURL(self.path)
 
-        if self.asset == None: return
+        if self.asset == None:
+            self.send_response(404)
+            self.logMessage("Given asset is None, abort with 404")
+            return
 
         self.logMessage("Retrieving remote file: "+str(self.asset))
         local_filename, headers = urllib.urlretrieve("http://" + self.asset)
@@ -192,15 +227,36 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
             self.logMessage("Downloading of the asset failed")
             return
 
+        #req = urllib2.Request("http://" + self.asset)
+        #try:
+        #    urlhandle = urllib2.urlopen(req)
+        #except urllib2.HTTPError, e:
+        #    self.logMessage("HTTPError on url=%s Code=%d" % ("http://"+self.asset, e.code))
+        #    self.send_response(404)
+        #    return
+        #except urllib2.URLError, e:
+        #    self.logMessage("URLError on url=%s, reason=%s" % ("http://"+self.asset, e.reason))
+        #    self.send_response(404)
+        #    return
+        #data_header = urlhandle.info()
+        #data = urlhandle.read()
+        #urlhandle.close()
+        #self.logMessage("URL read into memory, size=%d bytes" % len(data))
+
+        #self.logMessage("URL.headers():")
+        #self.logMessage(headers)
+
         # At the moment jpg, png, gif and tga file formats are passed
         # from squid url mangler. In this code we shall distinguish just between
         # image and mesh assets, and act accordingly.
 
         for t in ["jpg", "jpeg", "png", "gif", "tga"]:
             if self.asset.lower().endswith(t):
-                if t == "jpg": t = "jpeg" # This is to force PIL to detect Jpeg image format
+                mimetype = t
+                if t == "jpg": mimetypet = "jpeg" # This is to force PIL to detect Jpeg image format
                 self.logMessage("Imagetype "+str(t)+" detected.")
-                self.handleImageAndResponse(local_filename, t)
+                self.handleImageAndResponse("http://"+self.asset, local_filename, mimetype, t, headers)
+                #self.handleImageAndResponse(data_header, data, t)
                 return
 
         # Same applies for the meshes. At the moment the code below supports only
@@ -209,7 +265,9 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
         for t in ["mesh"]:
             if self.asset.lower().endswith(t):
                 self.logMessage("Meshtype "+str(t)+" detected.")
-                self.handleMeshAndResponse(local_filename, t)
+                self.handleMeshAndResponse("http://"+self.asset, local_filename, "model/mesh", t, headers)
+                #self.handleMeshAndResponse(data_header, data, t)
+                return
 
 
 class MyHTTPServer(SocketServer.ThreadingMixIn, BaseHTTPServer.HTTPServer):

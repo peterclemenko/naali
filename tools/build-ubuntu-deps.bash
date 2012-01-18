@@ -156,7 +156,7 @@ else
 fi
 
 if [ x$private_ogre = xtrue ]; then
-    sudo apt-get build-dep libogre-dev
+    sudo apt-get install build-essential libogre-dev
     what=ogre
     if test -f $tags/$what-done; then
         echo $what is done

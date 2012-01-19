@@ -1,7 +1,7 @@
 import BaseHTTPServer, SocketServer, threading
 import sys, os
 import urllib, urllib2
-import subprocess, bz2
+import subprocess, gzip
 
 from PIL import Image
 import getopt
@@ -37,10 +37,10 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
         except TypeError:
             pass
 
-        self.logMessage("URL: '"+self.baseurl+"'")
-        self.logMessage("asset: '"+str(self.asset)+"'")
-        self.logMessage("params: '"+str(self.params)+"'")
-        #self.logMessage("current thread: '"+str(threading.current_thread())+"'")
+        self.logMessage("URL: "+self.baseurl)
+        self.logMessage("asset: "+str(self.asset))
+        self.logMessage("params: "+str(self.params))
+        #self.logMessage("current thread: "+str(threading.current_thread()))
 
         if self.asset == None or self.params == None:
             return
@@ -55,14 +55,14 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
 
             if p.lower() == "lod":
                 self.p_LOD = v
-                self.logMessage("Detected param '"+str(p)+"' with value '"+str(v))
+                self.logMessage("Detected param "+str(p)+" with value "+str(v))
             elif p.lower() == "profile":
                 self.p_Profile = v
-                self.logMessage("Detected param '"+str(p)+"' with value '"+str(v))
+                self.logMessage("Detected param "+str(p)+" with value "+str(v))
             else:
-                self.logMessage("Errorneous param '"+str(p)+"'. Ignoring!")
+                self.logMessage("Errorneous param "+str(p)+". Ignoring!")
 
-    def pushData(self, localfile, mimetype, originalurl, suffix, newsuffix, headers):
+    def pushData(self, localfile, mimetype, originalurl, suffix, newsuffix, headers, contentencoding=None):
         """ pushData(localfile, mimetype):
             - This method finalizes the asset transfer, once the asset has been manipulated first.
             - It formulates the HTTP response, fills in the header according to mimetype, and finally
@@ -70,6 +70,7 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
               stream and is pushed as is.
         """
         import hashlib, base64
+        from time import gmtime, strftime
         try: f = open(localfile)
         except IOError:
             self.send_response(404)
@@ -77,14 +78,20 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
             return
         data = f.read() # Fixme: very big files will cause a jam
         f.close()
+        html_time = list(gmtime())
+        if html_time[3] < 23:
+            html_time[3] += 1 # Add one hour to current time (cache item expires in one hour)
+                              # Fixme: This is a bad way of checking time overflow.. :|
         md5 = hashlib.md5()
         md5.update(data)
         self.send_response(200)
-        self.send_header("Location", originalurl[:-len(suffix)]+newsuffix)
         self.send_header("Content-Type", mimetype)
         self.send_header("Content-Length", os.path.getsize(localfile))
-        self.send_header("Cache-Control", "public")
+        self.send_header("Expires", strftime("%a, %d %b %Y %H:%M:%S +0000", html_time))
+        self.send_header("Cache-Control", "max-time=3600,public") # HTML/1.1 cache control for one hour
         self.send_header("Content-MD5", base64.b64encode(md5.digest()))
+        if contentencoding != None:
+            self.send_header("Content-Encoding", contentencoding)
         self.end_headers()
         self.wfile.write(data)
         os.unlink(localfile)
@@ -111,15 +118,15 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.logMessage("LOD=%d, packing to ETC1" % self.p_LOD)
         subprocess.call(["./etcpack/etcpack", str(localfile)+".ppm", str(localfile)+".pkm"])
         os.unlink(str(localfile)+".ppm")
-        self.logMessage("LOD=%d, bzip2" % self.p_LOD)
-        bf = bz2.BZ2File(str(localfile)+".pkm.bz2", "w")
+        self.logMessage("LOD=%d, gzip" % self.p_LOD)
+        gf = gzip.GzipFile(str(localfile)+".pkm.gz", "wb")
         f = open(str(localfile)+".pkm")
-        bf.write(f.read())
+        gf.write(f.read())
         f.close()
-        bf.close()
+        gf.close()
         os.unlink(str(localfile)+".pkm")
         self.logMessage("done compression")
-        self.pushData(str(localfile)+".pkm.bz2", "image/"+mimetype, originalurl, suffix, "pkm.bz2", headers)
+        self.pushData(str(localfile)+".pkm.gz", "image/x-etc1", originalurl, suffix, "pkm.gz", headers, "gzip")
 
     def handleImageAndResponse_Profile2(self, originalurl, localfile, mimetype, suffix, headers):
         """ This is the profile which scales down all images and keeps original format
@@ -136,7 +143,7 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
         if self.p_LOD == 5:
             self.pushData(str(localfile), "image/"+mimetype, originalurl, suffix, suffix, headers)
             return
-        self.pushData(str(localfile)+"."+suffix, "image/"+mimetype, originalurl, suffix, suffix, headers)
+        self.pushData(str(localfile)+"."+suffix, "image/"+mimetype, originalurl, suffix, suffix, headers, None)
 
     def handleImageAndResponse(self, originalurl, localfile, mimetype, suffix, headers):
         """ handleImageAndResponse(localfile, imagetye):
@@ -151,7 +158,7 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
             self.send_response(404)
             self.logMessage("PIL image loading failed")
             return
-        if self.p_Profile == 1: # scale + ETC1 + bzip2
+        if self.p_Profile == 1: # scale + ETC1 + gzip
             self.handleImageAndResponse_Profile1(originalurl, localfile, mimetype, suffix, headers)
             return
         else: # Scaling only, format kept (this is also default, if profile is not defined)
@@ -166,11 +173,67 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
         """ handleMeshAndReponse_Profile1(): This is the mesh detail reduction filter which
             drops the vertex and face detail in percentage steps
         """
-        if self.p_LOD == 5: # LOD 5 = original asset
-            self.pushData(localfile, "model/mesh", originalurl, "mesh", "mesh", headers)
-        else:
-            result, f = mesh_transform.process(localfile, self.p_LOD)
-            self.pushData(f, "model/mesh", originalurl, "mesh", "mesh", headers)
+        if self.p_LOD < 5: # LODs 1-4 require adjustments:
+
+            if self.p_LOD == 1: mlx_file = "quad20.mlx"
+            if self.p_LOD == 2: mlx_file = "quad35.mlx"
+            if self.p_LOD == 3: mlx_file = "quad50.mlx"
+            if self.p_LOD == 4: mlx_file = "quad70.mlx"
+
+            try:
+                # ogre mesh -> ogre mesh XML
+                rc = subprocess.call(["OgreXMLConverter", localfile, localfile+".xml"])
+                if rc != 0: raise ValueError
+
+                # Ogre mesh XML -> obj
+                self.logMessage("Trying assimp")
+                rc = subprocess.call(["assimp", "export", localfile+".xml", localfile+".obj"])
+                if rc != 0: raise ValueError
+                os.unlink(localfile+".xml")
+
+                # obj -> Collada + optimize
+                self.logMessage("Trying meshlabserver")
+                rc = subprocess.call(["xvfb-run", "-a", "./simplify/meshlabserver", "-i", localfile+".obj", "-o", localfile+".dae", "-s", mlx_file, "-om", "vn", "wt"])
+                if rc != 0: raise ValueError
+                os.unlink(localfile+".obj")
+
+                # Collada -> Ogre Mesh
+                self.logMessage("Trying OgreAssimpconverter")
+                rc = subprocess.call(["OgreAssimpConverter", localfile+".dae"])
+                if rc != 0: raise ValueError
+                os.unlink(localfile+".dae")
+
+                # Ogre Mesh -> Ogre Mesh XML
+                self.logMessage("Trying OgreXMLconverter")
+                rc = subprocess.call(["OgreXMLConverter", localfile+"_dae.mesh", localfile+".xml"])
+                if rc != 0: raise ValueError
+                os.unlink(localfile+"_dae.mesh")
+
+            except OSError:
+                self.logMessage("OSerror during the mesh process. check tool installation. Abort")
+                self.pushData(localfile, "model/mesh", originalurl, "mesh", "mesh", headers, None)
+                return
+            except ValueError:
+                self.logMessage("ValueError during the mesh process. Abort")
+                self.pushData(localfile, "model/mesh", originalurl, "mesh", "mesh", headers, None)
+                return
+
+
+            # At this point we have converted .xml file waiting. Compress and send it as such
+
+            self.logMessage("LOD=%d, packing to .xml.gz" % self.p_LOD)
+            gf = gzip.GzipFile(str(localfile)+".xml.gz", "wb")
+            f = open(str(localfile)+".xml")
+            gf.write(f.read())
+            f.close()
+            gf.close()
+            os.unlink(str(localfile)+".xml")
+            self.logMessage("done compression")
+            self.pushData(str(localfile)+".xml.gz", "model/x-ogremesh", originalurl, suffix, "xml.gz", headers, "gzip")
+
+        else: # LOD = 5
+            print "Pushing unmodified mesh LOD=5"
+            self.pushData(localfile, "model/mesh", originalurl, "mesh", "mesh", headers, None)
 
     def handleMeshAndResponse(self, originalurl, localfile, mimetype, suffix, headers):
         """ handleMeshAndReponse(localfile, meshtype):
@@ -198,7 +261,7 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
 
             - LOD: A number ranging from 1-5 stating the dynamic LOD level which must be
               passed to client. Default LOD is 1, meaning the lower possible translation quality
-            - Profile: A name of the
+            - Profile: A ID of the profile
 
             Note: Squid URLManger passes all relevant URLs to this script. It will handle the
             decision, which URLs shall be translated. All traffic which reaches this point of
@@ -211,7 +274,7 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.p_Profile = 2          # and Profile = 2 (keep original image format and scale only if needed)
 
         self.logMessage("---")
-        self.logMessage("Incoming URL: '"+self.path)
+        self.logMessage("Incoming URL: "+self.path)
         self.parseURL(self.path)
 
         if self.asset == None:

@@ -105,7 +105,7 @@ public slots:
         void ClientDisconnectedEvent(UserConnection *connection);
 
         /// Triggered on the client side when a server connection attempt has failed.
-        void ConnectionAttemptFailed();
+        void ConnectionAttemptFailed(QString &);
 
     private:
         /// This timer tracks when we perform the next reconnection attempt when the connection is lost.
@@ -156,6 +156,7 @@ public slots:
         /// Messageconnections properties array: Messageconnections
         QMap<QString, Ptr(kNet::MessageConnection) > serverConnection_map_;
 
+        QStringList removeConnections;
 #ifdef KNET_USE_QT
         QPointer<kNet::NetworkDialog> networkDialog;
 #endif

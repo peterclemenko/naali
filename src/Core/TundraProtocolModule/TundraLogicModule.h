@@ -83,6 +83,9 @@ public slots:
     void ImportMesh(QString filename, float tx = 0.f, float ty = 0.f, float tz = 0.f, float rx = 0.f, float ry = 0.f,
         float rz = 0.f, float sx = 1.f, float sy = 1.f, float sz = 1.f, bool inspectForMaterialsAndSkeleton = true);
 
+    /// Switches main camera scene.
+    void SwitchScene(QString name);
+
 private slots:
     void StartupSceneLoaded(AssetPtr asset);
     void StartupSceneTransferFailed(IAssetTransfer *transfer, QString reason);

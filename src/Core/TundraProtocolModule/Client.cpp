@@ -59,8 +59,8 @@ void Client::Login(const QUrl& loginUrl)
         return;
 
     // Make sure to logout to empty the previous properties map.
-    if (IsConnected())
-        DoLogout();
+    if (IsConnected(loginUrl.host(),loginUrl.port(),loginUrl.queryItemValue("protocol")))
+        return;
 
     // Set properties that the "lower" overload wont be adding:
     // Iterate all query items and parse them to go into the login properties.
@@ -98,8 +98,8 @@ void Client::Login(const QUrl& loginUrl)
 
 void Client::Login(const QString& address, unsigned short port, const QString& username, const QString& password, const QString &protocol)
 {
-    if (IsConnected())
-        DoLogout();
+    if (IsConnected(address, port, protocol))
+        return;
 
     // Set properties that the "lower" overload wont be adding.
     SetLoginProperty("username", username);
@@ -171,7 +171,7 @@ void Client::Login(const QString& address, unsigned short port, kNet::SocketTran
     KristalliProtocol::KristalliProtocolModule *kristalli = framework_->GetModule<KristalliProtocol::KristalliProtocolModule>();
     connect(kristalli, SIGNAL(NetworkMessageReceived(kNet::MessageConnection *, kNet::message_id_t, const char *, size_t)), 
             this, SLOT(HandleKristalliMessage(kNet::MessageConnection*, kNet::message_id_t, const char*, size_t)), Qt::UniqueConnection);
-    connect(kristalli, SIGNAL(ConnectionAttemptFailed()), this, SLOT(OnConnectionAttemptFailed()), Qt::UniqueConnection);
+    connect(kristalli, SIGNAL(ConnectionAttemptFailed(QString&)), this, SLOT(OnConnectionAttemptFailed(QString&)), Qt::UniqueConnection);
 
     owner_->GetKristalliModule()->Connect(address.toStdString().c_str(), port, protocol);
     loginstate_ = ConnectionPending;
@@ -225,14 +225,15 @@ void Client::DoLogout(bool fail)
         return;
     }
 
-    if (loginstate_list_[discScene]!= NotConnected)
+    ::LogInfo("Disconnecting " + discScene + "! State: " + QString::number(loginstate_list_[discScene]));
+    if (loginstate_list_[discScene] != NotConnected)
     {
         if (GetConnection(discScene))
         {
             owner_->GetKristalliModule()->Disconnect(discScene);
             ::LogInfo("Disconnected");
         }
-
+        ::LogInfo("Removing properties!");
         loginstate_list_.remove(discScene);
         client_id_list_.remove(discScene);
         reconnect_list_.remove(discScene);
@@ -248,8 +249,6 @@ void Client::DoLogout(bool fail)
     }
     else // An user deliberately disconnected from the world, and not due to a connection error.
     {
-        framework_->Scene()->RemoveScene(discScene);
-
         // Clear all the login properties we used for this session, so that the next login session will start from an
         // empty set of login properties (just-in-case).
         properties_list_.remove(discScene);
@@ -261,15 +260,30 @@ void Client::DoLogout(bool fail)
         disconnect(kristalli, SIGNAL(NetworkMessageReceived(kNet::MessageConnection *, kNet::message_id_t, const char *, size_t)),
                    this, SLOT(HandleKristalliMessage(kNet::MessageConnection*, kNet::message_id_t, const char*, size_t)));
 
-        disconnect(kristalli, SIGNAL(ConnectionAttemptFailed()), this, SLOT(OnConnectionAttemptFailed()));
+        disconnect(kristalli, SIGNAL(ConnectionAttemptFailed(QString&)), this, SLOT(OnConnectionAttemptFailed(QString&)));
     }
+    framework_->Scene()->RemoveScene(discScene);
     discScene = "\0";
     ::LogInfo("Client logged out.");
 }
 
-bool Client::IsConnected() const
+bool Client::IsConnected()
 {
     return loginstate_ == LoggedIn;
+}
+
+bool Client::IsConnected(const QString& address, unsigned short port, const QString &protocol) const
+{
+    QMap< QString, std::map<QString, QString> >::const_iterator iter = properties_list_.begin();
+    std::map<QString, QString> tempMap;
+    while (iter != properties_list_.end())
+    {
+        tempMap = iter.value();
+        if (tempMap["address"] == address && tempMap["port"] == QString::number(port) && tempMap["protocol"] == protocol)
+            return true;
+        ++iter;
+    }
+    return false;
 }
 
 void Client::SetLoginProperty(QString key, QString value)
@@ -349,8 +363,11 @@ kNet::MessageConnection* Client::GetConnection(const QString &name)
     return owner_->GetKristalliModule()->GetMessageConnection(name);
 }
 
-void Client::OnConnectionAttemptFailed()
+void Client::OnConnectionAttemptFailed(QString &key)
 {
+    QMap< QString, std::map<QString, QString> >::const_iterator iter = properties_list_.find(key);
+    properties = iter.value();
+
     // Provide a reason why the connection failed.
     QString address = GetLoginProperty("address");
     QString port = GetLoginProperty("port");
@@ -367,6 +384,7 @@ void Client::OnConnectionAttemptFailed()
     }
 
     SetLoginProperty("LoginFailed", failReason);
+    discScene = key;
     DoLogout(true);
 }
 
@@ -424,7 +442,7 @@ void Client::HandleLoginReply(MessageConnection* source, const MsgLoginReply& ms
         sceneName = QString::fromStdString(BufferToString(msg.uuid));
         
         // Note: create scene & send info of login success only on first connection, not on reconnect
-        if (!reconnect_)
+        if (!reconnect_list_[sceneName])
         {
             // This sets identifier in KristalliProtocolModule for this particular connection
             owner_->GetKristalliModule()->SetIdentifier(sceneName);
@@ -510,6 +528,20 @@ void Client::saveProperties(const QString name)
         properties.clear();
     }
 
+}
+void Client::printSceneNames()
+{
+    QMap< QString, std::map<QString, QString> >::const_iterator iter = properties_list_.begin();
+    std::map<QString, QString> tempMap = iter.value();
+
+    QStringList keys = properties_list_.keys();
+    foreach (QString key, keys)
+    {
+        ::LogInfo("> " + key + " - " + tempMap["address"] + ":" + tempMap["port"] + "/" + tempMap["protocol"] + "\n");
+        ++iter;
+        if (iter != properties_list_.end())
+            tempMap = iter.value();
+    }
 }
 
 }

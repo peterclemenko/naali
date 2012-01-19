@@ -197,6 +197,12 @@ void TundraLogicModule::Initialize()
         "Usage: importmesh(filename,x=0,y=0,z=0,xrot=0,yrot=0,zrot=0,xscale=1,yscale=1,zscale=1,inspectForMaterialsAndSkeleton=true)",
         this, SLOT(ImportMesh(QString, float, float, float, float, float, float, float, float, float, bool)));
 
+    framework_->Console()->RegisterCommand("switchscene",
+        "Switches main camera to different scene."
+        "Give scene name as parameter."
+        "Type 'print' as parameter to get available scenes.",
+        this, SLOT(SwitchScene(QString)));
+
     // Take a pointer to KristalliProtocolModule so that we don't have to take/check it every time
     kristalliModule_ = framework_->GetModule<KristalliProtocol::KristalliProtocolModule>();
     if (!kristalliModule_)
@@ -338,10 +344,17 @@ void TundraLogicModule::registerSyncManager(const QString name)
 
 void TundraLogicModule::removeSyncManager(const QString name)
 {
-    // Only works with 1 syncmanager for now.
+    ::LogInfo("Removing syncmanager " + name);
+    ::LogInfo("Before deletion!\n");
+    QStringList names = syncManagers_.keys();
+    foreach (QString name, names)
+        ::LogInfo(name);
     delete syncManagers_[name];
-    syncManagers_.clear();
-
+    syncManagers_.remove(name);
+    ::LogInfo("After deletion!\n");
+    names = syncManagers_.keys();
+    foreach (QString name, names)
+        ::LogInfo(name);
 }
 
 SyncManager* TundraLogicModule::GetSyncManager() const
@@ -544,6 +557,16 @@ void TundraLogicModule::ImportMesh(QString filename, float tx, float ty, float t
     SceneImporter importer(scene->shared_from_this());
     EntityPtr entity = importer.ImportMesh(filename, path, Transform(float3(tx,ty,tz), float3(rx,ry,rz),
         float3(sx,sy,sz)), "", "local://", AttributeChange::Default, inspect);
+}
+
+void TundraLogicModule::SwitchScene(QString name)
+{
+    EC_Camera *camera = 0;
+
+    if (name == "print")
+        client_->printSceneNames();
+    else
+        client_->emitSceneSwitch(name);
 }
 
 bool TundraLogicModule::IsServer() const

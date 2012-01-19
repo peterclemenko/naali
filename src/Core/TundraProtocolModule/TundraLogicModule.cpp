@@ -344,17 +344,8 @@ void TundraLogicModule::registerSyncManager(const QString name)
 
 void TundraLogicModule::removeSyncManager(const QString name)
 {
-    ::LogInfo("Removing syncmanager " + name);
-    ::LogInfo("Before deletion!\n");
-    QStringList names = syncManagers_.keys();
-    foreach (QString name, names)
-        ::LogInfo(name);
     delete syncManagers_[name];
     syncManagers_.remove(name);
-    ::LogInfo("After deletion!\n");
-    names = syncManagers_.keys();
-    foreach (QString name, names)
-        ::LogInfo(name);
 }
 
 SyncManager* TundraLogicModule::GetSyncManager() const

@@ -25,6 +25,7 @@ del liboggd.dll
 del libvorbisd.dll
 del libvorbisfiled.dll
 del Tundrad.exe
+del TundraConsoled.exe
 del plugins\*d.dll
 del qtplugins\codecs\*d4.dll
 del qtplugins\graphicssystems\*d4.dll
@@ -112,9 +113,9 @@ del ssleay32.dll
 rd /s /q qtplugins\phonon_backend
 
 :: Delete unused Ogre DLLs and media content
-del /q media\fonts\*.*
-del /q media\models\avatar.*
-del /q media\models\Jack.*
+::del /q media\fonts\*.*
+::del /q media\models\avatar.*
+::del /q media\models\Jack.*
 del OgrePaging.dll
 del OgreProperty.dll
 del OgreRTShaderSystem.dll
@@ -146,7 +147,7 @@ del RenderSystem_Direct3D11.dll
 ::rd /s /q jsmodules\apitest
 ::del /q media\materials\templates\*.*
 ::del QtSolutions_PropertyBrowser-2.5.dll
-::del viewerautomove.xml
+del viewerautomove.xml
 ::del jsmodules\startup\RandomAvatarMovement.js
 ::del data\ui\audio_preview.ui
 ::del data\ui\eceditor.ui

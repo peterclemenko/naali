@@ -367,8 +367,7 @@ void AssetModule::OnAssetUploaded(const QString& assetRef)
     // If we are client, send to server
     else
     {
-        ::LogInfo("onAssetUploaded fail FIX IT: " + assetRef);
-        kNet::MessageConnection* connection = tundra->GetClient()->GetConnection("temp");
+        kNet::MessageConnection* connection = tundra->GetClient()->GetConnection();
         if (connection)
             connection->Send(msg);
     }
@@ -395,8 +394,7 @@ void AssetModule::OnAssetDeleted(const QString& assetRef)
     // If we are client, send to server
     else
     {
-        ::LogInfo("onAssetDeleted fail FIX IT: " + assetRef);
-        kNet::MessageConnection* connection = tundra->GetClient()->GetConnection("Fix");
+        kNet::MessageConnection* connection = tundra->GetClient()->GetConnection();
         if (connection)
             connection->Send(msg);
     }

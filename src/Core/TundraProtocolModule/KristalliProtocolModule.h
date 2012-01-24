@@ -9,8 +9,6 @@
 #include "kNet.h"
 
 #include <QObject>
-#include <QMap>
-#include <QMutableMapIterator>
 
 #ifdef KNET_USE_QT
 #include <QPointer>
@@ -38,7 +36,6 @@ namespace KristalliProtocol
         void Connect(const char *ip, unsigned short port, kNet::SocketTransportLayer transport);
 
         void Disconnect();
-        void Disconnect(const QString&);
 
         /// Starts a Kristalli server at the given port/transport.
         /// @return true if successful
@@ -49,6 +46,7 @@ namespace KristalliProtocol
         
         /// Invoked by the Network library for each received network message.
         void HandleMessage(kNet::MessageConnection *source, kNet::message_id_t id, const char *data, size_t numBytes);
+        void HandleMessage(kNet::MessageConnection *source, kNet::packet_id_t packetId, kNet::message_id_t id, const char *data, size_t numBytes);
 
         /// Invoked by the Network library for each new connection
         void NewConnectionEstablished(kNet::MessageConnection* source);
@@ -61,7 +59,7 @@ namespace KristalliProtocol
         void SubscribeToNetworkEvents();
 
         /// Return message connection, for use by other modules (null if no connection made)
-        kNet::MessageConnection *GetMessageConnection(const QString&);
+        kNet::MessageConnection *GetMessageConnection() { return serverConnection.ptr(); }
         
         /// Return server, for use by other modules (null if not running)
         kNet::NetworkServer* GetServer() const { return server; }
@@ -79,21 +77,14 @@ namespace KristalliProtocol
         /// Gets user by connection ID. Returns null if no such connection
         UserConnection* GetUserConnection(u8 id);
 
-        /// What trasport layer to use. Read on startup from --protocol udp/tcp/sctp. Defaults to TCP if no start param was given.
+        /// What trasport layer to use. Read on startup from --protocol udp/tcp. Defaults to TCP if no start param was given.
         kNet::SocketTransportLayer defaultTransport;
-
-        /// Sets serverConnection ID to match server/client scene name on login.
-        void SetIdentifier(const QString identifier);
-
-        /// Returns iterator to serverConnection_map_
-        QMapIterator<QString, Ptr(kNet::MessageConnection)> GetConnectionArray() { return QMapIterator<QString, Ptr(kNet::MessageConnection)> (serverConnection_map_); }
 
 #ifdef KNET_USE_QT
 public slots:
         void OpenKNetLogWindow();
 #endif
 
-        Ptr(kNet::MessageConnection) serverConnection;
     signals:
         /// Triggered whenever a new message is received rom the network.
         void NetworkMessageReceived(kNet::MessageConnection *source, kNet::message_id_t id, const char *data, size_t numBytes);
@@ -115,7 +106,6 @@ public slots:
         int reconnectAttempts;
 
         void PerformConnection();
-        void PerformReconnection(QMutableMapIterator<QString, Ptr(kNet::MessageConnection)> &, QString key);
 
         /// Allocate a  connection ID for new connection
         u8 AllocateNewConnectionID() const;
@@ -126,36 +116,18 @@ public slots:
         
         /// This variable stores the server ip address we are desiring to connect to.
         /// This is used to remember where we need to reconnect in case the connection goes down.
-        /*std::string serverIp;
+        std::string serverIp;
         /// Store the port number we are desiring to connect to. Used for reconnecting
         unsigned short serverPort;
         /// Store the transport type. Used for reconnecting
-        kNet::SocketTransportLayer serverTransport;*/
+        kNet::SocketTransportLayer serverTransport;
         
         kNet::Network network;
+        Ptr(kNet::MessageConnection) serverConnection;
         kNet::NetworkServer *server;
         
         /// Users that are connected to server
         UserConnectionList connections;
-
-        /// Messageconnection properties array: IP
-        QMap<QString, std::string> serverIp_map_;
-
-        /// Messageconnection properties array: Port
-        QMap<QString, unsigned short> serverPort_map_;
-
-        /// Messageconnection properties array: serverTransport
-        QMap<QString, kNet::SocketTransportLayer> serverTransport_map_;
-
-        /// Messageconnections properties array: reconnectAttempts
-        QMap<QString, int> reconnectAttempts_map_;
-
-        /// Messageconnections properties array: Timers
-        QMap<QString, kNet::PolledTimer> reconnectTimer_map_;
-
-        /// Messageconnections properties array: Messageconnections
-        QMap<QString, Ptr(kNet::MessageConnection) > serverConnection_map_;
-
 #ifdef KNET_USE_QT
         QPointer<kNet::NetworkDialog> networkDialog;
 #endif

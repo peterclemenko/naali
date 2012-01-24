@@ -75,11 +75,6 @@
 #include "EC_LaserPointer.h"
 #endif
 
-#ifdef EC_Menu_ENABLED
-#include "EC_MenuContainer.h"
-#include "EC_MenuItem.h"
-#endif
-
 #include "EC_Camera.h"
 #include "EC_Placeable.h"
 #include "EC_AnimationController.h"
@@ -148,15 +143,11 @@ void TundraLogicModule::Load()
 #ifdef EC_LaserPointer_ENABLED
     framework_->Scene()->RegisterComponentFactory(ComponentFactoryPtr(new GenericComponentFactory<EC_LaserPointer>));
 #endif
-#ifdef EC_Menu_ENABLED
-    framework_->Scene()->RegisterComponentFactory(ComponentFactoryPtr(new GenericComponentFactory<EC_MenuContainer>));
-    framework_->Scene()->RegisterComponentFactory(ComponentFactoryPtr(new GenericComponentFactory<EC_MenuItem>));
-#endif
 }
 
 void TundraLogicModule::Initialize()
 {
-    //syncManager_ = boost::shared_ptr<SyncManager>(new SyncManager(this));
+    syncManager_ = boost::shared_ptr<SyncManager>(new SyncManager(this));
     client_ = boost::shared_ptr<Client>(new Client(this));
     server_ = boost::shared_ptr<Server>(new Server(this));
     
@@ -177,7 +168,7 @@ void TundraLogicModule::Initialize()
 
     framework_->Console()->RegisterCommand("disconnect",
         "Disconnects from a server.",
-        this, SLOT(Disconnect(QString)));
+        this, SLOT(Disconnect()));
 
     framework_->Console()->RegisterCommand("savescene",
         "Saves scene into XML or binary. Usage: savescene(filename,asBinary=false,saveTemporaryEntities=false,saveLocalEntities=true)",
@@ -231,7 +222,7 @@ void TundraLogicModule::Initialize()
             autoStartServerPort_ = GetFramework()->Config()->Get(configData).toInt();
     }
     
-    /*if (framework_->HasCommandLineParameter("--netrate"))
+    if (framework_->HasCommandLineParameter("--netrate"))
     {
         QStringList rateParam = framework_->CommandLineParameters("--netrate");
         if (rateParam.size() > 0)
@@ -243,18 +234,13 @@ void TundraLogicModule::Initialize()
             else
                 LogError("--netrate parameter is not a valid integer.");
         }
-    }*/
-
-    connect(framework_->Scene(), SIGNAL(SceneAdded(QString)), this, SLOT(registerSyncManager(QString)));
-    connect(framework_->Scene(), SIGNAL(SceneRemoved(QString)), this, SLOT(removeSyncManager(QString)));
+    }
 }
 
 void TundraLogicModule::Uninitialize()
 {
     kristalliModule_ = 0;
-    //syncManager_.reset();
-    foreach (SyncManager *sm, syncManagers_)
-        delete sm;
+    syncManager_.reset();
     client_.reset();
     server_.reset();
 }
@@ -314,40 +300,12 @@ void TundraLogicModule::Update(f64 frametime)
     if (server_)
         server_->Update(frametime);
     // Run scene sync
-    if (!syncManagers_.empty())
-        foreach (SyncManager *sm, syncManagers_)
-        {
-            //::LogInfo("Updating!");
-            sm->Update(frametime);
-        }
+    if (syncManager_)
+        syncManager_->Update(frametime);
     // Run scene interpolation
     Scene *scene = GetFramework()->Scene()->MainCameraScene();
     if (scene)
         scene->UpdateAttributeInterpolations(frametime);
-}
-
-void TundraLogicModule::registerSyncManager(const QString name)
-{
-    if (name == "TundraServer")
-        return;
-    SyncManager *sm = new SyncManager(this);
-    ScenePtr newScene = framework_->Scene()->GetScene(name);
-    sm->RegisterToScene(newScene);
-    syncManagers_.insert(name, sm);
-}
-
-void TundraLogicModule::removeSyncManager(const QString name)
-{
-    // Only works with 1 syncmanager for now.
-    delete syncManagers_[name];
-    syncManagers_.clear();
-
-}
-
-SyncManager* TundraLogicModule::GetSyncManager() const
-{
-    QMap<QString, SyncManager*>::const_iterator iter = syncManagers_.begin();
-    return iter.value();
 }
 
 void TundraLogicModule::LoadStartupScene()
@@ -443,9 +401,9 @@ void TundraLogicModule::Connect(QString address, int port, QString protocol, QSt
     client_->Login(address, port, username, password, protocol);
 }
 
-void TundraLogicModule::Disconnect(const QString &name)
+void TundraLogicModule::Disconnect()
 {
-    client_->Logout(name);
+    client_->Logout();
 }
 
 void TundraLogicModule::SaveScene(QString filename, bool asBinary, bool saveTemporaryEntities, bool saveLocalEntities)

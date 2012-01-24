@@ -169,7 +169,22 @@ void EC_Hydrax::OnActiveCameraChanged(Entity *newActiveCamera)
         Create();
     else // Otherwise, update the camera to an existing initialized Hydrax instance.
         if (impl && impl->hydrax)
-            impl->hydrax->setCamera(newActiveCamera->GetComponent<EC_Camera>()->GetCamera());
+        {
+            // Before we apply post-processing to new main camera scene, check if hydrax actually exists in that scene.
+            // Othervise post-processing effect is rendered to viewport that actually does not have hydrax.
+            Scene *scene = framework->Renderer()->MainCameraScene();
+            EntityList entList = scene->GetEntitiesWithComponent("EC_Hydrax");
+            if (!entList.empty())
+            {
+                impl->hydrax->setVisible(true);
+                impl->hydrax->setCamera(newActiveCamera->GetComponent<EC_Camera>()->GetCamera());
+                return;
+            }
+            else
+            {
+                impl->hydrax->setVisible(false);
+            }
+        }
 }
 
 void EC_Hydrax::RequestConfigAsset()

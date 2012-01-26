@@ -131,6 +131,7 @@ AddProject(Application PythonScriptModule)      # Allows Python-created modules 
 AddProject(Application BrowserUiPlugin)         # Adds a browser ui to the viewer. Features multi tabbed browsing, web login to servers, classic login, world/web bookmarks, web page caching etc.
 AddProject(Application XMPPModule)
 AddProject(Application QMLPlugin)              # Adds EC_QML
+AddProject(Application ObjectCaptureModule)     # Chiru 3D-Capturing and reconstruction module.
 
 # Both are doable in linux, but need some prep work for fetching the deps etc. For vlc some code changes need to be done.
 # Remove the win32 check once the mumble and vlc deps are fetched in the deps build scripts. For mumble this is same as msantalas libmumbleclient and vlc apt-get libvlc-dev.

@@ -5,8 +5,7 @@
  *  @brief  Chiru 3D object capture and reconstruction module.
  */
 
-#ifndef incl_ObjectCapture_ObjectCaptureModule_h
-#define incl_ObjectCapture_ObjectCaptureModule_h
+#pragma once
 
 #include "IModule.h"
 #include "CoreStringUtils.h"
@@ -61,6 +60,3 @@ private:
 };
 
 } // end of namespace: ObjectCapture
-
-
-#endif // incl_ObjectCapture_ObjectCaptureModule_h

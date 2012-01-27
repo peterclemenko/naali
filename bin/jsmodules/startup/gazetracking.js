@@ -39,7 +39,7 @@ function OnSceneAdded(scenename)
     scene = framework.Scene().GetScene(scenename);
     timer.start(25);
     //print("Scene added");
-    AddActionToFreeLookCamera();
+    action_added = false;
         
     //var inputContext = input.RegisterInputContextRaw("GazeTrackingInput", 102);
     //inputContext.SetTakeMouseEventsOverQt(true);
@@ -61,6 +61,7 @@ function AddActionToFreeLookCamera()
     cameraEnt.Action("GraspGesture").Triggered.connect(GraspGesture);
     cameraEnt.Action("ReleaseGesture").Triggered.connect(ReleaseGesture);
     cameraEnt.Action("PitchAndRoll").Triggered.connect(PitchAndRoll);
+    action_added = true;
     //cameraEnt.Exec(1, "GazeCoordinates", 50, 50);
     //action_added = true;
     //print("Got Camera");
@@ -70,6 +71,9 @@ function TimerTimeout()
 {
     if (!scene)
         return;
+
+    if (!action_added)
+        AddActionToFreeLookCamera();
 
     if (!entity_selected)
         HandleCameraRotation();

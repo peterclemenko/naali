@@ -144,6 +144,9 @@ private:
 
     /// Current running servers protocol.
     QString current_protocol_;
+
+    /// UUID for server scene.
+    QString sceneID_;
 };
 
 }

@@ -119,7 +119,7 @@ if (!framework.IsHeadless())
         {
             disconnectAction.enabled = false;
             screenshotAct.enabled = false;
-            scene = framework.Scene().GetScene("TundraServer");
+            return;
         }
         else
         {

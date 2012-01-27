@@ -179,9 +179,7 @@ void Client::DoLogout(bool fail)
     if (!keys.contains(discScene))
     {
         discScene = "\0";
-        ::LogInfo("Available scenes are...");
-        foreach (QString key, keys)
-            ::LogInfo("> " + key + "\n");
+        printSceneNames();
         return;
     }
 
@@ -192,14 +190,9 @@ void Client::DoLogout(bool fail)
             owner_->GetKristalliModule()->Disconnect(discScene);
             ::LogInfo("Disconnected");
         }
-        ::LogInfo("Removing properties!");
-        loginstate_list_.remove(discScene);
-        client_id_list_.remove(discScene);
-        reconnect_list_.remove(discScene);
-        properties_list_.remove(discScene);
 
         framework_->Scene()->RemoveScene(discScene);
-
+        removeProperties(discScene);
         emit Disconnected();
     }
 
@@ -212,7 +205,9 @@ void Client::DoLogout(bool fail)
     {
         // Clear all the login properties we used for this session, so that the next login session will start from an
         // empty set of login properties (just-in-case).
-        properties_list_.remove(discScene);
+        //properties_list_.remove(discScene);
+        if (client_id_list_.contains(discScene))
+            removeProperties(discScene);
     }
 
     if (loginstate_list_.isEmpty())
@@ -450,6 +445,7 @@ void Client::HandleClientLeft(MessageConnection* source, const MsgClientLeft& ms
 
 void Client::saveProperties(const QString name)
 {
+    // Login happened and replace NEW-marked properties with scenename.
     if (name != "NEW")
     {
         // Container for all the connections loginstates
@@ -474,6 +470,8 @@ void Client::saveProperties(const QString name)
     }
     else
     {
+        // Initial connection attempt.
+
         // Container for all the connections loginstates
         loginstate_list_.insert(name, loginstate_);
         loginstate_ = NotConnected;
@@ -506,7 +504,16 @@ void Client::printSceneNames()
 
 QStringList Client::getSceneNames()
 {
+    // Used in javascript
     return loginstate_list_.keys();
+}
+
+void Client::removeProperties(const QString &name)
+{
+    loginstate_list_.remove(discScene);
+    client_id_list_.remove(discScene);
+    reconnect_list_.remove(discScene);
+    properties_list_.remove(discScene);
 }
 
 }

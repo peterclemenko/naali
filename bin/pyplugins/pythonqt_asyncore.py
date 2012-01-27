@@ -41,13 +41,14 @@ def unhook_fd(fd):
 def hook_fd(fd, obj):
     handler_table = [
         (QSocketNotifier.Read, make_handler(select.POLLIN)),
-        (QSocketNotifier.Write, make_handler(select.POLLOUT)),
+        #(QSocketNotifier.Write, make_handler(select.POLLOUT)),
         (QSocketNotifier.Exception, make_handler(select.POLLERR))]
 
     for evtype, handler in handler_table:
         n = QSocketNotifier(fd, evtype)
         n.connect('activated(int)', handler)
         notifiers[fd].append(n)
+
 
 def make_handler(flag):
     def handler(fd):
@@ -171,14 +172,31 @@ class LineHandler(asynchat.async_chat):
 
     def op_action(self, exectype, scene, entity, action, params):
         "exectype: execution type bitfield, scene: scene name, entity: entity name or integer id, action: action name, params: list of strings"
-        if hasattr(entity, 'upper'):
+
+        if isinstance(exectype, basestring):
+            exectype = exectype_parse(exectype)
+            
+        if isinstance(entity, basestring):
             ent = tundra.Scene().MainCameraScene().GetEntityByNameRaw(entity)
         else:
-            ent = tundra.Scene().MainCameraScene().GetEntityRaw(entid)
+            ent = tundra.Scene().MainCameraScene().GetEntityRaw(entity)
             
         rv = ent.Exec(exectype, action, *params)
         print "action %s executed on entity %d" % (action, ent.id)
         return dict(returnvalue=rv)
+
+def exectype_parse(s):
+    execint = 0
+    for w in s.split(","):
+        if w.lower() == 'local':
+            execint |= 1
+        elif w.lower() == 'server':
+            execint |= 2
+        elif w.lower() == 'peers':
+            execint |= 4
+        else:
+            print "unknown exec type", w
+    return execint
 
 class LineServer(asyncore.dispatcher):
     def __init__(self):

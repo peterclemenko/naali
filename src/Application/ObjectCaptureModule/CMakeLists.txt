@@ -1,16 +1,15 @@
 macro(configure_pcl)
     if(NOT WIN32)
-    sagase_configure_package(PCL
-        NAMES pcl pcl-1.4 libpcl
-        COMPONENTS pcl pcl_apps pcl_common pcl_features pcl_filters pcl_io pcl_kdtree pcl_keypoints
-                   pcl_octree pcl_registration pcl_sample_consensus pcl_search pcl_segmentation
-                   pcl_surface
+    sagase_configure_package(pcl
+        NAMES pcl PCL
+        COMPONENTS
         PREFIXES ${ENV_TUNDRA_DEP_PATH} "/usr")
-    sagase_configure_report(PCL)
+    sagase_configure_report(pcl)
     else ()
         # Implement me
     endif()
 endmacro(configure_pcl)
+
 
 # Define target name and output directory
 init_target (ObjectCaptureModule OUTPUT plugins)

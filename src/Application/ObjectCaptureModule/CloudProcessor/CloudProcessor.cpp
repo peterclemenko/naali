@@ -12,14 +12,32 @@ namespace ObjectCapture
 {
 
 CloudProcessor::CloudProcessor() :
-    kinect_capture_(0)
+    kinect_capture_(new KinectCapture())
 {
 
 }
 
 CloudProcessor::~CloudProcessor()
 {
+    SAFE_DELETE(kinect_capture_);
+}
 
+void CloudProcessor::startCapture()
+{
+    if(!kinect_capture_->isRunning())
+        kinect_capture_->startCapture();
+}
+
+void CloudProcessor::stopCapture()
+{
+    if(kinect_capture_->isRunning())
+        kinect_capture_->stopCapture();
+}
+
+void CloudProcessor::captureCloud()
+{
+    if(kinect_capture_->isRunning())
+        captured_clouds_.append(kinect_capture_->currentCloud());
 }
 
 }

@@ -1,10 +1,10 @@
 macro(configure_pcl)
     if(NOT WIN32)
-    sagase_configure_package(pcl
-        NAMES pcl PCL
+    sagase_configure_package(PCL
+        NAMES PCL
         COMPONENTS
         PREFIXES ${ENV_TUNDRA_DEP_PATH} "/usr")
-    sagase_configure_report(pcl)
+    sagase_configure_report(PCL)
     else ()
         # Implement me
     endif()

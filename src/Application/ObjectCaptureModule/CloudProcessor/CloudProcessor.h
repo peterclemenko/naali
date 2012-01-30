@@ -6,6 +6,7 @@
 
 #include <QList>
 #include <QObject>
+#include <QImage>
 
 namespace ObjectCapture
 {
@@ -23,6 +24,9 @@ public slots:
     void startCapture();
     void stopCapture();
     void captureCloud();
+
+signals:
+    void RGBUpdated(const QImage &frame);
 
 private slots:
 

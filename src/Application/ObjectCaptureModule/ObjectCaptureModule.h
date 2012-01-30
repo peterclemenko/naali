@@ -11,6 +11,7 @@
 #include "CoreStringUtils.h"
 
 #include <QObject>
+#include <QImage>
 
 namespace ObjectCapture
 {
@@ -51,6 +52,17 @@ public:
 
 
 public slots:
+    /// Starts the Kinect capturing interface
+    void startCapturing();
+
+    /// Stops the Kinect capturing interface
+    void stopCapturing();
+
+    /// Saves current cloud
+    void captureCloud();
+
+signals:
+    void previewFrameUpdated(const QImage &frame);
 
 private slots:
 

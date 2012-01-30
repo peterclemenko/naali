@@ -14,7 +14,10 @@ namespace ObjectCapture
 CloudProcessor::CloudProcessor() :
     kinect_capture_(new KinectCapture())
 {
+    bool check;
 
+    check = connect(kinect_capture_, SIGNAL(RGBUpdated(QImage)), this, SIGNAL(RGBUpdated(QImage)));
+    Q_ASSERT(check);
 }
 
 CloudProcessor::~CloudProcessor()

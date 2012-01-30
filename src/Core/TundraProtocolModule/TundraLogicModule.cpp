@@ -323,8 +323,11 @@ void TundraLogicModule::Update(f64 frametime)
 
 void TundraLogicModule::registerSyncManager(const QString name)
 {
+    // Do not create syncmanager for dummy TundraServer scene.
     if (name == "TundraServer")
         return;
+
+    // If scene is real deal, create syncManager.
     SyncManager *sm = new SyncManager(this);
     // Had to move some logic from Init to here because --netrate cmdLine option needs syncManager.
     if (netrateBool)
@@ -342,6 +345,8 @@ void TundraLogicModule::removeSyncManager(const QString name)
 
 SyncManager* TundraLogicModule::GetSyncManager() const
 {
+    // Used by server. Returns 1st syncmanager for now because server does not have
+    // multiple scenes. If multiscene support is done for server this needs to be modified.
     QMap<QString, SyncManager*>::const_iterator iter = syncManagers_.begin();
     return iter.value();
 }

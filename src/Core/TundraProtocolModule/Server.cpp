@@ -23,6 +23,7 @@
 
 #include <QtScript>
 #include <QDomDocument>
+#include <QUuid>
 
 Q_DECLARE_METATYPE(UserConnection*);
 Q_DECLARE_METATYPE(UserConnectedResponseData*);
@@ -39,6 +40,14 @@ Server::Server(TundraLogicModule* owner) :
     current_protocol_(""),
     actionsender_(0)
 {
+    // define sceneID_ with random QUUID.
+    // If the /dev/urandom device exists, then the numbers used to construct the UUID
+    // will be of cryptographic quality, which will make the UUID unique. Otherwise,
+    // the numbers of the UUID will be obtained from the local pseudo-random number generator.
+    // On a Windows platform, a GUID is generated, which almost certainly will be unique, on this or any other system, networked or not.
+    sceneID_ = QUuid::createUuid().toString().remove(QRegExp("[{}]")).remove("-");
+    // for now calculate CRC-16 from QUUID to reduce packet size.
+    sceneID_.setNum(qChecksum(sceneID_.toAscii(),16),16);
 }
 
 Server::~Server()
@@ -92,9 +101,9 @@ bool Server::Start(unsigned short port, QString protocol)
 
     // Create the default server scene
     /// \todo Should be not hard coded like this. Give some unique id (uuid perhaps) that could be returned to the client to make the corresponding named scene in client?
-    ScenePtr scene = framework_->Scene()->CreateScene("TundraServer", true, true);
+    ScenePtr scene = framework_->Scene()->CreateScene(sceneID_, true, true);
 //    framework_->Scene()->SetDefaultScene(scene);
-    owner_->GetSyncManager()->RegisterToScene(scene);
+    //owner_->GetSyncManager()->RegisterToScene(scene);
 
     emit ServerStarted();
 
@@ -114,7 +123,7 @@ void Server::Stop()
         ::LogInfo("Stopped Tundra server. Removing TundraServer scene.");
 
         owner_->GetKristalliModule()->StopServer();
-        framework_->Scene()->RemoveScene("TundraServer");
+        framework_->Scene()->RemoveScene(sceneID_);
         
         emit ServerStopped();
 
@@ -292,6 +301,8 @@ void Server::HandleLogin(kNet::MessageConnection* source, const MsgLogin& msg)
     MsgLoginReply reply;
     reply.success = 1;
     reply.userID = user->userID;
+    // Send unique scene name to client who creates scene with this name.
+    reply.uuid = StringToBuffer(sceneID_.toStdString());
     
     // Tell everyone of the client joining (also the user who joined)
     UserConnectionList users = GetAuthenticatedUsers();

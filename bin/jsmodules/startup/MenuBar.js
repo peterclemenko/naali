@@ -102,10 +102,6 @@ if (!framework.IsHeadless())
 
     function Disconnect() {
         client.Logout();
-    	var scene = framework.Scene().GetScene("TundraServer");
-    	cameraentity = scene.GetEntityByName("FreeLookCamera");
-    	var camera = cameraentity.camera;
-		camera.SetActive(camera);
     }
 
     function Connected() {
@@ -114,8 +110,23 @@ if (!framework.IsHeadless())
 	}
 
     function Disconnected() {
-        disconnectAction.enabled = false;
-        screenshotAct.enabled = false;
+        var scene;
+        var sceneNames;
+        
+        sceneNames = client.getSceneNames();
+        if (sceneNames[0] == undefined)
+        {
+            disconnectAction.enabled = false;
+            screenshotAct.enabled = false;
+            return;
+        }
+        else
+            scene = framework.Scene().GetScene(sceneNames[0]);
+    	cameraentity = scene.GetEntityByName("AvatarCamera");
+    	if (!cameraentity)
+    	    cameraentity = scene.GetEntityByName("FreeLookCamera");
+    	var camera = cameraentity.camera;
+		camera.SetActive(camera);
 	}
     function Quit() {
         framework.Exit();

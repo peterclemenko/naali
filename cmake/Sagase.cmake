@@ -123,11 +123,12 @@ macro (sagase_configure_package PREFIX)
         # which it tries to namespace by choosing all caps variable names.
         # when searching for a package who's name is all caps, this appears to
         # cause a name collision, and is thus bypassed.
-        if (NOT name_ STREQUAL name_upper_)
+        
+        #if (NOT name_ STREQUAL name_upper_)
             
-            # try built-in CMake modules first
-            find_package (${name_} QUIET COMPONENTS ${PKG_COMPONENTS})
-        endif ()
+        # try built-in CMake modules first
+        find_package (${name_} QUIET COMPONENTS ${PKG_COMPONENTS})
+        #endif ()
 
         if (${name_}_FOUND OR ${name_upper_}_FOUND)
             message (STATUS "sagase: configured " ${PREFIX} " using find_package")

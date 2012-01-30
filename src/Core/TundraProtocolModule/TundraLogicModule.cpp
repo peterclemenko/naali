@@ -90,7 +90,9 @@ TundraLogicModule::TundraLogicModule() :
     IModule("TundraLogic"),
     autoStartServer_(false),
     autoStartServerPort_(cDefaultPort),
-    kristalliModule_(0)
+    kristalliModule_(0),
+    netrateBool(false),
+    netrateValue(0)
 {
 }
 
@@ -147,7 +149,6 @@ void TundraLogicModule::Load()
 
 void TundraLogicModule::Initialize()
 {
-    syncManager_ = boost::shared_ptr<SyncManager>(new SyncManager(this));
     client_ = boost::shared_ptr<Client>(new Client(this));
     server_ = boost::shared_ptr<Server>(new Server(this));
     
@@ -168,7 +169,7 @@ void TundraLogicModule::Initialize()
 
     framework_->Console()->RegisterCommand("disconnect",
         "Disconnects from a server.",
-        this, SLOT(Disconnect()));
+        this, SLOT(Disconnect(QString)));
 
     framework_->Console()->RegisterCommand("savescene",
         "Saves scene into XML or binary. Usage: savescene(filename,asBinary=false,saveTemporaryEntities=false,saveLocalEntities=true)",
@@ -230,17 +231,25 @@ void TundraLogicModule::Initialize()
             bool ok;
             int rate = rateParam.first().toInt(&ok);
             if (ok && rate > 0)
-                syncManager_->SetUpdatePeriod(1.f / (float)rate);
+            {
+                // Had to move some logic from here to registerSyncManager() because --netrate cmdLine option needs syncManager.
+                netrateBool = true;
+                netrateValue = rate;
+            }
             else
                 LogError("--netrate parameter is not a valid integer.");
-        }
+        }        
     }
+    connect(framework_->Scene(), SIGNAL(SceneAdded(QString)), this, SLOT(registerSyncManager(QString)));
+    connect(framework_->Scene(), SIGNAL(SceneRemoved(QString)), this, SLOT(removeSyncManager(QString)));
 }
 
 void TundraLogicModule::Uninitialize()
 {
     kristalliModule_ = 0;
-    syncManager_.reset();
+    foreach (SyncManager *sm, syncManagers_)
+        delete sm;
+    syncManagers_.clear();
     client_.reset();
     server_.reset();
 }
@@ -300,12 +309,46 @@ void TundraLogicModule::Update(f64 frametime)
     if (server_)
         server_->Update(frametime);
     // Run scene sync
-    if (syncManager_)
-        syncManager_->Update(frametime);
+    if (!syncManagers_.empty())
+        foreach (SyncManager *sm, syncManagers_)
+        {
+            //::LogInfo("Updating!");
+            sm->Update(frametime);
+        }
     // Run scene interpolation
     Scene *scene = GetFramework()->Scene()->MainCameraScene();
     if (scene)
         scene->UpdateAttributeInterpolations(frametime);
+}
+
+void TundraLogicModule::registerSyncManager(const QString name)
+{
+    // Do not create syncmanager for dummy TundraServer scene.
+    if (name == "TundraServer")
+        return;
+
+    // If scene is real deal, create syncManager.
+    SyncManager *sm = new SyncManager(this);
+    // Had to move some logic from Init to here because --netrate cmdLine option needs syncManager.
+    if (netrateBool)
+        sm->SetUpdatePeriod(1.f / (float)netrateValue);
+    ScenePtr newScene = framework_->Scene()->GetScene(name);
+    sm->RegisterToScene(newScene);
+    syncManagers_.insert(name, sm);
+}
+
+void TundraLogicModule::removeSyncManager(const QString name)
+{
+    delete syncManagers_[name];
+    syncManagers_.remove(name);
+}
+
+SyncManager* TundraLogicModule::GetSyncManager() const
+{
+    // Used by server. Returns 1st syncmanager for now because server does not have
+    // multiple scenes. If multiscene support is done for server this needs to be modified.
+    QMap<QString, SyncManager*>::const_iterator iter = syncManagers_.begin();
+    return iter.value();
 }
 
 void TundraLogicModule::LoadStartupScene()
@@ -401,9 +444,9 @@ void TundraLogicModule::Connect(QString address, int port, QString protocol, QSt
     client_->Login(address, port, username, password, protocol);
 }
 
-void TundraLogicModule::Disconnect()
+void TundraLogicModule::Disconnect(const QString& name)
 {
-    client_->Logout();
+    client_->Logout(name);
 }
 
 void TundraLogicModule::SaveScene(QString filename, bool asBinary, bool saveTemporaryEntities, bool saveLocalEntities)

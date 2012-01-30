@@ -101,8 +101,8 @@ mkdir -p $viewer/bin/qtscript-plugins/script
 cp -lf $build/$what/plugins/script/* $viewer/bin/qtscript-plugins/script/
 
 
-what=kNet
-if false && test -f $tags/$what-done; then 
+what=knet
+if test -f $tags/$what-done; then 
    echo $what is done
 else
     cd $build
@@ -119,7 +119,7 @@ else
 fi
 
 if [ x$private_ogre = xtrue ]; then
-    sudo apt-get install build-essential libogre-dev
+    sudo apt-get build-dep libogre-dev
     what=ogre
     if test -f $tags/$what-done; then
         echo $what is done

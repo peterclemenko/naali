@@ -114,7 +114,6 @@ if (!framework.IsHeadless())
         var sceneNames;
         
         sceneNames = client.getSceneNames();
-        print("\nScenes: " + sceneNames + "\n");
         if (sceneNames[0] == undefined)
         {
             disconnectAction.enabled = false;
@@ -122,10 +121,7 @@ if (!framework.IsHeadless())
             return;
         }
         else
-        {
-            print("sceneNames[0] = " + sceneNames[0]);
             scene = framework.Scene().GetScene(sceneNames[0]);
-        }
     	cameraentity = scene.GetEntityByName("AvatarCamera");
     	if (!cameraentity)
     	    cameraentity = scene.GetEntityByName("FreeLookCamera");

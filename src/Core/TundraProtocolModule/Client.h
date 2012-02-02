@@ -122,7 +122,7 @@ public slots:
     void printSceneNames();
 
     /// Signal to javascript to switch main camera scene
-    void emitSceneSwitch(const QString name) { emit switchScene(name); }
+    void emitSceneSwitch(const QString name);
 
     /// Get connected scene names
     QStringList getSceneNames();
@@ -148,6 +148,8 @@ signals:
     /// Emitted when a login attempt failed to a server.
     void LoginFailed(const QString &reason);
 
+    void switchScene(const QString);
+
 private slots:
     /// Handles a Kristalli protocol message
     void HandleKristalliMessage(kNet::MessageConnection* source, kNet::message_id_t id, const char* data, size_t numBytes);
@@ -156,8 +158,6 @@ private slots:
 
     /// Actually perform a delayed logout
     void DelayedLogout();
-
-    void switchScene(const QString name);
 
 private:
     /// Saves connection properties to Containers

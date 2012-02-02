@@ -188,6 +188,10 @@ void TundraLogicModule::Initialize()
         "Imports a single mesh as a new entity. Position can be specified optionally."
         "Usage: importmesh(filename,x=0,y=0,z=0,xrot=0,yrot=0,zrot=0,xscale=1,yscale=1,zscale=1,inspectForMaterialsAndSkeleton=true)",
         this, SLOT(ImportMesh(QString, float, float, float, float, float, float, float, float, float, bool)));
+    framework_->Console()->RegisterCommand("switch",
+        "Switches to different scene if multiple scenes exist."
+        " Usage: switch(scenename). To get scenenames usage: switch(print).",
+        this, SLOT(switchscene(QString)));
 
     // Take a pointer to KristalliProtocolModule so that we don't have to take/check it every time
     kristalliModule_ = framework_->GetModule<KristalliProtocol::KristalliProtocolModule>();
@@ -341,6 +345,10 @@ void TundraLogicModule::removeSyncManager(const QString name)
 {
     delete syncManagers_[name];
     syncManagers_.remove(name);
+}
+
+void TundraLogicModule::switchscene(const QString name) {
+    client_->emitSceneSwitch(name);
 }
 
 SyncManager* TundraLogicModule::GetSyncManager() const

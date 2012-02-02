@@ -516,5 +516,12 @@ void Client::removeProperties(const QString &name)
     properties_list_.remove(discScene);
 }
 
+void Client::emitSceneSwitch(const QString name) {
+    if (!loginstate_list_.contains(name))
+        printSceneNames();
+    else
+        emit switchScene(name);
+}
+
 }
 

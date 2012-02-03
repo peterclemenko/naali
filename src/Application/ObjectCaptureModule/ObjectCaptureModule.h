@@ -68,7 +68,7 @@ public slots:
 
 signals:
     void previewFrameUpdated(const QImage &frame);
-    void objectCaptured(int entity_id);
+    void objectCaptured(unsigned int entity_id);
 
 private slots:
     void registrationFinished();

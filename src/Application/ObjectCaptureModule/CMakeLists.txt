@@ -35,7 +35,7 @@ configure_pcl()
 use_package(PCL)
 
 use_app_modules (ObjectCaptureModule)
-use_core_modules (Framework Math)
+use_core_modules (Framework OgreRenderingModule Math)
 
 build_library (${TARGET_NAME} SHARED ${SOURCE_FILES} ${MOC_SRCS} ${UI_SRCS} ${RESOURCE_SRCS})
 

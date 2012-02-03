@@ -9,6 +9,11 @@
 #include "MeshReconstructor/MeshReconstructor.h"
 
 #include "Framework.h"
+#include "SceneAPI.h"
+#include "Scene.h"
+#include "IComponent.h"
+#include "Entity.h"
+#include "EC_Mesh.h"
 #include "LoggingFunctions.h"
 
 #include "MemoryLeakCheck.h"
@@ -90,6 +95,21 @@ void ObjectCaptureModule::registrationFinished()
 void ObjectCaptureModule::cloudProcessingFinished()
 {
     //Add finalized mesh to scene
+    Scene *scene = framework_->Scene()->MainCameraScene();
+
+    EntityPtr entity_ = scene->CreateEntity(scene->NextFreeIdLocal(), QStringList(), AttributeChange::LocalOnly, false);
+    if (!entity_)
+        LogError("Couldn't create entity with given ID");
+    else
+    {
+        Entity *meshEntity = entity_.get();
+        IComponent *iComponent = meshEntity->GetOrCreateComponent("EC_Mesh", AttributeChange::LocalOnly, false).get();
+        if (iComponent)
+        {
+            scene->EmitEntityCreated(meshEntity, AttributeChange::LocalOnly);
+            emit objectCaptured(meshEntity->Id());
+        }
+    }
 }
 
 }// end of namespace: ObjectCapture

@@ -4,6 +4,7 @@
 #include "DebugOperatorNew.h"
 
 #include "ObjectCaptureModule.h"
+#include <pcl/io/pcd_io.h>
 #include "CloudProcessor/CloudProcessor.h"
 #include "MeshReconstructor/MeshReconstructor.h"
 
@@ -17,7 +18,7 @@ namespace ObjectCapture
 ObjectCaptureModule::ObjectCaptureModule() :
     IModule("ObjectCapture"),
     cloud_processor_(new CloudProcessor()),
-    mesh_reconstructor_(0)
+    mesh_reconstructor_(new MeshReconstructor())
 {
     bool check;
 
@@ -25,6 +26,9 @@ ObjectCaptureModule::ObjectCaptureModule() :
     Q_ASSERT(check);
 
     check = connect(cloud_processor_, SIGNAL(registrationFinished()), this, SLOT(registrationFinished()));
+    Q_ASSERT(check);
+
+    check = connect(mesh_reconstructor_, SIGNAL(cloudProcessingFinished()), this, SLOT(cloudProcessingFinished()));
     Q_ASSERT(check);
 }
 
@@ -77,7 +81,15 @@ void ObjectCaptureModule::registrationFinished()
     if(captured_cloud.get())
     {
         // pass for meshreconstructor
+        //LogInfo("setInputCloud()");
+        mesh_reconstructor_->setInputCloud(captured_cloud);
+        mesh_reconstructor_->processCloud();
     }
+}
+
+void ObjectCaptureModule::cloudProcessingFinished()
+{
+    //Add finalized mesh to scene
 }
 
 }// end of namespace: ObjectCapture

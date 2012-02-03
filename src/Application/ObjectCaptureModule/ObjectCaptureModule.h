@@ -72,6 +72,7 @@ signals:
 
 private slots:
     void registrationFinished();
+    void cloudProcessingFinished();
 
 private:
     CloudProcessor *cloud_processor_;

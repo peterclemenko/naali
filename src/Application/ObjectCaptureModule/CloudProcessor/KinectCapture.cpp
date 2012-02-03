@@ -14,13 +14,19 @@
 namespace ObjectCapture
 {
 
-KinectCapture::KinectCapture()
+KinectCapture::KinectCapture() :
+    rgb_update_frequency_(15)
 {
     kinect_interface_ = new pcl::OpenNIGrabber();
     rgb_frame_ = QImage(640, 480, QImage::Format_RGB888);
 
     boost::function<void (const PointCloud::ConstPtr&)> f = boost::bind(&KinectCapture::kinect_callback_, this, _1);
     kinect_interface_->registerCallback(f);
+
+    bool check;
+    check = connect(&rgb_update_timer_, SIGNAL(timeout()), this, SLOT(updateRGBImage()));
+
+    rgb_update_timer_.start(1000/rgb_update_frequency_);
 }
 
 KinectCapture::~KinectCapture()
@@ -63,29 +69,37 @@ void KinectCapture::updateRGBImage()
 {
     /// \todo need to create new image for each frame?
     /// \todo figure out a way avoid innecessary copying of rgb values.
-    QRgb value;
+    if(!kinect_interface_->isRunning())
+        return;
 
-    for(int u = 0; u < 480; u++) {
-        for(int v = 0; v < 640; v++) {
-            if(isnan(current_cloud_->points[(u*640)+v].x))
-                value = qRgb(255, 63, 139);
-            else
-                value = qRgb(current_cloud_->points[(u*640)+v].r, current_cloud_->points[(u*640)+v].g, current_cloud_->points[(u*640)+v].b);
-            rgb_frame_.setPixel(v, u, value);
+    if(cloud_mutex_.tryLock()) {
+        PointCloud::ConstPtr cloud = current_cloud_; // Could cause crash if kinect_callback_ is called at wrong time?
+        cloud_mutex_.unlock();
+
+        QRgb value;
+        for(int u = 0; u < 480; u++) {
+            for(int v = 0; v < 640; v++) {
+                if(isnan(cloud->points[(u*640)+v].x))
+                    value = qRgb(255, 63, 139);
+                else
+                    value = qRgb(cloud->points[(u*640)+v].r, cloud->points[(u*640)+v].g, cloud->points[(u*640)+v].b);
+                rgb_frame_.setPixel(v, u, value);
+            }
         }
-    }
 
-    emit RGBUpdated(rgb_frame_);
+        emit RGBUpdated(rgb_frame_);
+    }
 }
 
 void KinectCapture::kinect_callback_(const PointCloud::ConstPtr &cloud)
 {
-    current_cloud_.reset();
-    current_cloud_ = cloud;
+    if(cloud_mutex_.tryLock()) {
+        current_cloud_.reset();
+        current_cloud_ = cloud;
+        cloud_mutex_.unlock();
 
-    updateRGBImage();
-
-    emit cloudUpdated(current_cloud_);
+        emit cloudUpdated(current_cloud_);
+    }
 }
 
 }

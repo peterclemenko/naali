@@ -20,19 +20,24 @@ public:
     CloudProcessor();
     ~CloudProcessor();
 
+    PointCloud::Ptr finalCloud() const;
+
 public slots:
     void startCapture();
     void stopCapture();
     void captureCloud();
+    void registerClouds();
 
 signals:
     void RGBUpdated(const QImage &frame);
+    void registrationFinished();
 
 private slots:
 
 private:
     KinectCapture *kinect_capture_;
     QList<PointCloud::ConstPtr> captured_clouds_;
+    PointCloud::Ptr final_cloud_;
 };
 
 }

@@ -6,6 +6,8 @@
 
 #include <QObject>
 #include <QImage>
+#include <QTimer>
+#include <QMutex>
 
 namespace pcl
 {
@@ -43,6 +45,9 @@ private:
     pcl::Grabber *kinect_interface_;
     PointCloud::ConstPtr current_cloud_;
     QImage rgb_frame_;
+    int rgb_update_frequency_; // Hz
+    QTimer rgb_update_timer_;
+    QMutex cloud_mutex_;
 };
 
 }

@@ -23,6 +23,9 @@ ObjectCaptureModule::ObjectCaptureModule() :
 
     check = connect(cloud_processor_, SIGNAL(RGBUpdated(QImage)), this, SIGNAL(previewFrameUpdated(QImage)));
     Q_ASSERT(check);
+
+    check = connect(cloud_processor_, SIGNAL(registrationFinished()), this, SLOT(registrationFinished()));
+    Q_ASSERT(check);
 }
 
 ObjectCaptureModule::~ObjectCaptureModule()
@@ -61,6 +64,20 @@ void ObjectCaptureModule::stopCapturing()
 void ObjectCaptureModule::captureCloud()
 {
     cloud_processor_->captureCloud();
+}
+
+void ObjectCaptureModule::finalizeCapturing()
+{
+    cloud_processor_->registerClouds();
+}
+
+void ObjectCaptureModule::registrationFinished()
+{
+    PointCloud::Ptr captured_cloud;
+    if(captured_cloud.get())
+    {
+        // pass for meshreconstructor
+    }
 }
 
 }// end of namespace: ObjectCapture

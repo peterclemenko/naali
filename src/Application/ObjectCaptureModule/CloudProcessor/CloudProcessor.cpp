@@ -6,6 +6,8 @@
 #include "CloudProcessor.h"
 #include "KinectCapture.h"
 
+#include "pcl/filters/passthrough.h"
+
 #include "MemoryLeakCheck.h"
 
 namespace ObjectCapture
@@ -41,6 +43,33 @@ void CloudProcessor::captureCloud()
 {
     if(kinect_capture_->isRunning())
         captured_clouds_.append(kinect_capture_->currentCloud());
+}
+
+void CloudProcessor::registerClouds()
+{
+    if(captured_clouds_.isEmpty())
+        return;
+
+    kinect_capture_->stopCapture();
+
+    // fake registration process and only apply passthrough filter for now
+    PointCloud::Ptr filtered_cloud(new PointCloud);
+    pcl::PassThrough<pcl::PointXYZRGB> passthrough;
+    passthrough.setFilterFieldName("z");
+    passthrough.setFilterLimits(0.0, 1.4);
+    passthrough.setInputCloud(captured_clouds_.at(0));
+    passthrough.filter(*filtered_cloud);
+
+    final_cloud_ = filtered_cloud;
+
+    captured_clouds_.clear(); // clear dataset
+
+    emit registrationFinished();
+}
+
+PointCloud::Ptr CloudProcessor::finalCloud() const
+{
+    return final_cloud_;
 }
 
 }

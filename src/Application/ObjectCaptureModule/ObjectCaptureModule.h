@@ -10,6 +10,8 @@
 #include "IModule.h"
 #include "CoreStringUtils.h"
 
+#include "ObjectCaptureModuleDefines.h"
+
 #include <QObject>
 #include <QImage>
 
@@ -55,16 +57,21 @@ public slots:
     /// Starts the Kinect capturing interface
     void startCapturing();
 
-    /// Stops the Kinect capturing interface
+    /// Stops the Kinect capturing interface without processing the clouds
     void stopCapturing();
 
     /// Saves current cloud
     void captureCloud();
 
+    /// Stops capturing and processes the clouds to a mesh
+    void finalizeCapturing();
+
 signals:
     void previewFrameUpdated(const QImage &frame);
+    void objectCaptured(int entity_id);
 
 private slots:
+    void registrationFinished();
 
 private:
     CloudProcessor *cloud_processor_;

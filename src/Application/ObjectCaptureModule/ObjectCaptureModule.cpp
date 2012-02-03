@@ -12,8 +12,11 @@
 #include "SceneAPI.h"
 #include "Scene.h"
 #include "IComponent.h"
+
 #include "Entity.h"
 #include "EC_Mesh.h"
+#include "EC_Placeable.h"
+
 #include "LoggingFunctions.h"
 
 #include "MemoryLeakCheck.h"
@@ -108,9 +111,17 @@ void ObjectCaptureModule::cloudProcessingFinished()
         {
             EC_Mesh *mesh = dynamic_cast<EC_Mesh*>(iComponent);
             mesh->SetMesh("testmesh.mesh");
-            scene->EmitEntityCreated(meshEntity, AttributeChange::LocalOnly);
-            emit objectCaptured(meshEntity->Id());
         }
+
+        iComponent = meshEntity->GetOrCreateComponent("EC_Placeable", AttributeChange::LocalOnly, false).get();
+        if (iComponent)
+        {
+            EC_Placeable *placeable = dynamic_cast<EC_Placeable*>(iComponent);
+            placeable->setvisible(false);
+        }
+
+        scene->EmitEntityCreated(meshEntity, AttributeChange::LocalOnly);
+        emit objectCaptured(meshEntity->Id());
     }
 }
 

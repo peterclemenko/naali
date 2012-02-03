@@ -21,6 +21,7 @@
 
 #include <pcl/surface/gp3.h>
 
+#include "LoggingFunctions.h"
 #include "MemoryLeakCheck.h"
 namespace ObjectCapture
 {
@@ -42,9 +43,9 @@ void MeshReconstructor::processCloud()
 {
     //LogInfo("NormalEstimation()");
     NormalEstimation();
-    std::cout<<"GreedyProjection()";
+    LogInfo("GreedyProjection()");
     GreedyProjection_Mesher();
-    std::cout<<"convertVtkToMesh()";
+    LogInfo("convertVtkToMesh()");
     convertVtkToMesh();
 
     emit cloudProcessingFinished();
@@ -56,15 +57,15 @@ void MeshReconstructor::convertVtkToMesh()
 
     sprintf(Command, "python OgreMeshXML.py -i testmesh.vtk -o testmesh.xml");
     if (system(Command))
-        std::cerr<<"Error while converting vtk to xml!\n";
+        LogInfo("Error while converting vtk to xml!\n");
 
     sprintf(Command, "OgreXMLConverter testmesh.xml testmesh.mesh");
     if (system(Command))
-        std::cerr<<"Error while converting xml to mesh!\n";
+        LogInfo("Error while converting xml to mesh!\n");
 
-    sprintf(Command, "mv testmesh.mesh scenes/Chiru/Avatar/");
+    sprintf(Command, "mv testmesh.mesh data/assets/");
     if (system(Command))
-        std::cerr<<"Error while moving mesh to scenes folder!\n";
+        LogInfo("Error while moving mesh to scenes folder!\n");
 }
 
 void MeshReconstructor::MovingLeastSquares()
@@ -94,7 +95,7 @@ void MeshReconstructor::MovingLeastSquares()
     mls.setSqrGaussParam(0.0009);
 
     // Reconstruct
-    std::cout<<"starting MovingLeastSquare reconstruction"<<std::endl;
+    LogInfo("starting MovingLeastSquare reconstruction");
     mls.reconstruct (*smoothed_cloud_);
 
     // Concatenate fields for saving
@@ -131,7 +132,7 @@ void MeshReconstructor::GreedyProjection_Mesher()
     // beging of meshing
     pcl::PolygonMesh output;
 
-    std::cout << "Meshing" << std::endl;
+    LogInfo("Meshing");
     pcl::GreedyProjectionTriangulation<pcl::PointXYZRGBNormal> mesher;
     pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr cloud_with_normals(new pcl::PointCloud<pcl::PointXYZRGBNormal>());
     pcl::concatenateFields(*point_cloud_, *normals_, *cloud_with_normals);
@@ -157,7 +158,7 @@ void MeshReconstructor::GreedyProjection_Mesher()
     std::stringstream ssp;
     ssp << "testmesh.vtk";
 
-    std::cerr << "Saving file: " << ssp.str()<< std::endl;
+    LogInfo( "Saving file: " + ssp.str());
     pcl::io::saveVTKFile(ssp.str(), output);
 }
 } //end of namespace ObjectCapture

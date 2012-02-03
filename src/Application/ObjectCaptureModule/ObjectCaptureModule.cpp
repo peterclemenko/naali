@@ -99,13 +99,15 @@ void ObjectCaptureModule::cloudProcessingFinished()
 
     EntityPtr entity_ = scene->CreateEntity(scene->NextFreeIdLocal(), QStringList(), AttributeChange::LocalOnly, false);
     if (!entity_)
-        LogError("Couldn't create entity with given ID");
+        LogError("ObjectCapture: Error while creating entity for mesh");
     else
     {
         Entity *meshEntity = entity_.get();
         IComponent *iComponent = meshEntity->GetOrCreateComponent("EC_Mesh", AttributeChange::LocalOnly, false).get();
         if (iComponent)
         {
+            EC_Mesh *mesh = dynamic_cast<EC_Mesh*>(iComponent);
+            mesh->SetMesh("testmesh.mesh");
             scene->EmitEntityCreated(meshEntity, AttributeChange::LocalOnly);
             emit objectCaptured(meshEntity->Id());
         }

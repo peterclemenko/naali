@@ -1,0 +1,43 @@
+// For conditions of distribution and use, see copyright notice in LICENSE
+
+#pragma once
+#include <QObject>
+
+#include "ObjectCaptureModuleDefines.h"
+#include <pcl/point_types.h>
+#include <pcl/pcl_base.h>
+
+namespace ObjectCapture
+{
+
+class MeshReconstructor : public QObject
+{
+    Q_OBJECT
+
+public:
+    MeshReconstructor();
+    ~MeshReconstructor();
+
+public slots:
+    void setInputCloud(PointCloud::Ptr inputCloud);
+    void processCloud();
+
+private slots:
+    void convertVtkToMesh();
+    void MovingLeastSquares();
+    void NormalEstimation();
+
+    /// Create mesh with greedy projection
+    /// @param outputCloud Boost pointer to output cloud
+    void GreedyProjection_Mesher();
+
+signals:
+    void cloudProcessingFinished();
+
+private:
+    PointCloud::Ptr point_cloud_;
+    SurfaceNormals::Ptr normals_;
+    PointCloud::Ptr smoothed_cloud_;
+
+};
+} //end of namespace ObjectCapture

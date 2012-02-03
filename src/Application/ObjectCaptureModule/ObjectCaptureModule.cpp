@@ -36,7 +36,7 @@ ObjectCaptureModule::ObjectCaptureModule() :
     check = connect(cloud_processor_, SIGNAL(registrationFinished()), this, SLOT(registrationFinished()));
     Q_ASSERT(check);
 
-    check = connect(mesh_reconstructor_, SIGNAL(cloudProcessingFinished()), this, SLOT(cloudProcessingFinished()));
+    check = connect(mesh_reconstructor_, SIGNAL(cloudProcessingFinished()), this, SIGNAL(objectCaptured()));
     Q_ASSERT(check);
 }
 
@@ -85,7 +85,7 @@ void ObjectCaptureModule::finalizeCapturing()
 
 void ObjectCaptureModule::registrationFinished()
 {
-    PointCloud::Ptr captured_cloud;
+    PointCloud::Ptr captured_cloud = cloud_processor_->finalCloud();
     if(captured_cloud.get())
     {
         // pass for meshreconstructor
@@ -95,7 +95,7 @@ void ObjectCaptureModule::registrationFinished()
     }
 }
 
-void ObjectCaptureModule::cloudProcessingFinished()
+unsigned int ObjectCaptureModule::capturedObject() const
 {
     //Add finalized mesh to scene
     Scene *scene = framework_->Scene()->MainCameraScene();
@@ -110,7 +110,8 @@ void ObjectCaptureModule::cloudProcessingFinished()
         if (iComponent)
         {
             EC_Mesh *mesh = dynamic_cast<EC_Mesh*>(iComponent);
-            mesh->SetMesh("testmesh.mesh");
+            //mesh->SetMesh("local://testmesh.mesh");
+            mesh->SetMeshRef("local://testmesh.mesh");
         }
 
         iComponent = meshEntity->GetOrCreateComponent("EC_Placeable", AttributeChange::LocalOnly, false).get();
@@ -121,7 +122,6 @@ void ObjectCaptureModule::cloudProcessingFinished()
         }
 
         scene->EmitEntityCreated(meshEntity, AttributeChange::LocalOnly);
-        emit objectCaptured(meshEntity->Id());
     }
 }
 

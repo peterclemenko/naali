@@ -66,9 +66,12 @@ public slots:
     /// Stops capturing and processes the clouds to a mesh
     void finalizeCapturing();
 
+    /// Get latest captured object
+    unsigned int capturedObject() const;
+
 signals:
     void previewFrameUpdated(const QImage &frame);
-    void objectCaptured(unsigned int entity_id);
+    void objectCaptured();
 
 private slots:
     void registrationFinished();

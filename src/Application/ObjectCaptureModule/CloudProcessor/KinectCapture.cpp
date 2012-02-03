@@ -87,6 +87,8 @@ void KinectCapture::updateRGBImage()
             }
         }
 
+        rgb_frame_ = rgb_frame_.convertToFormat(QImage::Format_ARGB32);
+
         emit RGBUpdated(rgb_frame_);
     }
 }

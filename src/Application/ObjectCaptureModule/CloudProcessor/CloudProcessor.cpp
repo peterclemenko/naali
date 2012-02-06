@@ -3,6 +3,7 @@
 #include "StableHeaders.h"
 #include "DebugOperatorNew.h"
 #include "LoggingFunctions.h"
+#include "Math/float3.h"
 
 #include "CloudProcessor.h"
 #include "KinectCapture.h"
@@ -63,12 +64,33 @@ void CloudProcessor::registerClouds()
     passthrough.setInputCloud(captured_clouds_.at(0));
     passthrough.filter(*filtered_cloud);
 
+    moveToOrigo(filtered_cloud);
+
     final_cloud_ = filtered_cloud;
 
     captured_clouds_.clear(); // clear dataset
 
     LogInfo("ObjectCapture: Registration finished.");
     emit registrationFinished();
+}
+
+void CloudProcessor::moveToOrigo(PointCloud::Ptr cloud)
+{
+    float3 distance(0, 0, 0);
+    for(int i = 0; i < cloud->points.size(); ++i)
+    {
+        distance.x += cloud->points[i].x;
+        distance.y += cloud->points[i].y;
+        distance.z += cloud->points[i].z;
+    }
+    distance /= cloud->points.size();
+
+    for(int i = 0; i < cloud->points.size(); ++i)
+    {
+        cloud->points[i].x -= distance.x;
+        cloud->points[i].y -= distance.y;
+        cloud->points[i].z -= distance.z;
+    }
 }
 
 PointCloud::Ptr CloudProcessor::finalCloud() const

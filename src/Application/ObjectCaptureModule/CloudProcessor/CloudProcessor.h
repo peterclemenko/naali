@@ -34,6 +34,9 @@ signals:
 
 private slots:
 
+protected:
+    void moveToOrigo(PointCloud::Ptr cloud);
+
 private:
     KinectCapture *kinect_capture_;
     QList<PointCloud::ConstPtr> captured_clouds_;

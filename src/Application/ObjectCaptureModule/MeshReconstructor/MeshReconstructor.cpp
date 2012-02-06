@@ -41,8 +41,10 @@ MeshReconstructor::~MeshReconstructor()
 
 void MeshReconstructor::processCloud()
 {
+    LogInfo("Performing MovingLeastSquares smoothing");
+    MovingLeastSquares();
     //LogInfo("NormalEstimation()");
-    NormalEstimation();
+    //NormalEstimation();
     LogInfo("GreedyProjection()");
     GreedyProjection_Mesher();
     LogInfo("convertVtkToMesh()");
@@ -70,37 +72,27 @@ void MeshReconstructor::convertVtkToMesh()
 
 void MeshReconstructor::MovingLeastSquares()
 {
-    /// \note not working yet
-
     // Create a KD-Tree
     pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGB>(false));
     //pcl::search::Search<PointCloud>::Ptr tree (new pcl::search::Search<PointCloud>(false));
-
-    // Output has the same type as the input one, it will be only smoothed
-//    PointCloud mls_points;
 
     // Init object (second point type is for the normals, even if unused)
     pcl::MovingLeastSquares<pcl::PointXYZRGB, pcl::Normal> mls;
 
     // Optionally, a pointer to a cloud can be provided, to be set by MLS
-    SurfaceNormals::Ptr mls_normals (new SurfaceNormals ());
-    mls.setOutputNormals (mls_normals);
+    mls.setOutputNormals (normals_);
 
     // Set parameters
-    //mls.setInputCloud (input);
+    mls.setInputCloud (point_cloud_);
     mls.setPolynomialFit (true);
     mls.setPolynomialOrder(2);
-    //mls.setSearchMethod (tree);
+    mls.setSearchMethod (tree);
     mls.setSearchRadius (0.03);
     mls.setSqrGaussParam(0.0009);
 
     // Reconstruct
     LogInfo("starting MovingLeastSquare reconstruction");
     mls.reconstruct (*smoothed_cloud_);
-
-    // Concatenate fields for saving
-    //pcl::PointCloud<pcl::PointNormal> mls_cloud;
-    //pcl::concatenateFields (mls_points, *mls_normals, *outputCloud);
 }
 
 void MeshReconstructor::setInputCloud(PointCloud::Ptr inputCloud)
@@ -114,11 +106,11 @@ void MeshReconstructor::NormalEstimation()
 
     //initialize normal estimation
     pcl::NormalEstimation<pcl::PointXYZRGB, pcl::Normal> normal_estimation;
-    normal_estimation.setInputCloud (point_cloud_);
+    normal_estimation.setInputCloud (smoothed_cloud_);
 
     //initialize search tree
     pcl::search::KdTree<pcl::PointXYZRGB>::Ptr search_tree (new pcl::search::KdTree<pcl::PointXYZRGB>());
-    search_tree->setInputCloud (point_cloud_);
+    search_tree->setInputCloud (smoothed_cloud_);
 
     normal_estimation.setSearchMethod (search_tree);
     //normal_estimation.setKSearch (20); //if we want more accurate results, re-run with KSearch!
@@ -135,7 +127,7 @@ void MeshReconstructor::GreedyProjection_Mesher()
     LogInfo("Meshing");
     pcl::GreedyProjectionTriangulation<pcl::PointXYZRGBNormal> mesher;
     pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr cloud_with_normals(new pcl::PointCloud<pcl::PointXYZRGBNormal>());
-    pcl::concatenateFields(*point_cloud_, *normals_, *cloud_with_normals);
+    pcl::concatenateFields(*smoothed_cloud_, *normals_, *cloud_with_normals);
     mesher.setInputCloud(cloud_with_normals);
 
     //std::cout << "Setting search method" << std::endl;

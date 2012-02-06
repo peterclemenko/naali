@@ -112,13 +112,15 @@ unsigned int ObjectCaptureModule::capturedObject() const
             EC_Mesh *mesh = dynamic_cast<EC_Mesh*>(iComponent);
             //mesh->SetMesh("local://testmesh.mesh");
             mesh->SetMeshRef("local://testmesh.mesh");
+            mesh->SetAdjustOrientation(Quat(1.0, 0.0, 0.0, 0.0));
         }
 
         iComponent = meshEntity->GetOrCreateComponent("EC_Placeable", AttributeChange::LocalOnly, false).get();
         if (iComponent)
         {
             EC_Placeable *placeable = dynamic_cast<EC_Placeable*>(iComponent);
-            placeable->setvisible(false);
+            placeable->setvisible(true);
+            placeable->SetScale(float3(7.0, 7.0, 7.0));
         }
 
         scene->EmitEntityCreated(meshEntity, AttributeChange::LocalOnly);

@@ -4,12 +4,11 @@ material testmesh
     {
         pass
         {
-            cull_hardware none
-            cull_software none
-            ambient 1.0 1.0 1.0 1.0
-            diffuse verteccolour
-            specular 1 1 1 5.6
-            emissive 0 0 0
+		cull_hardware none
+		ambient vertexcolour
+		diffuse vertexcolour
+		specular vertexcolour
+		emissive 0.1 0.1 0.1
         }
     }
 }

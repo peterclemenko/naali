@@ -135,7 +135,7 @@ void MeshReconstructor::GreedyProjection_Mesher()
     mesher.setSearchMethod(tree2);//pcl::search::Search<pcl::PointNormal>::Ptr()
 
     //std::cout << "Setting search radius" << std::endl;
-    mesher.setSearchRadius(0.025);
+    mesher.setSearchRadius(0.05);
 
     mesher.setMu(2.5);
     mesher.setMaximumNearestNeighbors(1000);

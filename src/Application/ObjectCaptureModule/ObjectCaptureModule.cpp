@@ -12,6 +12,7 @@
 #include "SceneAPI.h"
 #include "Scene.h"
 #include "IComponent.h"
+#include "AssetReference.h"
 
 #include "Entity.h"
 #include "EC_Mesh.h"
@@ -110,8 +111,10 @@ unsigned int ObjectCaptureModule::capturedObject() const
         if (iComponent)
         {
             EC_Mesh *mesh = dynamic_cast<EC_Mesh*>(iComponent);
-            //mesh->SetMesh("local://testmesh.mesh");
+            AssetReferenceList materials;
+            materials.Append(AssetReference("local://testmesh.material"));
             mesh->SetMeshRef("local://testmesh.mesh");
+            mesh->setmeshMaterial(materials);
             mesh->SetAdjustOrientation(Quat(1.0, 0.0, 0.0, 0.0));
         }
 

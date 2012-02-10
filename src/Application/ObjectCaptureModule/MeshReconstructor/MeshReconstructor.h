@@ -19,8 +19,7 @@ public:
     ~MeshReconstructor();
 
 public slots:
-    void setInputCloud(PointCloud::Ptr inputCloud);
-    void processCloud();
+    void processCloud(PointCloud::Ptr cloud);
 
 private slots:
     void convertVtkToMesh();

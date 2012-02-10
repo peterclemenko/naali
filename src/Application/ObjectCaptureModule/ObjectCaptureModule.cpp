@@ -32,20 +32,27 @@ ObjectCaptureModule::ObjectCaptureModule() :
     mesh_reconstructor_(new MeshReconstructor()),
     worker_thread_(new QThread)
 {
+    qRegisterMetaType<PointCloud>("PointCloud");
+    qRegisterMetaType<PointCloud::Ptr>("PointCloud::Ptr");
+
+    mesh_reconstructor_->moveToThread(worker_thread_);
+    cloud_processor_->moveToThread(worker_thread_);
+    worker_thread_->start();
+
     bool check;
-
-    check = connect(cloud_processor_, SIGNAL(RGBUpdated(QImage)), this, SIGNAL(previewFrameUpdated(QImage)));
+    check = connect(cloud_processor_, SIGNAL(RGBUpdated(QImage)), this, SIGNAL(previewFrameUpdated(QImage)), Qt::QueuedConnection);
     Q_ASSERT(check);
 
-    check = connect(cloud_processor_, SIGNAL(registrationFinished()), this, SLOT(registrationFinished()));
+    check = connect(cloud_processor_, SIGNAL(registrationFinished(PointCloud::Ptr)), mesh_reconstructor_, SLOT(processCloud(PointCloud::Ptr)), Qt::QueuedConnection);
     Q_ASSERT(check);
 
-    //check = connect(mesh_reconstructor_, SIGNAL(finished()), this, SIGNAL(objectCaptured()));
-    //Q_ASSERT(check);
+    check = connect(mesh_reconstructor_, SIGNAL(cloudProcessingFinished()), this, SLOT(meshReconstructed()), Qt::QueuedConnection);
+    Q_ASSERT(check);
 }
 
 ObjectCaptureModule::~ObjectCaptureModule()
 {
+    worker_thread_->quit();
     SAFE_DELETE(cloud_processor_);
     SAFE_DELETE(mesh_reconstructor_);
     SAFE_DELETE(worker_thread_);
@@ -88,31 +95,8 @@ void ObjectCaptureModule::finalizeCapturing()
     cloud_processor_->registerClouds();
 }
 
-void ObjectCaptureModule::registrationFinished()
+void ObjectCaptureModule::meshReconstructed()
 {
-    bool check;
-    PointCloud::Ptr captured_cloud = cloud_processor_->finalCloud();
-    if(captured_cloud.get())
-    {
-        // pass for meshreconstructor
-        //LogInfo("setInputCloud()");
-
-        mesh_reconstructor_->setInputCloud(captured_cloud);
-        mesh_reconstructor_->moveToThread(worker_thread_);
-
-        check = connect(worker_thread_, SIGNAL(started()), mesh_reconstructor_, SLOT(processCloud()), Qt::QueuedConnection);
-        Q_ASSERT(check && "Connect failed");
-
-        check = connect(mesh_reconstructor_, SIGNAL(cloudProcessingFinished()), this, SIGNAL(objectCaptured()), Qt::QueuedConnection);
-        Q_ASSERT(check && "Connect failed");
-
-        worker_thread_->start();
-    }
-}
-
-unsigned int ObjectCaptureModule::capturedObject() const
-{
-    //Add finalized mesh to scene
     Scene *scene = framework_->Scene()->MainCameraScene();
 
     EntityPtr entity_ = scene->CreateEntity(scene->NextFreeIdLocal(), QStringList(), AttributeChange::LocalOnly, false);
@@ -141,6 +125,7 @@ unsigned int ObjectCaptureModule::capturedObject() const
         }
 
         scene->EmitEntityCreated(meshEntity, AttributeChange::LocalOnly);
+        emit objectCaptured(meshEntity->Id());
     }
 }
 

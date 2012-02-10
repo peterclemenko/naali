@@ -23,6 +23,7 @@
 
 #include "LoggingFunctions.h"
 #include "MemoryLeakCheck.h"
+
 namespace ObjectCapture
 {
 
@@ -39,8 +40,9 @@ MeshReconstructor::~MeshReconstructor()
 
 }
 
-void MeshReconstructor::processCloud()
+void MeshReconstructor::processCloud(PointCloud::Ptr cloud)
 {
+    point_cloud_ = cloud;
     LogInfo("Performing MovingLeastSquares smoothing");
     MovingLeastSquares();
     //LogInfo("NormalEstimation()");
@@ -93,11 +95,6 @@ void MeshReconstructor::MovingLeastSquares()
     // Reconstruct
     LogInfo("starting MovingLeastSquare reconstruction");
     mls.reconstruct (*smoothed_cloud_);
-}
-
-void MeshReconstructor::setInputCloud(PointCloud::Ptr inputCloud)
-{
-    point_cloud_ = inputCloud;
 }
 
 void MeshReconstructor::NormalEstimation()

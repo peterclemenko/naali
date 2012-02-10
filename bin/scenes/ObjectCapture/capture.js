@@ -35,13 +35,11 @@ function ObjectCapture()
     inputmapper.RegisterMapping("U", "Finalize", 1);
     inputmapper.RegisterMapping("I", "startCapturing", 1);
     inputmapper.RegisterMapping("O", "stopCapturing", 1);
-    inputmapper.RegisterMapping("P", "showObject", 1);
     
     me.Action("Capture").Triggered.connect(captureCloud);
     me.Action("Finalize").Triggered.connect(finalizeCloud);
     me.Action("startCapturing").Triggered.connect(startCapturing);
     me.Action("stopCapturing").Triggered.connect(stopCapturing);
-    me.Action("showObject").Triggered.connect(showObject);
 }
 
 function updateScreen(image)
@@ -78,20 +76,6 @@ function finalizeCloud()
     print("Finalizing cloud.");
     var module = framework.GetModuleByName("ObjectCapture");
     module.finalizeCapturing();
-}
-
-function showObject()
-{
-    if(!objectFinished)
-        return;
-
-    print("Visualising final object.");
-    var module = framework.GetModuleByName("ObjectCapture");
-    
-    var entityId = module.capturedObject();
-    var entity = scene.GetEntity(entityId);
-    var placeable = entity.GetComponent("EC_Placeable");
-    placeable.visible = true;
 }
 
 function displayObject()

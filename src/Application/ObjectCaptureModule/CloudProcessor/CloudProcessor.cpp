@@ -7,6 +7,7 @@
 
 #include "CloudProcessor.h"
 #include "KinectCapture.h"
+#include "CloudFilter.h"
 
 #include "pcl/filters/passthrough.h"
 
@@ -16,7 +17,8 @@ namespace ObjectCapture
 {
 
 CloudProcessor::CloudProcessor() :
-    kinect_capture_(new KinectCapture())
+    kinect_capture_(new KinectCapture()),
+    cloud_filter_(new CloudFilter())
 {
     bool check;
 
@@ -71,7 +73,7 @@ void CloudProcessor::registerClouds()
     captured_clouds_.clear(); // clear dataset
 
     LogInfo("ObjectCapture: Registration finished.");
-    emit registrationFinished();
+    emit registrationFinished(final_cloud_);
 }
 
 void CloudProcessor::moveToOrigo(PointCloud::Ptr cloud)

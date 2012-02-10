@@ -43,13 +43,10 @@ MeshReconstructor::~MeshReconstructor()
 void MeshReconstructor::processCloud(PointCloud::Ptr cloud)
 {
     point_cloud_ = cloud;
-    LogInfo("Performing MovingLeastSquares smoothing");
+
     MovingLeastSquares();
-    //LogInfo("NormalEstimation()");
     //NormalEstimation();
-    LogInfo("GreedyProjection()");
     GreedyProjection_Mesher();
-    LogInfo("convertVtkToMesh()");
     convertVtkToMesh();
 
     emit cloudProcessingFinished();
@@ -61,19 +58,20 @@ void MeshReconstructor::convertVtkToMesh()
 
     sprintf(Command, "python OgreMeshXML.py -i testmesh.vtk -o testmesh.xml");
     if (system(Command))
-        LogInfo("Error while converting vtk to xml!\n");
+        LogError("ObjectCapture: Error while converting vtk to xml!\n");
 
     sprintf(Command, "OgreXMLConverter testmesh.xml testmesh.mesh");
     if (system(Command))
-        LogInfo("Error while converting xml to mesh!\n");
+        LogError("ObjectCapture: Error while converting xml to mesh!\n");
 
     sprintf(Command, "mv testmesh.mesh data/assets/");
     if (system(Command))
-        LogInfo("Error while moving mesh to scenes folder!\n");
+        LogError("ObjectCapture: Error while moving mesh to scenes folder!\n");
 }
 
 void MeshReconstructor::MovingLeastSquares()
 {
+    LogInfo("ObjectCapture: Smoothing object geometry..");
     // Create a KD-Tree
     pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGB>(false));
     //pcl::search::Search<PointCloud>::Ptr tree (new pcl::search::Search<PointCloud>(false));
@@ -93,12 +91,12 @@ void MeshReconstructor::MovingLeastSquares()
     mls.setSqrGaussParam(0.0009);
 
     // Reconstruct
-    LogInfo("starting MovingLeastSquare reconstruction");
     mls.reconstruct (*smoothed_cloud_);
 }
 
 void MeshReconstructor::NormalEstimation()
 {
+    LogInfo("ObjectCapture: Estimating normals..");
     float normal_search_radius = 0.0025;
 
     //initialize normal estimation
@@ -118,10 +116,10 @@ void MeshReconstructor::NormalEstimation()
 
 void MeshReconstructor::GreedyProjection_Mesher()
 {
+    LogInfo("ObjectCapture: Reconstructing object surface..");
     // beging of meshing
     pcl::PolygonMesh output;
 
-    LogInfo("Meshing");
     pcl::GreedyProjectionTriangulation<pcl::PointXYZRGBNormal> mesher;
     pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr cloud_with_normals(new pcl::PointCloud<pcl::PointXYZRGBNormal>());
     pcl::concatenateFields(*smoothed_cloud_, *normals_, *cloud_with_normals);
@@ -142,7 +140,6 @@ void MeshReconstructor::GreedyProjection_Mesher()
     mesher.setMaximumAngle(2*M_PI/3); // 120 degrees
     mesher.setNormalConsistency(false);
 
-    std::cout << "Reconstructing" << std::endl;
     mesher.reconstruct(output);
 
     std::stringstream ssp;

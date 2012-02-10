@@ -1,3 +1,6 @@
+if (framework.IsHeadless())
+    return;
+
 framework.Scene().SceneAdded.connect(OnSceneAdded);
 ui.MainWindow().WindowResizeEvent.connect(MainWindowResized);
 
@@ -8,6 +11,33 @@ if (!framework.IsHeadless())
     engine.ImportExtension("qt.gui");
 }
 
+//Adjusts the dead zone for camera rotation in the center of the screen.
+//0.5 or higher makes the dead zone full screen, so camera won't rotate from gaze coordinates.
+var center_size = 0.25;
+
+//Adjust the maximum rotation speed of the camera.
+var maximum_rotate_speed = 1.5;
+
+//Adjusts the maximum angle for the camera turning up and down, so you can't go upside down.
+var maximum_camera_angle_y = 65;
+
+//Adjusts the entity rotating speed for the thresholds.
+var rotate_speed_1 = 1;
+var rotate_speed_2 = 7;
+var rotate_speed_3 = 25;
+
+//If this is true, entity will rotated directly to the angle of the sensor.
+//Set it to false for continuous toggled rotation.
+var delta_mode = true;
+
+//Adjusts the thresholds for the sensor to toggle rotation.
+var rotate_threshold_1 = 30;
+var rotate_threshold_2 = 45;
+var rotate_threshold_3 = 60;
+
+//Defines the amount of gaze coordinates from which the average is counted from.
+var amount_of_points = 30;
+
 var scene = null;
 var timer = new QTimer();
 var gaze_x = 0;
@@ -16,30 +46,57 @@ var delta_center_x = 0;
 var delta_center_y = 0;
 var screen_width = 0;
 var screen_height = 0;
-var center_size = 0.10;
 var border_x = 0;
 var border_y = 0;
 var speed = 0;
-var cameraEnt = null;
-var maximum_rotate_speed = 2.0;
-var maximum_camera_angle_y = 65;
 var last_raycast_entity = null;
 var action_added = false;
 var entity_selected = false;
 var selected_entity = null;
 var pitch_angle = 0;
 var roll_angle = 0;
+var movement_mode = false;
+var delta_roll = 0;
+var delta_pitch = 0;
+var gaze_counter = 0;
+var gaze_average_x = 0;
+var gaze_average_y = 0;
+var gaze_sum_x = 0;
+var gaze_sum_y = 0;
+var gaze_points_x = [];
+var gaze_points_y = [];
+var index = 0;
+
+
+if (!framework.IsHeadless())
+{
+        var label = new QLabel();
+        label.objectName = "InfoLabel";
+        label.setStyleSheet("QLabel#InfoLabel { padding: 10px; background-color: rgba(230,230,230,175); border: 1px solid black; font-size: 16px; }");
+        label.text = "GAZE";
+
+        var proxy = new UiProxyWidget(label);
+        ui.AddProxyWidgetToScene(proxy);
+        proxy.x = 50
+        proxy.y = 50;
+        proxy.windowFlags = 0;
+        proxy.visible = true;
+}
 
 timer.timeout.connect(TimerTimeout);
 
 function OnSceneAdded(scenename)
-{  
+{
+if (framework.IsHeadless())
+    return;
+
     screen_width = ui.GraphicsView().viewport().size.width();
     screen_height = ui.GraphicsView().viewport().size.height();
     scene = framework.Scene().GetScene(scenename);
     timer.start(25);
-    //print("Scene added");
     action_added = false;
+    gaze_x = parseInt(screen_width / 2);
+    gaze_y = parseInt(screen_height / 2);
         
     //var inputContext = input.RegisterInputContextRaw("GazeTrackingInput", 102);
     //inputContext.SetTakeMouseEventsOverQt(true);
@@ -54,17 +111,16 @@ function MainWindowResized(width, height)
 
 function AddActionToFreeLookCamera()
 {
-    cameraEnt = scene.GetEntityByName("FreeLookCamera");
+    var cameraEnt = scene.GetEntityByName("FreeLookCamera");
     if (!cameraEnt)
         return;
     cameraEnt.Action("GazeCoordinates").Triggered.connect(GazeCoordinates);
     cameraEnt.Action("GraspGesture").Triggered.connect(GraspGesture);
     cameraEnt.Action("ReleaseGesture").Triggered.connect(ReleaseGesture);
     cameraEnt.Action("PitchAndRoll").Triggered.connect(PitchAndRoll);
+    cameraEnt.Action("SwitchGesture").Triggered.connect(SwitchGesture);
     action_added = true;
-    //cameraEnt.Exec(1, "GazeCoordinates", 50, 50);
-    //action_added = true;
-    //print("Got Camera");
+    print("Actions added to FreeLookCamera");
 }
 
 function TimerTimeout()
@@ -75,18 +131,32 @@ function TimerTimeout()
     if (!action_added)
         AddActionToFreeLookCamera();
 
-    if (!entity_selected)
-        HandleCameraRotation();
 
-    else if (entity_selected)
+    if (entity_selected && !movement_mode)
         HandleEntityRotation();
+    if (entity_selected && movement_mode)
+	HandleEntityMovement();
+
+    if (!entity_selected)
+    {
+        HandleCameraRotation();
+        HandleCameraMovement();
+    }
+
+}
+
+function SwitchGesture()
+{
+    if (!entity_selected)
+	return;
+    movement_mode = !movement_mode;
 }
 
 function HandleCameraRotation()
 {
     if (parseInt(delta_center_x) > border_x)
     {
-        cameraEnt = scene.GetEntityByName("FreeLookCamera");
+        var cameraEnt = scene.GetEntityByName("FreeLookCamera");
         if (!cameraEnt)
             return;
 
@@ -101,7 +171,7 @@ function HandleCameraRotation()
     
     else if (parseInt(delta_center_x) < -border_x)
     {
-        cameraEnt = scene.GetEntityByName("FreeLookCamera");
+        var cameraEnt = scene.GetEntityByName("FreeLookCamera");
         if (!cameraEnt)
             return;
 
@@ -116,7 +186,7 @@ function HandleCameraRotation()
 
     if (parseInt(delta_center_y) > border_y)
     {
-        cameraEnt = scene.GetEntityByName("FreeLookCamera");
+        var cameraEnt = scene.GetEntityByName("FreeLookCamera");
         if (!cameraEnt)
             return;
 
@@ -134,7 +204,7 @@ function HandleCameraRotation()
 
     else if (parseInt(delta_center_y) < -border_y)
     {
-        cameraEnt = scene.GetEntityByName("FreeLookCamera");
+        var cameraEnt = scene.GetEntityByName("FreeLookCamera");
         if (!cameraEnt)
             return;
 
@@ -150,9 +220,95 @@ function HandleCameraRotation()
     }
 }
 
+function HandleCameraMovement()
+{
+    if (entity_selected)
+	return;
+    //print(pitch_angle + ", " + roll_angle);
+    if (pitch_angle >= rotate_threshold_1)
+    {
+        var cameraEnt = scene.GetEntityByName("FreeLookCamera");
+        if (!cameraEnt)
+            return;
+	cameraEnt.Exec(1, "Move", "back");  
+    }
+    else if (pitch_angle <= -rotate_threshold_1)
+    {
+        var cameraEnt = scene.GetEntityByName("FreeLookCamera");
+        if (!cameraEnt)
+            return;
+	cameraEnt.Exec(1, "Move", "forward");
+    } 
+    else
+    {
+        var cameraEnt = scene.GetEntityByName("FreeLookCamera");
+        if (!cameraEnt)
+            return;
+        cameraEnt.Exec(1, "Stop", "forward");
+        cameraEnt.Exec(1, "Stop", "back"); 
+    }
+
+    if (roll_angle >= rotate_threshold_1)
+    {
+        var cameraEnt = scene.GetEntityByName("FreeLookCamera");
+        if (!cameraEnt)
+            return;
+        cameraEnt.Exec(1, "Move", "right");
+    }
+    else if (roll_angle <= -rotate_threshold_1)
+    {
+        var cameraEnt = scene.GetEntityByName("FreeLookCamera");
+        if (!cameraEnt)
+            return;
+	cameraEnt.Exec(1, "Move", "left");   
+    } 
+    else
+    {
+        var cameraEnt = scene.GetEntityByName("FreeLookCamera");
+        if (!cameraEnt)
+            return;
+        cameraEnt.Exec(1, "Stop", "left");
+        cameraEnt.Exec(1, "Stop", "right"); 
+    }
+}
+
+function HandleEntityMovement()
+{
+    if (!selected_entity)
+        return;
+
+    if (pitch_angle >= rotate_threshold_1)
+    {
+        var transform = selected_entity.placeable.transform;
+        transform.pos.z += 0.5;
+        selected_entity.placeable.transform = transform;   
+    }
+
+    else if (pitch_angle <= -rotate_threshold_1)
+    {
+        var transform = selected_entity.placeable.transform;
+        transform.pos.z -= 0.5;
+        selected_entity.placeable.transform = transform;   
+    }
+
+    if (roll_angle >= rotate_threshold_1)
+    {
+        var transform = selected_entity.placeable.transform;
+        transform.pos.x += 0.5;
+        selected_entity.placeable.transform = transform;   
+    }
+
+    else if (roll_angle <= -rotate_threshold_1)
+    {
+        var transform = selected_entity.placeable.transform;
+        transform.pos.x -= 0.5;
+        selected_entity.placeable.transform = transform;   
+    }
+
+}
 function HandleMouseMove(mouse)
 {
-    /*if (!scene)
+    if (!scene)
         return;
     border_x = parseInt(center_size * screen_width);
     border_y = parseInt(center_size * screen_height);
@@ -160,22 +316,60 @@ function HandleMouseMove(mouse)
     gaze_y = mouse.y;
     delta_center_x = (screen_width / 2) - gaze_x;
     delta_center_y = (screen_height / 2) - gaze_y;
-    EntitySelection();*/
+    EntitySelection();
 }
 
 function GazeCoordinates(x, y)
 {
-    print("GazeCoordinates: " + x + ", " + y);
     if (!scene)
         return;
     border_x = parseInt(center_size * screen_width);
     border_y = parseInt(center_size * screen_height);
-    gaze_x = x;
-    gaze_y = y;
-    delta_center_x = (screen_width / 2) - gaze_x;
-    delta_center_y = (screen_height / 2) - gaze_y;
+    if (gaze_counter < amount_of_points)
+    {
+        gaze_points_x.unshift(parseInt(x));
+        gaze_points_y.unshift(parseInt(y));          
+        gaze_counter += 1;
+    }
+    else
+    {
+        gaze_points_x.unshift(parseInt(x));
+        gaze_points_y.unshift(parseInt(y)); 
+        gaze_points_x.pop();
+        gaze_points_y.pop();
+
+        for (index = 0; index < amount_of_points; index++)
+        {
+            gaze_sum_x += gaze_points_x[index];
+            gaze_sum_y += gaze_points_y[index];
+        }
+
+        gaze_average_x = gaze_sum_x / amount_of_points;
+        gaze_average_y = gaze_sum_y / amount_of_points;
+        gaze_sum_x = 0;
+        gaze_sum_y = 0;
+        gaze_x = gaze_average_x;
+        gaze_y = gaze_average_y;
+    }
+
+    delta_center_x = (screen_width / 2) - gaze_points_x[0];
+    delta_center_y = (screen_height / 2) - gaze_points_y[0];
     if (!entity_selected)
         EntitySelection();
+
+    if (gaze_x > screen_width)
+        proxy.x = screen_width - 100;
+    else if (gaze_x < 0)
+        proxy.x = 0;
+    else 
+        proxy.x = gaze_x;
+
+    if (gaze_y > screen_height)
+        proxy.y = screen_height - 100;
+    else if (gaze_y < 0)
+        proxy_y = 0;
+    else
+        proxy.y = gaze_y;
 }
 
 function EntitySelection()
@@ -220,7 +414,15 @@ function GraspGesture()
     {
         print("Entity Grasped.");
         entity_selected = true;
-        selected_entity = last_raycast_entity;   
+        selected_entity = last_raycast_entity;
+
+	var cameraEnt = scene.GetEntityByName("FreeLookCamera");
+        if (!cameraEnt)
+            return;
+        cameraEnt.Exec(1, "Stop", "left");
+        cameraEnt.Exec(1, "Stop", "right");
+	cameraEnt.Exec(1, "Stop", "forward");
+        cameraEnt.Exec(1, "Stop", "back");     
     }
 }
 
@@ -236,10 +438,13 @@ function ReleaseGesture()
 
 function PitchAndRoll(pitch, roll)
 {
-    if (!entity_selected)
-        return;
+    //if (!entity_selected)
+    //    return;
+    delta_pitch = parseInt(pitch - pitch_angle);    
+    delta_roll = parseInt(roll - roll_angle);
+
     pitch_angle = parseInt(pitch);
-    roll_angle = parseInt(roll);    
+    roll_angle = parseInt(roll);        
 }
 
 function HandleEntityRotation()
@@ -247,77 +452,86 @@ function HandleEntityRotation()
     if (!selected_entity)
         return;
 
-    if (pitch_angle >= 30 && pitch_angle < 45)
+    if (delta_mode)
     {
         var transform = selected_entity.placeable.transform;
-        transform.rot.x += 1;
+    	transform.rot.x += delta_pitch;
+        transform.rot.y += delta_roll;
+        selected_entity.placeable.transform = transform;
+        return;   
+    }
+
+    if (pitch_angle >= rotate_threshold_1 && pitch_angle < rotate_threshold_2)
+    {
+        var transform = selected_entity.placeable.transform;
+        transform.rot.x += rotate_speed_1;
         selected_entity.placeable.transform = transform;   
     }
-    else if (pitch_angle >= 45 && pitch_angle < 60)
+    else if (pitch_angle >= rotate_threshold_2 && pitch_angle < rotate_threshold_3)
     {
         var transform = selected_entity.placeable.transform;
-        transform.rot.x += 2;
+        transform.rot.x += rotate_speed_2;
         selected_entity.placeable.transform = transform;
     }
-    else if (pitch_angle >= 60 && pitch_angle < 90)
+    else if (pitch_angle >= rotate_threshold_3 && pitch_angle < 90)
     {
         var transform = selected_entity.placeable.transform;
-        transform.rot.x += 3;
+        transform.rot.x += rotate_speed_3;
         selected_entity.placeable.transform = transform;
     }
-    else if (pitch_angle <= -30 && pitch_angle > -45)
+    else if (pitch_angle <= -rotate_threshold_1 && pitch_angle > -rotate_threshold_2)
     {
         var transform = selected_entity.placeable.transform;
-        transform.rot.x -= 1;
+        transform.rot.x -= rotate_speed_1;
         selected_entity.placeable.transform = transform;   
     }
-    else if (pitch_angle <= -45 && pitch_angle > -60)
+    else if (pitch_angle <= -rotate_threshold_2 && pitch_angle > -rotate_threshold_3)
     {
         var transform = selected_entity.placeable.transform;
-        transform.rot.x -= 2;
+        transform.rot.x -= rotate_speed_2;
         selected_entity.placeable.transform = transform;
     }
-    else if (pitch_angle <= -60 && pitch_angle > -90)
+    else if (pitch_angle <= -rotate_threshold_3 && pitch_angle > -90)
     {
         var transform = selected_entity.placeable.transform;
-        transform.rot.x -= 3;
+        transform.rot.x -= rotate_speed_3;
         selected_entity.placeable.transform = transform;
     }
 
-    if (roll_angle >= 30 && roll_angle < 45)
+    if (roll_angle >= rotate_threshold_1 && roll_angle < rotate_threshold_2)
     {
         var transform = selected_entity.placeable.transform;
-        transform.rot.y += 1;
+        transform.rot.y += rotate_speed_1;
         selected_entity.placeable.transform = transform;   
     }
-    else if (roll_angle >= 45 && roll_angle < 60)
+    else if (roll_angle >= rotate_threshold_2 && roll_angle < rotate_threshold_3)
     {
         var transform = selected_entity.placeable.transform;
-        transform.rot.y += 2;
+        transform.rot.y += rotate_speed_2;
         selected_entity.placeable.transform = transform;
     }
-    else if (roll_angle >= 60 && roll_angle < 90)
+    else if (roll_angle >= rotate_threshold_3 && roll_angle < 90)
     {
         var transform = selected_entity.placeable.transform;
-        transform.rot.y += 3;
+        transform.rot.y += rotate_speed_3;
         selected_entity.placeable.transform = transform;
     }
-    else if (roll_angle <= -30 && roll_angle > -45)
+    else if (roll_angle <= -rotate_threshold_1 && roll_angle > -rotate_threshold_2)
     {
         var transform = selected_entity.placeable.transform;
-        transform.rot.y -= 1;
+        transform.rot.y -= rotate_speed_1;
         selected_entity.placeable.transform = transform;   
     }
-    else if (roll_angle <= -45 && roll_angle > -60)
+    else if (roll_angle <= -rotate_threshold_2 && roll_angle > -rotate_threshold_3)
     {
         var transform = selected_entity.placeable.transform;
-        transform.rot.y -= 2;
+        transform.rot.y -= rotate_speed_2;
         selected_entity.placeable.transform = transform;
     }
-    else if (roll_angle <= -60 && roll_angle > -90)
+    else if (roll_angle <= -rotate_threshold_3 && roll_angle > -90)
     {
         var transform = selected_entity.placeable.transform;
-        transform.rot.y -= 3;
+        transform.rot.y -= rotate_speed_3;
         selected_entity.placeable.transform = transform;
     }
 }

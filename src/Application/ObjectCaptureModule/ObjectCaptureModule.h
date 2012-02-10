@@ -14,6 +14,7 @@
 
 #include <QObject>
 #include <QImage>
+class QThread;
 
 namespace ObjectCapture
 {
@@ -80,6 +81,7 @@ private slots:
 private:
     CloudProcessor *cloud_processor_;
     MeshReconstructor *mesh_reconstructor_;
+    QThread *worker_thread_;
 };
 
 } // end of namespace: ObjectCapture

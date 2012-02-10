@@ -136,6 +136,7 @@ void MeshReconstructor::GreedyProjection_Mesher()
 
     //std::cout << "Setting search radius" << std::endl;
     mesher.setSearchRadius(0.05);
+    //mesher.setConsistentVertexOrdering(true); // Requires PCL-1.5 or higher!
 
     mesher.setMu(2.5);
     mesher.setMaximumNearestNeighbors(1000);

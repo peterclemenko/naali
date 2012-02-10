@@ -1,5 +1,7 @@
 // For conditions of distribution and use, see copyright notice in license.txt
 
+#include <QThread>
+
 #include "StableHeaders.h"
 #include "DebugOperatorNew.h"
 
@@ -27,7 +29,8 @@ namespace ObjectCapture
 ObjectCaptureModule::ObjectCaptureModule() :
     IModule("ObjectCapture"),
     cloud_processor_(new CloudProcessor()),
-    mesh_reconstructor_(new MeshReconstructor())
+    mesh_reconstructor_(new MeshReconstructor()),
+    worker_thread_(new QThread)
 {
     bool check;
 
@@ -37,14 +40,15 @@ ObjectCaptureModule::ObjectCaptureModule() :
     check = connect(cloud_processor_, SIGNAL(registrationFinished()), this, SLOT(registrationFinished()));
     Q_ASSERT(check);
 
-    check = connect(mesh_reconstructor_, SIGNAL(cloudProcessingFinished()), this, SIGNAL(objectCaptured()));
-    Q_ASSERT(check);
+    //check = connect(mesh_reconstructor_, SIGNAL(finished()), this, SIGNAL(objectCaptured()));
+    //Q_ASSERT(check);
 }
 
 ObjectCaptureModule::~ObjectCaptureModule()
 {
     SAFE_DELETE(cloud_processor_);
-    SAFE_DELETE(mesh_reconstructor_)
+    SAFE_DELETE(mesh_reconstructor_);
+    SAFE_DELETE(worker_thread_);
 }
 
 void ObjectCaptureModule::Load()
@@ -86,13 +90,23 @@ void ObjectCaptureModule::finalizeCapturing()
 
 void ObjectCaptureModule::registrationFinished()
 {
+    bool check;
     PointCloud::Ptr captured_cloud = cloud_processor_->finalCloud();
     if(captured_cloud.get())
     {
         // pass for meshreconstructor
         //LogInfo("setInputCloud()");
+
         mesh_reconstructor_->setInputCloud(captured_cloud);
-        mesh_reconstructor_->processCloud();
+        mesh_reconstructor_->moveToThread(worker_thread_);
+
+        check = connect(worker_thread_, SIGNAL(started()), mesh_reconstructor_, SLOT(processCloud()), Qt::QueuedConnection);
+        Q_ASSERT(check && "Connect failed");
+
+        check = connect(mesh_reconstructor_, SIGNAL(cloudProcessingFinished()), this, SIGNAL(objectCaptured()), Qt::QueuedConnection);
+        Q_ASSERT(check && "Connect failed");
+
+        worker_thread_->start();
     }
 }
 

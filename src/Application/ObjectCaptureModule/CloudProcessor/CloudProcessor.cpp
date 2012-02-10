@@ -8,6 +8,7 @@
 #include "CloudProcessor.h"
 #include "KinectCapture.h"
 #include "CloudFilter.h"
+#include "Registering.h"
 
 #include "pcl/filters/passthrough.h"
 
@@ -56,23 +57,29 @@ void CloudProcessor::registerClouds()
 
     kinect_capture_->stopCapture();
 
-    LogInfo("ObjectCapture: Registering clouds..");
+    RegisterInterface *cloud_register = new DummyRegister();
 
     // fake registration process and only apply passthrough filter for now
-    PointCloud::Ptr filtered_cloud(new PointCloud);
-    pcl::PassThrough<pcl::PointXYZRGB> passthrough;
-    passthrough.setFilterFieldName("z");
-    passthrough.setFilterLimits(0.0, 1.4);
-    passthrough.setInputCloud(captured_clouds_.at(0));
-    passthrough.filter(*filtered_cloud);
+    for(int i = 0; i < captured_clouds_.size(); ++i)
+    {
+        PointCloud::Ptr depth_filtered;
+        depth_filtered = cloud_filter_->filterDepth(captured_clouds_.at(0), 0.0, 1.4);
 
-    moveToOrigo(filtered_cloud);
+        PointCloud::Ptr parse_cloud;
+        parse_cloud = cloud_filter_->filterDensity(depth_filtered, 0.005);
 
-    final_cloud_ = filtered_cloud;
+        PointCloud::Ptr segmented_cloud;
+        segmented_cloud = cloud_filter_->extractLargestCluster(parse_cloud, 0.1);
 
+        moveToOrigo(segmented_cloud);
+
+        cloud_register->addCloud(segmented_cloud);
+    }
+
+    final_cloud_ = cloud_register->registerClouds();
     captured_clouds_.clear(); // clear dataset
+    delete cloud_register;
 
-    LogInfo("ObjectCapture: Registration finished.");
     emit registrationFinished(final_cloud_);
 }
 

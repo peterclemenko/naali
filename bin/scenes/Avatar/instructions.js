@@ -1,4 +1,4 @@
-var showUi = true;
+var showUi = false;
 if (server.IsRunning() && framework.IsHeadless())
     showUi = false;
 

@@ -31,8 +31,10 @@
   <jsplugin path="MenuBar.js" />
   <jsplugin path="RendererSettings.js" />
   <jsplugin path="SoundSettings.js" />
+  <jsplugin path="gazetracking.js" />
 
   <!-- Python plugins -->
+  <pyplugin path="pythonqt_asyncore.py"/>
   <!-- <pyplugin path="lib/apitests.py" /> -->          <!-- Runs framework api tests -->
 
   <!--  AssetAPI's file system watcher currently disabled because LocalAssetProvider implements

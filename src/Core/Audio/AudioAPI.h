@@ -1,4 +1,4 @@
-// For conditions of distribution and use, see copyright notice in license.txt
+// For conditions of distribution and use, see copyright notice in LICENSE
 #pragma once
 
 #include "AudioFwd.h"
@@ -10,11 +10,6 @@
 #include "Math/Quat.h"
 
 class Framework;
-
-// Remove <Windows.h> PlaySound defines.
-#ifdef PlaySound
-#undef PlaySound
-#endif
 
 /// Enables audio playback functionality.
 class AUDIO_API AudioAPI : public QObject

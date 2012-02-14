@@ -1,4 +1,4 @@
-// For conditions of distribution and use, see copyright notice in license.txt
+// For conditions of distribution and use, see copyright notice in LICENSE
 
 #pragma once
 
@@ -13,6 +13,16 @@
 #include <QLabel>
 #include <QSlider>
 #include <QUrl>
+
+#ifdef Q_WS_MAC
+class VlcPluginsException : public std::exception
+{
+    virtual const char* what() const throw()
+    {
+        return "Fatal error, could not find vlc plugins path!";
+    }
+};
+#endif
 
 class VlcMediaPlayer : public QWidget
 {

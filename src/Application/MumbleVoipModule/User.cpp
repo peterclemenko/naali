@@ -1,11 +1,6 @@
-// For conditions of distribution and use, see copyright notice in license.txt
+// For conditions of distribution and use, see copyright notice in LICENSE
 
 #include "StableHeaders.h"
-
-// If we don't do this, we get "boost/asio/detail/socket_types.hpp(27) : fatal error C1189: #error :  WinSock.h has already been included"
-#ifdef WIN32
-#include <Winsock2.h>
-#endif
 
 #include "DebugOperatorNew.h"
 
@@ -174,7 +169,7 @@ namespace MumbleLib
     {
         if (left_)
             return -1;
-        boost::shared_ptr<::MumbleClient::Channel> mumble_channel = user_.channel.lock();
+        boost::shared_ptr< ::MumbleClient::Channel> mumble_channel = user_.channel.lock();
         if (mumble_channel)
             return user_.channel.lock()->id;
         else

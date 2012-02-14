@@ -1,4 +1,4 @@
-// For conditions of distribution and use, see copyright notice in license.txt
+// For conditions of distribution and use, see copyright notice in LICENSE
 
 #include "StableHeaders.h"
 
@@ -135,18 +135,8 @@ void KristalliProtocolModule::Initialize()
 {
     defaultTransport = kNet::SocketOverTCP;
     QStringList cmdLineParams = framework_->CommandLineParameters("--protocol");
-    
     if (cmdLineParams.size() > 0 && cmdLineParams.first().trimmed().toLower() == "udp")
         defaultTransport = kNet::SocketOverUDP;
-        
-    else if (cmdLineParams.size() > 0 && cmdLineParams.first().trimmed().toLower() == "sctp")
-    {
-#ifdef KNET_HAS_SCTP
-        defaultTransport = kNet::SocketOverSCTP;
-#else
-        ::LogError("SCTP not supported by kNet. Using TCP instead.");
-#endif
-    }
 
 #ifdef KNET_USE_QT
     framework_->Console()->RegisterCommand("kNet", "Shows the kNet statistics window.", this, SLOT(OpenKNetLogWindow()));
@@ -226,10 +216,9 @@ void KristalliProtocolModule::Update(f64 /*frametime*/)
                     else
                     {
                         ::LogInfo("Failed to connect to " + serverIpIter_.value() + ":" + ToString(serverPortIter_.value()));
-                        emit ConnectionAttemptFailed();
+                        emit ConnectionAttemptFailed(key);
 
-                        reconnectTimerIter_.value().Stop();
-                        serverIpIter_.value() = "";
+                        removeConnections.append(key);
                     }
                 }
                 else if (!reconnectTimerIter_.value().Enabled())
@@ -240,6 +229,14 @@ void KristalliProtocolModule::Update(f64 /*frametime*/)
             if (serverConnectionIter_.value() && serverConnectionIter_.value()->GetConnectionState() == ConnectionOK)
                 reconnectAttemptsIter_.value() = cReconnectAttempts;
         }
+    }
+    if (!removeConnections.isEmpty())
+    {
+        foreach (QString key, removeConnections)
+        {
+            Disconnect(key);
+        }
+        removeConnections.clear();
     }
 
     if (server)
@@ -286,7 +283,7 @@ void KristalliProtocolModule::PerformConnection()
         serverConnection_map_["NEW"]->GetSocket()->SetNaglesAlgorithmEnabled(false);
 
 #ifdef KNET_HAS_SCTP
-    // For SCTP mode sockets, disable Nagle's option to improve latency for the messages we send.        
+    // For SCTP mode sockets, disable Nagle's option to improve latency for the messages we send.
     else if (serverConnection_map_["NEW"]->GetSocket() && serverConnection_map_["NEW"]->GetSocket()->TransportLayer() == kNet::SocketOverSCTP)
         serverConnection_map_["NEW"]->GetSocket()->SetNaglesAlgorithmEnabled(false);
 #endif
@@ -371,7 +368,7 @@ bool KristalliProtocolModule::StartServer(unsigned short port, SocketTransportLa
     
     ::LogInfo("Server started");
     ::LogInfo(QString("* Port     : ") + QString::number(port));
-    ::LogInfo(QString("* Protocol : ") + (transport == kNet::SocketOverUDP ? "UDP" : (transport == kNet::SocketOverTCP) ? "TCP" : "SCTP"));
+    ::LogInfo(QString("* Protocol : ") + (transport == kNet::SocketOverUDP ? "UDP" : "TCP"));
     ::LogInfo(QString("* Headless : ") + (framework_->IsHeadless() == true ? "True" : "False"));
     return true;
 }
@@ -406,13 +403,7 @@ void KristalliProtocolModule::NewConnectionEstablished(kNet::MessageConnection *
     // For TCP mode sockets, set the TCP_NODELAY option to improve latency for the messages we send.
     if (source->GetSocket() && source->GetSocket()->TransportLayer() == kNet::SocketOverTCP)
         source->GetSocket()->SetNaglesAlgorithmEnabled(false);
-        
-#ifdef KNET_HAS_SCTP        
-    // For SCTP mode sockets, set the SCTP_NODELAY option to improve latency for the messages we send.
-    else if (source->GetSocket() && source->GetSocket()->TransportLayer() == kNet::SocketOverSCTP)
-        source->GetSocket()->SetNaglesAlgorithmEnabled(false);
-#endif
-        
+
     ::LogInfo("User connected from " + source->RemoteEndPoint().ToString() + ", connection ID " + ToString((int)connection->userID));
     
     emit ClientConnectedEvent(connection.get());
@@ -434,6 +425,11 @@ void KristalliProtocolModule::ClientDisconnected(MessageConnection *source)
         ::LogInfo("Unknown user disconnected");
 }
 
+void KristalliProtocolModule::HandleMessage(kNet::MessageConnection *source, kNet::packet_id_t packetId, kNet::message_id_t id, const char *data, size_t numBytes)
+{
+    HandleMessage(source, id, data, numBytes);
+}
+
 void KristalliProtocolModule::HandleMessage(MessageConnection *source, message_id_t id, const char *data, size_t numBytes)
 {
     assert(source);
@@ -446,6 +442,13 @@ void KristalliProtocolModule::HandleMessage(MessageConnection *source, message_i
     {
         ::LogError("KristalliProtocolModule: Exception \"" + std::string(e.what()) + "\" thrown when handling network message id " +
             ToString(id) + " size " + ToString((int)numBytes) + " from client " + source->ToString());
+
+        // Kill the connection. For debugging purposes, don't disconnect the client if the server is running a debug build.
+#ifndef _DEBUG
+        source->Disconnect(0);
+        source->Close(0);
+        // kNet will call back to KristalliProtocolModule::ClientDisconnected() to clean up the high-level Tundra UserConnection object.
+#endif
     }
 }
 
@@ -510,7 +513,10 @@ kNet::MessageConnection * KristalliProtocolModule::GetMessageConnection(const QS
     if (iter == serverConnection_map_.end())
         return 0;
     else
-        return iter.value();
+    {
+        Ptr(kNet::MessageConnection) temp = iter.value();
+        return temp.ptr();
+    }
 }
 
 } // ~KristalliProtocolModule namespace

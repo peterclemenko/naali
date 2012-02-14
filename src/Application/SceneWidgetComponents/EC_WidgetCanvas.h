@@ -1,4 +1,4 @@
-// For conditions of distribution and use, see copyright notice in license.txt
+// For conditions of distribution and use, see copyright notice in LICENSE
 
 #ifndef incl_SceneWidgetComponents_EC_WidgetCanvas_h
 #define incl_SceneWidgetComponents_EC_WidgetCanvas_h
@@ -73,7 +73,7 @@ public:
 public slots:
     void Start();
     void Stop();
-    void Update(QImage &buffer);
+    void Update(QImage buffer);
     void Update();
     void Setup(QWidget *widget, const QList<uint> &submeshes, int refresh_per_second);
     void RestoreOriginalMeshMaterials();

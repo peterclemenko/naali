@@ -1,4 +1,4 @@
-// For conditions of distribution and use, see copyright notice in license.txt
+// For conditions of distribution and use, see copyright notice in LICENSE
 
 #include "StableHeaders.h"
 #include "DebugOperatorNew.h"
@@ -355,7 +355,7 @@ void AssetModule::OnAssetUploaded(const QString& assetRef)
     KristalliProtocol::KristalliProtocolModule *kristalli = framework_->GetModule<KristalliProtocol::KristalliProtocolModule>();
 
     MsgAssetDiscovery msg;
-    msg.assetRef = StringToBuffer(assetRef.toStdString());
+    msg.assetRef = StringToBuffer(assetRef.toStdString()); /// @bug Convert to UTF-8 instead!
     /// \todo Would preferably need the assettype as well
     
     // If we are server, send to everyone
@@ -367,8 +367,8 @@ void AssetModule::OnAssetUploaded(const QString& assetRef)
     // If we are client, send to server
     else
     {
-        ::LogInfo("onAssetUploaded fail FIX IT: " + assetRef);
-        kNet::MessageConnection* connection = tundra->GetClient()->GetConnection("temp");
+        /// TODO: this is unresolved for now. Need to know what connection we actually need
+        kNet::MessageConnection* connection = tundra->GetClient()->GetConnection("FIX_THIS");
         if (connection)
             connection->Send(msg);
     }
@@ -384,7 +384,7 @@ void AssetModule::OnAssetDeleted(const QString& assetRef)
     KristalliProtocol::KristalliProtocolModule *kristalli = framework_->GetModule<KristalliProtocol::KristalliProtocolModule>();
 
     MsgAssetDeleted msg;
-    msg.assetRef = StringToBuffer(assetRef.toStdString());
+    msg.assetRef = StringToBuffer(assetRef.toStdString()); /// @bug Convert to UTF-8 instead!
     
     // If we are server, send to everyone
     if (tundra->IsServer())
@@ -395,8 +395,8 @@ void AssetModule::OnAssetDeleted(const QString& assetRef)
     // If we are client, send to server
     else
     {
-        ::LogInfo("onAssetDeleted fail FIX IT: " + assetRef);
-        kNet::MessageConnection* connection = tundra->GetClient()->GetConnection("Fix");
+        /// TODO: this is unresolved for now. Need to know what connection we actually need
+        kNet::MessageConnection* connection = tundra->GetClient()->GetConnection("FIX_THIS");
         if (connection)
             connection->Send(msg);
     }

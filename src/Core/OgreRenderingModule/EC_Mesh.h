@@ -1,4 +1,4 @@
-// For conditions of distribution and use, see copyright notice in license.txt
+// For conditions of distribution and use, see copyright notice in LICENSE
 
 #pragma once
 
@@ -316,9 +316,6 @@ public slots:
     const std::string& GetMaterialName(uint index) const;
     ///\todo Remove, leave just one.
     QString GetMatName(uint index) const { return GetMaterialName(index).c_str(); }
-
-    ///\todo Is this needed? If not, remove.
-    QVector3D GetWorldSize() const;
 
     /// Returns adjustment position
     float3 GetAdjustPosition() const;

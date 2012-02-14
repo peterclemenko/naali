@@ -1,4 +1,4 @@
-// For conditions of distribution and use, see copyright notice in license.txt
+// For conditions of distribution and use, see copyright notice in LICENSE
 
 #pragma once
 
@@ -14,7 +14,7 @@ class AssetRefListener : public QObject
     Q_OBJECT
 
 public:
-    AssetRefListener() : myAssetAPI(0), requestedRef(""), inspectCreated(false) {};
+    AssetRefListener() : myAssetAPI(0), requestedRef(""), /** \todo This needs to be removed. */ inspectCreated(false) {};
 
     /// Issues a new asset request to the given AssetReference.
     /// @param assetRef A pointer to an attribute of type AssetReference.
@@ -27,7 +27,7 @@ public:
     void HandleAssetRefChange(AssetAPI *assetApi, QString assetRef, const QString& assetType = "");
     
     /// Returns the asset currently stored in this asset reference.
-    AssetPtr Asset();
+    AssetPtr Asset() const;
 
 signals:
     /// Emitted when the raw byte download of this asset finishes.
@@ -50,5 +50,7 @@ private:
     AssetWeakPtr asset;
     AssetTransferWeakPtr currentTransfer;
     AssetReference requestedRef;
+
+    ///\todo This needs to be removed.
     bool inspectCreated;
 };

@@ -44,71 +44,30 @@ fi
 
 if lsb_release -c | egrep -q "lucid|maverick|natty|oneiric"; then
         which aptitude > /dev/null 2>&1 || sudo apt-get install aptitude
-	sudo aptitude -y install python-dev libogg-dev libvorbis-dev \
+	sudo aptitude -y install git-core python-dev libogg-dev libvorbis-dev \
 	 build-essential g++ libogre-dev libboost-all-dev \
 	 ccache libqt4-dev python-dev freeglut3-dev \
-	 libxml2-dev cmake libalut-dev libtheora-dev \
-	 liboil0.3-dev mercurial unzip xsltproc \
+	 libxml2-dev cmake libalut-dev libtheora-dev libsctp-dev \
+	 liboil0.3-dev mercurial unzip xsltproc libois-dev libxrandr-dev \
 	 libspeex-dev nvidia-cg-toolkit subversion $more
 fi
 
-what=bullet-2.77
+what=bullet-2.79-rev2440
 if test -f $tags/$what-done; then
     echo $what is done
 else
     cd $build
-    rm -rf $what
+    whatdir=${what%%-rev*}
+    rm -rf $whatdir
     test -f $tarballs/$what.tgz || wget -P $tarballs http://bullet.googlecode.com/files/$what.tgz
     tar zxf $tarballs/$what.tgz
-    cd $what
-    # This patch is for GCC 4.6. It overrides a known issue with bullet 2.77 and gcc 4.6
-    # When Tundra upgrades to bullet 2.78 or later, this should be removed.
-    if [ "`gcc --version |head -n 1|cut -f 4 -d " "|cut -c -3`" == "4.6" ]; then
-        sed -i "s/static const T[\t]zerodummy/memset(\&value, 0, sizeof(T))/" ./src/BulletSoftBody/btSoftBodyInternals.h
-        sed -i "s/value=zerodummy;//" ./src/BulletSoftBody/btSoftBodyInternals.h
-    fi
-    cmake -DCMAKE_INSTALL_PREFIX=$prefix -DBUILD_DEMOS=OFF -DINSTALL_EXTRA_LIBS=ON -DCMAKE_CXX_FLAGS_RELEASE="-O2 -fPIC -DNDEBUG -DBT_NO_PROFILE" .
+    cd $whatdir
+    sed -i s/OpenCL// src/BulletMultiThreaded/GpuSoftBodySolvers/CMakeLists.txt
+    cmake -DCMAKE_INSTALL_PREFIX=$prefix -DBUILD_DEMOS=OFF -DBUILD_{NVIDIA,AMD,MINICL}_OPENCL_DEMOS=OFF -DBUILD_CPU_DEMOS=OFF -DINSTALL_EXTRA_LIBS=ON -DCMAKE_CXX_FLAGS_RELEASE="-O2 -g -fPIC" .
     make -j $nprocs
     make install
     touch $tags/$what-done
 fi
-
-#what=hydrax
-#if test -f $tags/$what-done; then
-#    echo $what is done
-#else
-#    cd $build
-#    rm -rf $what
-#    tarballname=libhydrax_0.5.4-5.tar.gz
-#    url=https://launchpad.net/~sonsilentsea-team/+archive/sonsilentsea/+files/$tarballname
-#    test -f $tarballs/$tarballname || wget -P $tarballs $url
-#    tar zxf $tarballs/$tarballname
-#    cd libhydrax-0.5.4
-#    sed -i "s!^OGRE_CFLAGS.*!OGRE_CFLAGS = $(pkg-config OGRE --cflags)!" makefile
-#    sed -i "s!^OGRE_LDFLAGS.*!OGRE_LDFLAGS = $(pkg-config OGRE --libs)!" makefile
-#    make -j $nprocs PREFIX=$prefix
-#    make PREFIX=$prefix install
-#    touch $tags/$what-done
-#fi
-
-
-#what=skyx
-#if test -f $tags/$what-done; then
-#    echo $what is done
-#else
-#    cd $build
-#    rm -rf $what
-#    tarballname=libskyx_0.1.1.orig.tar.gz
-#    url=https://launchpad.net/~sonsilentsea-team/+archive/sonsilentsea/+files/$tarballname
-#    test -f $tarballs/$tarballname || wget -P $tarballs $url
-#    tar zxf $tarballs/$tarballname
-#    cd skyx-0.1.1.orig
-#    sed -i "s!^OGRE_CFLAGS.*!OGRE_CFLAGS = $(pkg-config OGRE --cflags)!" makefile
-#    sed -i "s!^OGRE_LDFLAGS.*!OGRE_LDFLAGS = $(pkg-config OGRE --libs)!" makefile
-#    make -j $nprocs PREFIX=$prefix
-#    make PREFIX=$prefix install
-#    touch $tags/$what-done
-#fi
 
 what=qtscriptgenerator
 if test -f $tags/$what-done; then 
@@ -139,7 +98,7 @@ cp -lf $build/$what/plugins/script/* $viewer/bin/qtscript-plugins/script/
 
 
 what=knet
-if false && test -f $tags/$what-done; then 
+if test -f $tags/$what-done; then 
    echo $what is done
 else
     cd $build
@@ -199,6 +158,7 @@ else
         echo "No changes in realxtend deps git."
     fi
 fi
+
 # HydraX build:
 if test -f $tags/hydrax-done; then
     echo "Hydrax-done"
@@ -215,12 +175,17 @@ if test -f $tags/skyx-done; then
     echo "SkyX-done"
 else
     cd $build/$depdir/skyx
-    sed -i "s!^OGRE_CFLAGS.*!OGRE_CFLAGS = $(pkg-config OGRE --cflags)!" makefile
-    sed -i "s!^OGRE_LDFLAGS.*!OGRE_LDFLAGS = $(pkg-config OGRE --libs)!" makefile
-    make -j $nprocs PREFIX=$prefix
-    # Media should be media, linux files case sensitive..
-    sed -i "s/Media/media/" makefile
-    make PREFIX=$prefix install
+    if [ -z "$OGRE_HOME" ]; then
+	    OGRE_HOME=`pkg-config --variable=prefix OGRE`
+        if [ -z "$OGRE_HOME" ]; then
+            echo "OGRE_HOME not defined, check your pkg-config or set OGRE_HOME manually.";
+            exit 0;
+        fi
+    fi
+    echo "Using OGRE_HOME = $OGRE_HOME"
+    SKYX_SOURCE_DIR=`pwd`
+    cmake -DCMAKE_INSTALL_PREFIX=$prefix .
+    make -j $nprocs install
     touch $tags/skyx-done
 fi
 # PythonQT build

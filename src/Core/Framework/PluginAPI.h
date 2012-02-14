@@ -1,12 +1,11 @@
-// For conditions of distribution and use, see copyright notice in license.txt
+// For conditions of distribution and use, see copyright notice in LICENSE
 #pragma once
 
 #include <QString>
 #include <QObject>
 
 #ifdef WIN32
-#include <Winsock2.h>
-#include <Windows.h>
+#include "Win.h"
 typedef HMODULE PluginHandle;
 #elif defined(_POSIX_C_SOURCE) || defined(Q_WS_MAC)
 #include <dlfcn.h>

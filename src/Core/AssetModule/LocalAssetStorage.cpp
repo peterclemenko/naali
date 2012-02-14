@@ -1,4 +1,4 @@
-// For conditions of distribution and use, see copyright notice in license.txt
+// For conditions of distribution and use, see copyright notice in LICENSE
 
 #include "StableHeaders.h"
 #include "DebugOperatorNew.h"
@@ -126,8 +126,10 @@ void LocalAssetStorage::SetupWatcher()
     LogDebug("LocalAssetStorage::SetupWatcher: adding " + directory + " recursive=" + BoolToString(recursive));
 
     QStringList paths = DirectorySearch(directory, recursive, QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot | QDir::NoSymLinks);
+#ifndef Q_WS_MAC
     changeWatcher->addPath(QDir::fromNativeSeparators(directory));
     changeWatcher->addPaths(paths);
+#endif
 
     LogDebug("Total of " + QString::number(paths.count()) + " dirs and files added to watch list.");
 }

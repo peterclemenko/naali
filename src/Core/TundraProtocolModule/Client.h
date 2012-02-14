@@ -1,4 +1,4 @@
-// For conditions of distribution and use, see copyright notice in license.txt
+// For conditions of distribution and use, see copyright notice in LICENSE
 
 #pragma once
 
@@ -18,12 +18,6 @@ struct MsgLogin;
 struct MsgLoginReply;
 struct MsgClientJoined;
 struct MsgClientLeft;
-
-namespace kNet
-{
-    class MessageConnection;
-    typedef unsigned long message_id_t;
-}
 
 namespace KristalliProtocol
 {
@@ -96,16 +90,14 @@ public slots:
 
     /// Disconnects the client from the current server, and also deletes all contents from the client scene.
     /** Delays the logout by one frame, so it is safe to call from scripts. */
-    void Logout(const QString&);
-
-    /// Fails the current connection, to test for net hiccups and reconnect.
-    void FailConnection(const QString&);
+    void Logout(const QString& name="\0");
 
     /// Returns client connection ID (from loginreply message). Is zero if not connected
     int GetConnectionID() const { return client_id_; }
 
     /// See if connected & authenticated
-    bool IsConnected() const;
+    bool IsConnected(const QString& , unsigned short , const QString &) const;
+    bool IsConnected();
 
     /// Sets the given login property with the given value.
     /** Call this function prior connecting to a scene to specify data that should be carried to the server as initial login data.
@@ -125,6 +117,15 @@ public slots:
 
     /// Deletes all set login properties.
     void ClearLoginProperties() { properties.clear(); }
+
+    /// Prints scene names from loginstate_list_ keys
+    void printSceneNames();
+
+    /// Signal to javascript to switch main camera scene
+    void emitSceneSwitch(const QString name);
+
+    /// Get connected scene names
+    QStringList getSceneNames();
 
 signals:
     /// This signal is emitted right before this client is starting to connect to a Tundra server.
@@ -147,11 +148,13 @@ signals:
     /// Emitted when a login attempt failed to a server.
     void LoginFailed(const QString &reason);
 
+    void switchScene(const QString);
+
 private slots:
     /// Handles a Kristalli protocol message
     void HandleKristalliMessage(kNet::MessageConnection* source, kNet::message_id_t id, const char* data, size_t numBytes);
 
-    void OnConnectionAttemptFailed();
+    void OnConnectionAttemptFailed(QString &);
 
     /// Actually perform a delayed logout
     void DelayedLogout();
@@ -159,6 +162,9 @@ private slots:
 private:
     /// Saves connection properties to Containers
     void saveProperties(const QString name = "NEW");
+
+    /// Removes connection properties from containers
+    void removeProperties(const QString &name);
 
     /// Handles pending login to server
     void CheckLogin();
@@ -190,6 +196,7 @@ private:
     QMap<QString, u8> client_id_list_;
     // Scene to be disconnected
     QString discScene;
+
 };
 
 }

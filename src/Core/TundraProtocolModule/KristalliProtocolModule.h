@@ -1,4 +1,4 @@
-// For conditions of distribution and use, see copyright notice in license.txt
+// For conditions of distribution and use, see copyright notice in LICENSE
 
 #pragma once
 
@@ -49,6 +49,7 @@ namespace KristalliProtocol
         
         /// Invoked by the Network library for each received network message.
         void HandleMessage(kNet::MessageConnection *source, kNet::message_id_t id, const char *data, size_t numBytes);
+        void HandleMessage(kNet::MessageConnection *source, kNet::packet_id_t packetId, kNet::message_id_t id, const char *data, size_t numBytes);
 
         /// Invoked by the Network library for each new connection
         void NewConnectionEstablished(kNet::MessageConnection* source);
@@ -79,7 +80,7 @@ namespace KristalliProtocol
         /// Gets user by connection ID. Returns null if no such connection
         UserConnection* GetUserConnection(u8 id);
 
-        /// What trasport layer to use. Read on startup from --protocol udp/tcp/sctp. Defaults to TCP if no start param was given.
+        /// What trasport layer to use. Read on startup from --protocol udp/tcp. Defaults to TCP if no start param was given.
         kNet::SocketTransportLayer defaultTransport;
 
         /// Sets serverConnection ID to match server/client scene name on login.
@@ -93,7 +94,6 @@ public slots:
         void OpenKNetLogWindow();
 #endif
 
-        Ptr(kNet::MessageConnection) serverConnection;
     signals:
         /// Triggered whenever a new message is received rom the network.
         void NetworkMessageReceived(kNet::MessageConnection *source, kNet::message_id_t id, const char *data, size_t numBytes);
@@ -105,7 +105,7 @@ public slots:
         void ClientDisconnectedEvent(UserConnection *connection);
 
         /// Triggered on the client side when a server connection attempt has failed.
-        void ConnectionAttemptFailed();
+        void ConnectionAttemptFailed(QString &);
 
     private:
         /// This timer tracks when we perform the next reconnection attempt when the connection is lost.
@@ -119,24 +119,18 @@ public slots:
 
         /// Allocate a  connection ID for new connection
         u8 AllocateNewConnectionID() const;
-        
+
         /// If true, the connection attempt we've started has not yet been established, but is waiting
         /// for a transition to OK state. When this happens, the MsgLogin message is sent.
         bool connectionPending;
-        
-        /// This variable stores the server ip address we are desiring to connect to.
-        /// This is used to remember where we need to reconnect in case the connection goes down.
-        /*std::string serverIp;
-        /// Store the port number we are desiring to connect to. Used for reconnecting
-        unsigned short serverPort;
-        /// Store the transport type. Used for reconnecting
-        kNet::SocketTransportLayer serverTransport;*/
-        
+
         kNet::Network network;
         kNet::NetworkServer *server;
-        
+
         /// Users that are connected to server
         UserConnectionList connections;
+
+        Ptr(kNet::MessageConnection) serverConnection;
 
         /// Messageconnection properties array: IP
         QMap<QString, std::string> serverIp_map_;
@@ -156,6 +150,7 @@ public slots:
         /// Messageconnections properties array: Messageconnections
         QMap<QString, Ptr(kNet::MessageConnection) > serverConnection_map_;
 
+        QStringList removeConnections;
 #ifdef KNET_USE_QT
         QPointer<kNet::NetworkDialog> networkDialog;
 #endif

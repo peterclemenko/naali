@@ -1,4 +1,4 @@
-// For conditions of distribution and use, see copyright notice in license.txt
+// For conditions of distribution and use, see copyright notice in LICENSE
 
 #include "StableHeaders.h"
 #include "DebugOperatorNew.h"
@@ -1515,7 +1515,7 @@ void TimeProfilerWindow::RefreshSceneComplexityProfilingData()
     
     std::ostringstream text;
 
-    uint visible_entities = renderer->GetActiveOgreWorld()->GetVisibleEntities().size();
+    uint visible_entities = renderer->GetActiveOgreWorld()->VisibleEntities().size();
     uint batches = 0;
     uint triangles = 0;
     float avgfps = 0.0f;
@@ -2355,12 +2355,14 @@ void TimeProfilerWindow::RefreshAssetData(Ogre::ResourceManager& manager, QTreeW
         // Is there already this kind of element? 
         QTreeWidgetItem *item = FindItemByName(widget, resource->getName().c_str());
         if (item == 0)
+        {
             if (drawType == "texture")
                 item = new OgreTextureAssetTreeWidgetItem(widget);
             else if (drawType == "mesh")
                 item = new OgreMeshAssetTreeWidgetItem(widget);
             else
                 item = new OgreAssetTreeWidgetItem(widget);
+        }
 
         FillItem(item, resource, drawType);
     }

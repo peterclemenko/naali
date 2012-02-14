@@ -1,11 +1,10 @@
-// For conditions of distribution and use, see copyright notice in license.txt
+// For conditions of distribution and use, see copyright notice in LICENSE
 
 #include "StableHeaders.h"
 #include "DebugOperatorNew.h"
 
 #include "Application.h"
 #include "Framework.h"
-#include "VersionInfo.h"
 #include "ConfigAPI.h"
 #include "Profiler.h"
 #include "CoreStringUtils.h"
@@ -21,33 +20,48 @@
 #include <QLocale>
 #include <QIcon>
 #include <QWebSettings>
-#ifdef ENABLE_SPLASH_SCREEN
 #include <QSplashScreen>
-#endif
 
 #ifdef Q_WS_MAC
 #include <QMouseEvent>
 #include <QWheelEvent>
-
+#include <QDropEvent>
 #include "UiMainWindow.h"
 #include "UiAPI.h"
 #include "UiGraphicsView.h"
 #endif
 
 #if defined(_WINDOWS)
-#include <WinSock2.h>
-#include <windows.h>
+#include "Win.h"
 #include <shlobj.h>
-#undef min
-#undef max
+#include <io.h>
+#include <fcntl.h>
+#include <conio.h>
+#endif
+
+#if defined(_MSC_VER) && defined(_DMEMDUMP)
+// For generating minidump
+#include <dbghelp.h>
+#include <shellapi.h>
+#include <shlobj.h>
+#pragma warning(push)
+#pragma warning(disable : 4996)
+#include <strsafe.h>
+#pragma warning(pop)
+#endif
+
+#if defined(_MSC_VER) && defined(MEMORY_LEAK_CHECK)
+// for reporting memory leaks upon debug exit
+#include <crtdbg.h>
 #endif
 
 #include "MemoryLeakCheck.h"
 
+
 /// @note Modify these values when you are making a custom Tundra build. Also the version needs to be changed here on releases.
 const char *Application::organizationName = "realXtend";
 const char *Application::applicationName = "Tundra";
-const char *Application::version = "2.1.3";
+const char *Application::version = "2.2.0";
 
 Application::Application(Framework *owner, int &argc, char **argv) :
     QApplication(argc, argv),
@@ -56,14 +70,16 @@ Application::Application(Framework *owner, int &argc, char **argv) :
     nativeTranslator(new QTranslator),
     appTranslator(new QTranslator),
     targetFpsLimit(60.0)
-#ifdef ENABLE_SPLASH_SCREEN
     ,splashScreen(0)
-#endif
 {
     // Reflect our versioning information to Qt internals, if something tries to obtain it straight from there.
     QApplication::setOrganizationName(organizationName);
     QApplication::setApplicationName(applicationName);
     QApplication::setApplicationVersion(version);
+
+#ifdef Q_WS_MAC
+    QDir::setCurrent(QCoreApplication::applicationDirPath());
+#endif
 
     // Make sure that the required Tundra data directories exist.
     QDir path = UserDataDirectory();
@@ -111,16 +127,13 @@ Application::Application(Framework *owner, int &argc, char **argv) :
 
 Application::~Application()
 {
-#ifdef ENABLE_SPLASH_SCREEN
     SAFE_DELETE(splashScreen);
-#endif
     SAFE_DELETE(nativeTranslator);
     SAFE_DELETE(appTranslator);
 }
 
 void Application::InitializeSplash()
 {
-#ifdef ENABLE_SPLASH_SCREEN
     if (framework->IsHeadless())
         return;
 
@@ -132,13 +145,15 @@ void Application::InitializeSplash()
         splashScreen->show();
         splashScreen->activateWindow();
     }
-#endif
 }
 
 void Application::SetSplashMessage(const QString &message)
 {
-#ifdef ENABLE_SPLASH_SCREEN
     if (framework->IsHeadless())
+        return;
+
+    // Splash screen is enabled with --splash command.
+    if (!framework->HasCommandLineParameter("--splash"))
         return;
 
     if (!splashScreen)
@@ -147,11 +162,10 @@ void Application::SetSplashMessage(const QString &message)
     if (splashScreen && splashScreen->isVisible())
     {
         // Call QApplication::processEvents() to update splash painting as at this point main loop is not running yet
-        QString finalMessage = "v" + framework->ApplicationVersion()->GetVersion() + " - " + message.toUpper();
+        QString finalMessage = "v" + QString(Application::Version()) + " - " + message.toUpper();
         splashScreen->showMessage(finalMessage, Qt::AlignBottom|Qt::AlignLeft, QColor(240, 240, 240));
         processEvents();
     }
-#endif
 }
 
 QStringList Application::FindQmFiles(const QDir& dir)
@@ -168,9 +182,7 @@ QStringList Application::FindQmFiles(const QDir& dir)
 
 void Application::Go()
 {
-#ifdef ENABLE_SPLASH_SCREEN
     SAFE_DELETE(splashScreen);
-#endif
 
     installEventFilter(this);
 
@@ -228,6 +240,44 @@ void Application::Message(const wchar_t *title, const wchar_t *text)
 void Application::Message(const std::wstring &title, const std::wstring &text)
 {
     Message(title.c_str(), text.c_str());
+}
+
+bool Application::ShowConsoleWindow(bool attachToParent)
+{
+#ifdef WIN32
+    BOOL success = 0;
+    if (attachToParent)
+        success = AttachConsole(ATTACH_PARENT_PROCESS);
+    // Code below adapted from http://dslweb.nwnexus.com/~ast/dload/guicon.htm
+    if (!success)
+        success = AllocConsole();
+    if (!success)
+        return false;
+
+    // Prepare stdin, stdout and stderr.
+    long hStd =(long)GetStdHandle(STD_INPUT_HANDLE);
+    int hCrt = _open_osfhandle(hStd, _O_TEXT);
+    FILE *hf = _fdopen(hCrt, "r+");
+    setvbuf(hf,0,_IONBF,0);
+    *stdin = *hf;
+
+    hStd =(long)GetStdHandle(STD_OUTPUT_HANDLE);
+    hCrt = _open_osfhandle(hStd, _O_TEXT);
+    hf = _fdopen(hCrt, "w+");
+    setvbuf(hf, 0, _IONBF, 0);
+    *stdout = *hf;
+
+    hStd =(long)GetStdHandle(STD_ERROR_HANDLE);
+    hCrt = _open_osfhandle(hStd, _O_TEXT);
+    hf = _fdopen(hCrt, "w+");
+    setvbuf(hf, 0, _IONBF, 0);
+    *stderr = *hf;
+
+    // Make C++ IO streams cout, wcout, cin, wcin, wcerr, cerr, wclog and clog point to console as well.
+    std::ios::sync_with_stdio();
+#endif
+
+    return true;
 }
 
 void Application::SetCurrentWorkingDirectory(QString newCwd)
@@ -330,7 +380,7 @@ QString Application::ParseWildCardFilename(const QString& input)
     filename = filename.replace("$(USERDATA)", UserDataDirectory(), Qt::CaseInsensitive);
     filename = filename.replace("$(USERDOCS)", UserDocumentsDirectory(), Qt::CaseInsensitive);
     QRegExp rx("\\$\\(DATE:(.*)\\)");
-    // Qt Regexes don't support non-greedy matching. The above regex should be "\\$\\(DATE:(.*?)\\)". Instad Qt supports
+    // Qt Regexes don't support non-greedy matching. The above regex should be "\\$\\(DATE:(.*?)\\)". Instead Qt supports
     // only setting the matching to be non-greedy globally.
     rx.setMinimal(true); // This is to avoid e.g. $(DATE:yyyyMMdd)_aaa).txt to be incorrectly captured as "yyyyMMdd)_aaa".
     for(;;) // Loop and find all instances of $(DATE:someformat).
@@ -363,6 +413,11 @@ const char *Application::Version()
     return version;
 }
 
+QString Application::FullIdentifier()
+{
+    return QString("%1 %2 %3").arg(organizationName).arg(applicationName).arg(version).trimmed();
+}
+
 void Application::ReadTargetFpsLimitFromConfig()
 {
     ConfigData targetFpsConfigData(ConfigAPI::FILE_FRAMEWORK, ConfigAPI::SECTION_RENDERING);
@@ -370,7 +425,6 @@ void Application::ReadTargetFpsLimitFromConfig()
     {
         bool ok;
         double targetFps = framework->Config()->Get(targetFpsConfigData, "fps target limit").toDouble(&ok);
-        assert(ok && targetFps >= 0.0);
         if (ok && targetFps >= 0.0)
         {
             LogDebug("Application: read target FPS limit " + QString::number(targetFpsLimit) + " from config.");
@@ -404,6 +458,25 @@ bool Application::eventFilter(QObject *obj, QEvent *event)
                 if (mouse->buttons() == Qt::LeftButton)
                     framework->Ui()->GraphicsView()->mouseMoveEvent(mouse);
                 break;
+            }
+        }
+    }
+    QDropEvent *drop = dynamic_cast<QDropEvent*>(event);
+    if (drop)
+    {
+        if (dynamic_cast<UiMainWindow*>(obj))
+        {
+            switch (event->type())
+            {
+                case QEvent::DragEnter:
+                    framework->Ui()->GraphicsView()->dragEnterEvent(dynamic_cast<QDragEnterEvent*>(event));
+                    break;
+                case QEvent::DragMove:
+                    framework->Ui()->GraphicsView()->dragMoveEvent(dynamic_cast<QDragMoveEvent*>(event));
+                    break;
+                case QEvent::Drop:
+                    framework->Ui()->GraphicsView()->dropEvent(drop);
+                    break;
             }
         }
     }
@@ -566,3 +639,155 @@ void Application::AboutToExit()
     if (framework->IsExiting())
         quit();
 }
+
+QString Application::Platform()
+{
+#ifdef Q_WS_WIN
+    return QString("win");
+#elif defined(Q_WS_MAC)
+    return QString("mac");
+#elif defined(Q_WS_X11)
+    return QString("x11");
+#else
+    return QString();
+#endif
+}
+
+#if defined(_MSC_VER) && defined(_DMEMDUMP)
+int generate_dump(EXCEPTION_POINTERS* pExceptionPointers);
+#endif
+
+int run(int argc, char **argv)
+{
+    // set up a debug flag for memory leaks. Output the results to file when the app exits.
+    // Note that this file is written to the same directory where the executable resides,
+    // so you can only use this in a development version where you have write access to
+    // that directory.
+#if defined(_MSC_VER) && defined(MEMORY_LEAK_CHECK) && defined(_DEBUG)
+    int tmpDbgFlag = _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_LEAK_CHECK_DF;
+    _CrtSetDbgFlag(tmpDbgFlag);
+
+    HANDLE hLogFile = CreateFileW(L"fullmemoryleaklog.txt", GENERIC_WRITE, 
+      FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+#endif
+
+#if defined(_MSC_VER) && defined(_DMEMDUMP)
+    __try
+    {
+#endif
+        int return_value = EXIT_SUCCESS;
+
+        // Initialization prints
+        LogInfo("Starting up Tundra.");
+        LogInfo("* Working directory: " + QDir::currentPath());
+
+    // Create application object
+#if !defined(_DEBUG) || !defined (_MSC_VER)
+        try
+#endif
+        {
+            Framework* fw = new Framework(argc, argv);
+            fw->Go();
+            delete fw;
+        }
+#if !defined(_DEBUG) || !defined (_MSC_VER)
+        catch(std::exception& e)
+        {
+            Application::Message("An exception has occurred!", e.what());
+#if defined(_DEBUG)
+            throw;
+#else
+            return_value = EXIT_FAILURE;
+#endif
+        }
+#endif
+ #if defined(_MSC_VER) && defined(_DMEMDUMP)
+    }
+    __except(generate_dump(GetExceptionInformation()))
+    {
+    }
+#endif
+
+#if defined(_MSC_VER) && defined(MEMORY_LEAK_CHECK) && defined(_DEBUG)
+    if (hLogFile != INVALID_HANDLE_VALUE)
+    {
+       _CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_FILE);
+       _CrtSetReportFile(_CRT_WARN, hLogFile);
+       _CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_FILE);
+       _CrtSetReportFile(_CRT_ERROR, hLogFile);
+       _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_FILE);
+       _CrtSetReportFile(_CRT_ASSERT, hLogFile);
+    }
+#endif
+
+    // Note: We cannot close the file handle manually here. Have to let the OS close it
+    // after it has printed out the list of leaks to the file.
+    //CloseHandle(hLogFile);
+
+    return return_value;
+}
+
+#if defined(_MSC_VER) && defined(_DMEMDUMP)
+int generate_dump(EXCEPTION_POINTERS* pExceptionPointers)
+{
+    // Add a hardcoded check to guarantee we only write a dump file of the first crash exception that is received.
+    // Sometimes a crash is so bad that writing the dump below causes another exception to occur, in which case
+    // this function would be recursively called, spawning tons of error dialogs to the user.
+    static bool dumpGenerated = false;
+    if (dumpGenerated)
+    {
+        printf("WARNING: Not generating another dump, one has been generated already!\n");
+        return 0;
+    }
+    dumpGenerated = true;
+
+    BOOL bMiniDumpSuccessful;
+    WCHAR szPath[MAX_PATH];
+    WCHAR szFileName[MAX_PATH];
+
+    WCHAR szOrgName[MAX_PATH];
+    WCHAR szAppName[MAX_PATH];
+    WCHAR szVer[MAX_PATH];
+    // Note: all the following Application functions access static const char * variables so it's safe to call them.
+    MultiByteToWideChar(CP_ACP, 0, Application::OrganizationName(), -1, szOrgName, NUMELEMS(szOrgName));
+    MultiByteToWideChar(CP_ACP, 0, Application::ApplicationName(), -1, szAppName, NUMELEMS(szAppName));
+    MultiByteToWideChar(CP_ACP, 0, Application::Version(), -1, szVer, NUMELEMS(szVer));
+    WCHAR szVersion[MAX_PATH]; // Will contain "<AppName>_v<Version>".
+    StringCchPrintf(szVersion, MAX_PATH, L"%s_v%s", szAppName, szVer);
+
+    DWORD dwBufferSize = MAX_PATH;
+    HANDLE hDumpFile;
+    SYSTEMTIME stLocalTime;
+    MINIDUMP_EXCEPTION_INFORMATION ExpParam;
+
+    GetLocalTime( &stLocalTime );
+    GetTempPathW( dwBufferSize, szPath );
+
+    StringCchPrintf(szFileName, MAX_PATH, L"%s%s", szPath, szOrgName/*szAppName*/);
+    CreateDirectoryW(szFileName, 0);
+    StringCchPrintf(szFileName, MAX_PATH, L"%s%s\\%s-%04d%02d%02d-%02d%02d%02d-%ld-%ld.dmp",
+               szPath, szOrgName/*szAppName*/, szVersion,
+               stLocalTime.wYear, stLocalTime.wMonth, stLocalTime.wDay,
+               stLocalTime.wHour, stLocalTime.wMinute, stLocalTime.wSecond,
+               GetCurrentProcessId(), GetCurrentThreadId());
+
+    hDumpFile = CreateFileW(szFileName, GENERIC_READ|GENERIC_WRITE,
+                FILE_SHARE_WRITE|FILE_SHARE_READ, 0, CREATE_ALWAYS, 0, 0);
+
+    ExpParam.ThreadId = GetCurrentThreadId();
+    ExpParam.ExceptionPointers = pExceptionPointers;
+    ExpParam.ClientPointers = TRUE;
+
+    bMiniDumpSuccessful = MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(),
+                    hDumpFile, MiniDumpWithDataSegs, &ExpParam, 0, 0);
+
+    WCHAR szMessage[MAX_PATH];
+    StringCchPrintf(szMessage, MAX_PATH, L"Program %s encountered an unexpected error.\n\nCrashdump was saved to location:\n%s", szAppName, szFileName);
+    if (bMiniDumpSuccessful)
+        Application::Message(L"Minidump generated!", szMessage);
+    else
+        Application::Message(szAppName, L"Unexpected error was encountered while generating minidump!");
+
+    return EXCEPTION_EXECUTE_HANDLER;
+}
+#endif

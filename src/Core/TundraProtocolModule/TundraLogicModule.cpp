@@ -1,4 +1,4 @@
-// For conditions of distribution and use, see copyright notice in license.txt
+// For conditions of distribution and use, see copyright notice in LICENSE
 
 #include "StableHeaders.h"
 #include "DebugOperatorNew.h"
@@ -75,11 +75,6 @@
 #include "EC_LaserPointer.h"
 #endif
 
-#ifdef EC_Menu_ENABLED
-#include "EC_MenuContainer.h"
-#include "EC_MenuItem.h"
-#endif
-
 #include "EC_Camera.h"
 #include "EC_Placeable.h"
 #include "EC_AnimationController.h"
@@ -95,7 +90,9 @@ TundraLogicModule::TundraLogicModule() :
     IModule("TundraLogic"),
     autoStartServer_(false),
     autoStartServerPort_(cDefaultPort),
-    kristalliModule_(0)
+    kristalliModule_(0),
+    netrateBool(false),
+    netrateValue(0)
 {
 }
 
@@ -148,15 +145,10 @@ void TundraLogicModule::Load()
 #ifdef EC_LaserPointer_ENABLED
     framework_->Scene()->RegisterComponentFactory(ComponentFactoryPtr(new GenericComponentFactory<EC_LaserPointer>));
 #endif
-#ifdef EC_Menu_ENABLED
-    framework_->Scene()->RegisterComponentFactory(ComponentFactoryPtr(new GenericComponentFactory<EC_MenuContainer>));
-    framework_->Scene()->RegisterComponentFactory(ComponentFactoryPtr(new GenericComponentFactory<EC_MenuItem>));
-#endif
 }
 
 void TundraLogicModule::Initialize()
 {
-    //syncManager_ = boost::shared_ptr<SyncManager>(new SyncManager(this));
     client_ = boost::shared_ptr<Client>(new Client(this));
     server_ = boost::shared_ptr<Server>(new Server(this));
     
@@ -196,6 +188,10 @@ void TundraLogicModule::Initialize()
         "Imports a single mesh as a new entity. Position can be specified optionally."
         "Usage: importmesh(filename,x=0,y=0,z=0,xrot=0,yrot=0,zrot=0,xscale=1,yscale=1,zscale=1,inspectForMaterialsAndSkeleton=true)",
         this, SLOT(ImportMesh(QString, float, float, float, float, float, float, float, float, float, bool)));
+    framework_->Console()->RegisterCommand("switch",
+        "Switches to different scene if multiple scenes exist."
+        " Usage: switch(scenename). To get scenenames usage: switch(print).",
+        this, SLOT(switchscene(QString)));
 
     // Take a pointer to KristalliProtocolModule so that we don't have to take/check it every time
     kristalliModule_ = framework_->GetModule<KristalliProtocol::KristalliProtocolModule>();
@@ -231,7 +227,7 @@ void TundraLogicModule::Initialize()
             autoStartServerPort_ = GetFramework()->Config()->Get(configData).toInt();
     }
     
-    /*if (framework_->HasCommandLineParameter("--netrate"))
+    if (framework_->HasCommandLineParameter("--netrate"))
     {
         QStringList rateParam = framework_->CommandLineParameters("--netrate");
         if (rateParam.size() > 0)
@@ -239,12 +235,15 @@ void TundraLogicModule::Initialize()
             bool ok;
             int rate = rateParam.first().toInt(&ok);
             if (ok && rate > 0)
-                syncManager_->SetUpdatePeriod(1.f / (float)rate);
+            {
+                // Had to move some logic from here to registerSyncManager() because --netrate cmdLine option needs syncManager.
+                netrateBool = true;
+                netrateValue = rate;
+            }
             else
                 LogError("--netrate parameter is not a valid integer.");
-        }
-    }*/
-
+        }        
+    }
     connect(framework_->Scene(), SIGNAL(SceneAdded(QString)), this, SLOT(registerSyncManager(QString)));
     connect(framework_->Scene(), SIGNAL(SceneRemoved(QString)), this, SLOT(removeSyncManager(QString)));
 }
@@ -252,9 +251,9 @@ void TundraLogicModule::Initialize()
 void TundraLogicModule::Uninitialize()
 {
     kristalliModule_ = 0;
-    //syncManager_.reset();
     foreach (SyncManager *sm, syncManagers_)
         delete sm;
+    syncManagers_.clear();
     client_.reset();
     server_.reset();
 }
@@ -328,9 +327,15 @@ void TundraLogicModule::Update(f64 frametime)
 
 void TundraLogicModule::registerSyncManager(const QString name)
 {
+    // Do not create syncmanager for dummy TundraServer scene.
     if (name == "TundraServer")
         return;
+
+    // If scene is real deal, create syncManager.
     SyncManager *sm = new SyncManager(this);
+    // Had to move some logic from Init to here because --netrate cmdLine option needs syncManager.
+    if (netrateBool)
+        sm->SetUpdatePeriod(1.f / (float)netrateValue);
     ScenePtr newScene = framework_->Scene()->GetScene(name);
     sm->RegisterToScene(newScene);
     syncManagers_.insert(name, sm);
@@ -338,14 +343,18 @@ void TundraLogicModule::registerSyncManager(const QString name)
 
 void TundraLogicModule::removeSyncManager(const QString name)
 {
-    // Only works with 1 syncmanager for now.
     delete syncManagers_[name];
-    syncManagers_.clear();
+    syncManagers_.remove(name);
+}
 
+void TundraLogicModule::switchscene(const QString name) {
+    client_->emitSceneSwitch(name);
 }
 
 SyncManager* TundraLogicModule::GetSyncManager() const
 {
+    // Used by server. Returns 1st syncmanager for now because server does not have
+    // multiple scenes. If multiscene support is done for server this needs to be modified.
     QMap<QString, SyncManager*>::const_iterator iter = syncManagers_.begin();
     return iter.value();
 }
@@ -364,8 +373,18 @@ void TundraLogicModule::LoadStartupScene()
     if (hasFile && files.isEmpty())
         LogError("TundraLogicModule: --file specified without a value.");
 
-    foreach(const QString &startupScene, files)
+    foreach(const QString &file, files)
     {
+        QString startupScene;
+        // If the file parameter uses the full storage specifier format, parse the "src" keyvalue
+        if (file.indexOf(';') != -1 || file.indexOf('=') != -1)
+        {
+            QMap<QString, QString> keyValues = AssetAPI::ParseAssetStorageString(file);
+            startupScene = keyValues["src"];
+        }
+        else
+            startupScene = file;
+        
         // At this point, if we have a LocalAssetProvider, it has already also parsed the --file command line option
         // and added the appropriate path as a local asset storage. Here we assume that is the case, so that the
         // scene we now load will be able to refer to local:// assets in its subfolders.
@@ -433,7 +452,7 @@ void TundraLogicModule::Connect(QString address, int port, QString protocol, QSt
     client_->Login(address, port, username, password, protocol);
 }
 
-void TundraLogicModule::Disconnect(const QString &name)
+void TundraLogicModule::Disconnect(const QString& name)
 {
     client_->Logout(name);
 }

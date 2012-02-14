@@ -1,4 +1,4 @@
-// For conditions of distribution and use, see copyright notice in license.txt
+// For conditions of distribution and use, see copyright notice in LICENSE
 
 #include "StableHeaders.h"
 #include "DebugOperatorNew.h"
@@ -37,22 +37,30 @@ EC_Fog::EC_Fog(Scene* scene) :
         metadataInitialized = true;
     }
 
-    connect(this, SIGNAL(AttributeChanged(IAttribute*, AttributeChange::Type)), SLOT(Update()), Qt::UniqueConnection);
-    connect(this, SIGNAL(ParentEntitySet()), SLOT(Update()));
+    // Only when rendering is enabled
+    if (!framework->IsHeadless())
+    {
+        connect(this, SIGNAL(AttributeChanged(IAttribute*, AttributeChange::Type)), SLOT(Update()), Qt::UniqueConnection);
+        connect(this, SIGNAL(ParentEntitySet()), SLOT(Update()));
+    }
 }
 
 EC_Fog::~EC_Fog()
 {
+    if (framework->IsHeadless())
+        return;
     OgreWorldPtr w = world.lock();
     if (!w)
         return;
 
-    w->GetSceneManager()->setFog(Ogre::FOG_NONE);
-    w->GetRenderer()->MainViewport()->setBackgroundColour(Color()); // Color default ctor == black
+    w->OgreSceneManager()->setFog(Ogre::FOG_NONE);
+    w->Renderer()->MainViewport()->setBackgroundColour(Color()); // Color default ctor == black
 }
 
 void EC_Fog::Update()
 {
+    if (framework->IsHeadless())
+        return;
     if (!ParentScene())
         return;
     OgreWorldPtr w = ParentScene()->GetWorld<OgreWorld>();
@@ -60,10 +68,20 @@ void EC_Fog::Update()
         return;
 
     world = w;
+
     // Note: in Tundra1-series, if we were within EC_WaterPlane, the waterPlaneColor*fogColor was used as the scene fog color.
-    w->GetSceneManager()->setFog((Ogre::FogMode)mode.Get(), color.Get(), expDensity.Get(), startDistance.Get(), endDistance.Get());
-    if ((FogMode)mode.Get() == None)
-        w->GetRenderer()->MainViewport()->setBackgroundColour(Color()); // Color default ctor == black
-    else
-        w->GetRenderer()->MainViewport()->setBackgroundColour(color.Get());
+
+    // Specify the fog color.
+    if (w->OgreSceneManager())
+        w->OgreSceneManager()->setFog((Ogre::FogMode)mode.Get(), color.Get(), expDensity.Get(), startDistance.Get(), endDistance.Get());
+
+    // Specify the window background color to match the fog color.
+    Ogre::Viewport *ovp = w->Renderer() ? w->Renderer()->MainViewport() : 0;
+    if (ovp)
+    {
+        if ((FogMode)mode.Get() == None)
+            ovp->setBackgroundColour(Color()); // Color default ctor == black
+        else
+            ovp->setBackgroundColour(color.Get());
+    }
 }

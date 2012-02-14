@@ -1,4 +1,4 @@
-// For conditions of distribution and use, see copyright notice in license.txt
+// For conditions of distribution and use, see copyright notice in LICENSE
 
 #include "StableHeaders.h"
 #define MATH_OGRE_INTEROP
@@ -44,7 +44,7 @@ EC_Sky::EC_Sky(Scene* scene) :
         if (names.size() == cSkyBoxTextureCount)
         {
             // This code block is not currently working, but if for some reason GetTextureNamesFromMaterial understands cubic_textures this codeblock is runned
-            for(int i = 0; i < cSkyBoxTextureCount; ++i)
+            for(unsigned int i = 0; i < cSkyBoxTextureCount; ++i)
                 lst.Append(AssetReference(names[i].c_str()));
         }
         else
@@ -74,7 +74,7 @@ EC_Sky::EC_Sky(Scene* scene) :
     while(textureAssets.size() < cSkyBoxTextureCount)
     textureAssets.push_back(boost::shared_ptr<AssetRefListener>(new AssetRefListener));
 
-    for(int i = 0; i < cSkyBoxTextureCount; ++i)
+    for(unsigned int i = 0; i < cSkyBoxTextureCount; ++i)
     {
         connect(textureAssets[i].get(), SIGNAL(Loaded(AssetPtr)), this, SLOT(OnTextureAssetLoaded(AssetPtr)), Qt::UniqueConnection);
         //materialAssets[i]->HandleAssetRefChange(framework->Asset(), materials[i].ref);
@@ -111,7 +111,7 @@ void EC_Sky::CreateSky()
 
     try
     {
-        world_.lock()->GetSceneManager()->setSkyBox(true, currentMaterial.toStdString().c_str(), distance.Get(),
+        world_.lock()->OgreSceneManager()->setSkyBox(true, currentMaterial.toStdString().c_str(), distance.Get(),
             drawFirst.Get(), orientation.Get());
     }
     catch(Ogre::Exception& e)
@@ -219,7 +219,7 @@ void EC_Sky::SetTextures()
     std::vector<std::string> texture_names;
     texture_names.reserve(cSkyBoxTextureCount);
 
-    for(int i = 0; i < lst.Size() && i <= cSkyBoxTextureCount; ++i)
+    for(unsigned int i = 0; i < (unsigned int)lst.Size() && i <= cSkyBoxTextureCount; ++i)
         texture_names.push_back(lst[i].ref.toStdString());
 
     Ogre::MaterialPtr materialPtr = Ogre::MaterialManager::getSingleton().getByName(materialRef.Get().ref.toStdString().c_str());
@@ -240,5 +240,5 @@ void EC_Sky::DisableSky()
         return;
 
     if (!world_.expired())
-        world_.lock()->GetSceneManager()->setSkyBox(false, "");
+        world_.lock()->OgreSceneManager()->setSkyBox(false, "");
 }

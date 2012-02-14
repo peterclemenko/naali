@@ -1,5 +1,6 @@
-// For conditions of distribution and use, see copyright notice in license.txt
+// For conditions of distribution and use, see copyright notice in LICENSE
 
+#include "Math/MathNamespace.h"
 #include "StableHeaders.h"
 #include "DebugOperatorNew.h"
 #include "EC_WidgetCanvas.h"
@@ -251,7 +252,7 @@ void EC_WidgetCanvas::WidgetDestroyed(QObject *obj)
     SAFE_DELETE(refresh_timer_);
 }
 
-void EC_WidgetCanvas::Update(QImage &buffer)
+void EC_WidgetCanvas::Update(QImage buffer)
 {
     if (framework->IsHeadless())
         return;
@@ -260,7 +261,7 @@ void EC_WidgetCanvas::Update(QImage &buffer)
 
     if (buffer.format() != QImage::Format_ARGB32 && buffer.format() != QImage::Format_ARGB32_Premultiplied)
     {
-        LogWarning("EC_WidgetCanvas::Update(QImage &buffer): Input format needs to be Format_ARGB32 or Format_ARGB32_Premultiplied, preforming auto conversion!");
+        LogWarning("EC_WidgetCanvas::Update(QImage buffer): Input format needs to be Format_ARGB32 or Format_ARGB32_Premultiplied, preforming auto conversion!");
         buffer = buffer.convertToFormat(QImage::Format_ARGB32);
         if (buffer.isNull())
         {
@@ -365,7 +366,7 @@ void EC_WidgetCanvas::Update()
 
 bool EC_WidgetCanvas::Blit(const QImage &source, Ogre::TexturePtr destination)
 {
-#ifdef DIRECTX_ENABLED && defined(WIN32)
+#if defined(DIRECTX_ENABLED) && defined(WIN32)
     Ogre::HardwarePixelBufferSharedPtr pb = destination->getBuffer();
     Ogre::D3D9HardwarePixelBuffer *pixelBuffer = dynamic_cast<Ogre::D3D9HardwarePixelBuffer*>(pb.get());
     if (!pixelBuffer)

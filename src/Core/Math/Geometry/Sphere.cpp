@@ -570,11 +570,15 @@ void Sphere::Enclose(const float3 *pointArray, int numPoints)
 int Sphere::Triangulate(float3 *outPos, float3 *outNormal, float2 *outUV, int numVertices)
 {
 	assume(outPos);
+    assume(numVertices >= 24 && "At minimum, sphere triangulation will contain at least 8 triangles, which is 24 vertices, but fewer were specified!");
+    assume(numVertices % 3 == 0 && "Warning:: The size of output should be divisible by 3 (each triangle takes up 3 vertices!)");
 #ifndef MATH_ENABLE_INSECURE_OPTIMIZATIONS
 	if (!outPos)
 		return 0;
 #endif
 	assume(this->r > 0.f);
+    if (numVertices < 24)
+        return 0;
 
 #ifdef MATH_ENABLE_STL_SUPPORT
 	std::vector<Triangle> temp;
@@ -669,7 +673,11 @@ float3 Sphere::RandomPointOnSurface(LCG &lcg)
 		float z = lcg.Float(-r, r);
 		float lenSq = x*x + y*y + z*z;
 		if (lenSq >= 1e-6f && lenSq <= r*r)
+#ifndef __APPLE__
 			return pos + r / sqrt(lenSq) * float3(x,y,z);
+#else
+			return pos + float3(x,y,z).operator*(r / sqrt(lenSq));
+#endif
 	}
 	assume(false && "Sphere::RandomPointOnSurface failed!");
 

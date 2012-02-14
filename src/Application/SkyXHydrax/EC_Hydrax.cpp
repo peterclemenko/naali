@@ -1,9 +1,8 @@
 /**
- *  For conditions of distribution and use, see copyright notice in license.txt
- *
- *  @file   EC_Hydrax.cpp
- *  @brief  A photorealistic water plane component using Hydrax, http://www.ogre3d.org/tikiwiki/Hydrax
- */
+    For conditions of distribution and use, see copyright notice in LICENSE
+
+    @file   EC_Hydrax.cpp
+    @brief  A photorealistic water plane component using Hydrax, http://www.ogre3d.org/tikiwiki/Hydrax */
 
 #define MATH_OGRE_INTEROP
 
@@ -95,7 +94,7 @@ EC_Hydrax::EC_Hydrax(Scene* scene) :
         return;
     }
 
-    connect(w->GetRenderer(), SIGNAL(MainCameraChanged(Entity *)), SLOT(OnActiveCameraChanged(Entity *)));
+    connect(w->Renderer(), SIGNAL(MainCameraChanged(Entity *)), SLOT(OnActiveCameraChanged(Entity *)));
     connect(this, SIGNAL(ParentEntitySet()), SLOT(Create()));
 
     connect(&configRefListener, SIGNAL(Loaded(AssetPtr)), this, SLOT(ConfigLoadSucceeded(AssetPtr)));
@@ -125,7 +124,7 @@ void EC_Hydrax::Create()
         OgreWorldPtr w = ParentScene()->GetWorld<OgreWorld>();
         assert(w);
 
-        Entity *mainCamera = w->GetRenderer()->MainCamera();
+        Entity *mainCamera = w->Renderer()->MainCamera();
         if (!mainCamera)
         {
             // Can't create Hydrax just yet, no main camera set (Hydrax needs a valid camera to initialize).
@@ -137,7 +136,7 @@ void EC_Hydrax::Create()
 
         Ogre::Camera *cam = mainCamera->GetComponent<EC_Camera>()->GetCamera();
         impl = new EC_HydraxImpl();
-        impl->hydrax = new Hydrax::Hydrax(w->GetSceneManager(), cam, w->GetRenderer()->MainViewport());
+        impl->hydrax = new Hydrax::Hydrax(w->OgreSceneManager(), cam, w->Renderer()->MainViewport());
 
         // Using projected grid module by default
         Hydrax::Module::ProjectedGrid *module = new Hydrax::Module::ProjectedGrid(impl->hydrax, new Hydrax::Noise::Perlin(),
@@ -170,7 +169,22 @@ void EC_Hydrax::OnActiveCameraChanged(Entity *newActiveCamera)
         Create();
     else // Otherwise, update the camera to an existing initialized Hydrax instance.
         if (impl && impl->hydrax)
-            impl->hydrax->setCamera(newActiveCamera->GetComponent<EC_Camera>()->GetCamera());
+        {
+            // Before we apply post-processing to new main camera scene, check if hydrax actually exists in that scene.
+            // Othervise post-processing effect is rendered to viewport that actually does not have hydrax.
+            Scene *scene = framework->Renderer()->MainCameraScene();
+            EntityList entList = scene->GetEntitiesWithComponent("EC_Hydrax");
+            if (!entList.empty())
+            {
+                impl->hydrax->setVisible(true);
+                impl->hydrax->setCamera(newActiveCamera->GetComponent<EC_Camera>()->GetCamera());
+                return;
+            }
+            else
+            {
+                impl->hydrax->setVisible(false);
+            }
+        }
 }
 
 void EC_Hydrax::RequestConfigAsset()
@@ -261,8 +275,28 @@ void EC_Hydrax::Update(float frameTime)
             if (!entities.empty())
                 impl->skyX = (*entities.begin())->GetComponent<EC_SkyX>();
         }
-        if (!impl->skyX.expired() && impl->hydrax->isCreated())
-            impl->hydrax->setSunPosition(impl->skyX.lock()->SunPosition());
+
+        // Set Hydrax's sun position to use either sun or moon, depending which is visible.
+        boost::shared_ptr<EC_SkyX> skyX = impl->skyX.lock();
+        if (skyX && impl->hydrax->isCreated())
+        {
+            // Decrease sun strength for moonlight. Otherwise the light projection on the water surface looks unnaturally.
+            /// @todo Decrease underwater sun strength too.
+            const float defaultSunlightStrenth = 1.75f;
+            const float defaultMoonlightStrenth = 0.75f;
+            if (skyX->IsSunVisible())
+            {
+                if (impl->hydrax->getSunStrength() != defaultSunlightStrenth)
+                    impl->hydrax->setSunStrength(defaultSunlightStrenth);
+                impl->hydrax->setSunPosition(skyX->SunPosition());
+            }
+            else if (skyX->IsMoonVisible())
+            {
+                if (impl->hydrax->getSunStrength() != defaultMoonlightStrenth)
+                    impl->hydrax->setSunStrength(defaultMoonlightStrenth);
+                impl->hydrax->setSunPosition(skyX->MoonPosition());
+            }
+        }
 #endif
         if (impl->hydrax->isCreated())
             impl->hydrax->update(frameTime);
@@ -319,7 +353,7 @@ void EC_Hydrax::ConfigLoadSucceeded(AssetPtr asset)
 
         // The position attribute is always authoritative from the component attribute.
         if (visible.Get())
-            impl->hydrax->setPosition(position.Get());  
+            impl->hydrax->setPosition(position.Get());
     }
     catch (Ogre::Exception &e)
     {

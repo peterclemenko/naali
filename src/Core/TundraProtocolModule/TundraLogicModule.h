@@ -1,4 +1,4 @@
-// For conditions of distribution and use, see copyright notice in license.txt
+// For conditions of distribution and use, see copyright notice in LICENSE
 
 #pragma once
 
@@ -57,7 +57,7 @@ public:
 public slots:
     /// Starts the server.
     /** @param port Port.
-        @param protocol Protocol, udp, tcp or sctp. */
+        @param protocol Protocol, udp or tcp. */
     void StartServer(int port, const QString &protocol);
 
     /// Stops the server.
@@ -88,6 +88,7 @@ private slots:
     void StartupSceneTransferFailed(IAssetTransfer *transfer, QString reason);
     void registerSyncManager(const QString);
     void removeSyncManager(const QString);
+    void switchscene(const QString);
 
 private:
     /// Handles a Kristalli protocol message
@@ -103,6 +104,8 @@ private:
     KristalliProtocol::KristalliProtocolModule *kristalliModule_; ///< KristalliProtocolModule pointer
     bool autoStartServer_; ///< Whether to autostart the server
     short autoStartServerPort_; ///< Autostart server port
+    bool netrateBool;
+    int netrateValue;
 };
 
 }

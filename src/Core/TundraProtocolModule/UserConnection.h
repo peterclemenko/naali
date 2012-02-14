@@ -1,4 +1,4 @@
-// For conditions of distribution and use, see copyright notice in license.txt
+// For conditions of distribution and use, see copyright notice in LICENSE
 
 #pragma once
 
@@ -64,6 +64,12 @@ public slots:
     /// Deny connection. Call as a response to server.UserAboutToConnect() if necessary
     void DenyConnection(const QString& reason);
     
+    /// Starts a benign disconnect procedure (one which waits for the peer acknowledge procedure).
+    void Disconnect();
+
+    /// Forcibly kills this connection without notifying the peer.
+    void Close();
+
 signals:
     void ActionTriggered(UserConnection* connection, Entity* entity, const QString& action, const QStringList& params);
 };

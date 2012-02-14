@@ -1,4 +1,4 @@
-// For conditions of distribution and use, see copyright notice in license.txt
+// For conditions of distribution and use, see copyright notice in LICENSE
 
 #include "EC_WidgetBillboard.h"
 
@@ -263,6 +263,7 @@ void EC_WidgetBillboard::PrepareComponent()
             ogreMaterialAsset->SetSceneBlend(0, 0, 0 /*SBT_TRANSPARENT_ALPHA*/);
             ogreMaterialAsset->SetDepthWrite(0, 0, false);
             ogreMaterialAsset->SetEmissiveColor(0,0, Color(1,1,1,1));
+            ogreMaterialAsset->SetAttribute("tex_address_mode", "clamp");
             bb->materialRef.Set(AssetReference(ogreMaterialAsset->Name()), AttributeChange::LocalOnly);
         }
         else

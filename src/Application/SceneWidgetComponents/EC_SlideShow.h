@@ -1,4 +1,4 @@
-// For conditions of distribution and use, see copyright notice in license.txt
+// For conditions of distribution and use, see copyright notice in LICENSE
 
 #pragma once
 
@@ -104,9 +104,6 @@ private slots:
 
     /// Handle AssetAPI forget asset signals.
     void AssetRemoved(AssetPtr asset);
-
-    /// Draws a message texture. Used for info and error textures in the 3D object.    
-    QImage DrawMessageTexture(QString message, bool error = false);
 
     /// Get render target texture unit state.
     Ogre::TextureUnitState *GetRenderTextureUnit();

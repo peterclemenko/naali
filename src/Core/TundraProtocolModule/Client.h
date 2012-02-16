@@ -4,11 +4,10 @@
 
 #include "CoreDefines.h"
 #include "CoreTypes.h"
-#include "TundraLogicModuleApi.h"
-#include "UserConnectedResponseData.h"
+#include "TundraProtocolModuleApi.h"
+#include "TundraProtocolModuleFwd.h"
 
-#include <kNet.h>
-
+#include <kNet/Socket.h>
 #include <map>
 #include <QObject>
 #include <QUrl>
@@ -30,13 +29,12 @@ typedef std::list<UserConnectionPtr> UserConnectionList;
 
 class Framework;
 
+class QUrl;
+
 namespace TundraLogic
 {
-
-class TundraLogicModule;
-
 /// Provides Tundra client->server connection functions.
-class TUNDRALOGIC_MODULE_API Client : public QObject
+class TUNDRAPROTOCOL_MODULE_API Client : public QObject
 {
     Q_OBJECT
 
@@ -107,7 +105,7 @@ public slots:
 
     /// Returns the login property value of the given name.
     /// @return value of the key, or an empty string if the key was not found.
-    QString GetLoginProperty(QString key);
+    QString GetLoginProperty(QString key) const;
 
     /// Returns all the currently set login properties as an XML text.
     QString LoginPropertiesAsXml() const;
@@ -140,7 +138,7 @@ signals:
     void Connected(UserConnectedResponseData *responseData);
 
     /// Triggered whenever a new message is received from the network.
-    void NetworkMessageReceived(kNet::message_id_t id, const char *data, size_t numBytes);
+    void NetworkMessageReceived(kNet::packet_id_t, kNet::message_id_t id, const char *data, size_t numBytes);
 
     /// This signal is emitted when the client has disconnected from the server.
     void Disconnected();
@@ -152,7 +150,7 @@ signals:
 
 private slots:
     /// Handles a Kristalli protocol message
-    void HandleKristalliMessage(kNet::MessageConnection* source, kNet::message_id_t id, const char* data, size_t numBytes);
+    void HandleKristalliMessage(kNet::MessageConnection* source, kNet::packet_id_t, kNet::message_id_t id, const char* data, size_t numBytes);
 
     void OnConnectionAttemptFailed(QString &);
 

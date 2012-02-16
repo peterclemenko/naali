@@ -148,7 +148,7 @@ public:
     void LoadCompleted();
 
     /// Called whenever another asset this asset depends on is loaded. The default implementation will check if the asset itself is loaded, and the
-    /// number of dependencies: if it was the last dependency, Loaded() will be mitted.
+    /// number of dependencies: if it was the last dependency, Loaded() will be emitted.
     virtual void DependencyLoaded(AssetPtr dependee);
 
     /// Returns all the assets this asset refers to (but not the references those assets refer to).
@@ -178,7 +178,7 @@ protected:
     /// @note Implementation has to call AssetAPI::AssetLoadCompleted after loaded succesfully (both synchronous and asynchronous). 
     /// AssetAPI::AssetLoadCompleted can be called inside this function, how ever just returning true is not enough. 
     /// AssetAPI::AssetLoadFailed will be called automatically if false is returned.
-    virtual bool DeserializeFromData(const u8 *data, size_t numBytes, const bool allowAsynchronous) = 0;
+    virtual bool DeserializeFromData(const u8 *data, size_t numBytes, bool allowAsynchronous) = 0;
 
     /// Private-implementation of the unloading of an asset.
     virtual void DoUnload() = 0;

@@ -2,23 +2,23 @@
 
 #pragma once
 
-#include "KristalliProtocolModuleApi.h"
-#include "kNet.h"
+#include "CoreTypes.h"
+#include "TundraProtocolModuleApi.h"
+#include "TundraProtocolModuleFwd.h"
+
+#include <kNet/SharedPtr.h>
+#include <kNet/MessageConnection.h>
+
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
 #include <QObject>
 
-namespace kNet
-{
-    class MessageConnection;
-}
-
 class Entity;
-struct SceneSyncState;
+class SceneSyncState;
 
-/// Represents a client conncetion on the server side.
-class KRISTALLIPROTOCOL_MODULE_API UserConnection : public QObject, public boost::enable_shared_from_this<UserConnection>
+/// Represents a client connection on the server side.
+class TUNDRAPROTOCOL_MODULE_API UserConnection : public QObject, public boost::enable_shared_from_this<UserConnection>
 {
     Q_OBJECT
     
@@ -49,7 +49,7 @@ public slots:
     /// Execute an action on an entity, sent only to the specific user
     void Exec(QObject* entity, const QString &action, const QStringList &params);
     
-    /// Get connectionid
+    /// Get connection id
     int GetConnectionID() const;
     
     /// Get raw login data
@@ -73,9 +73,3 @@ public slots:
 signals:
     void ActionTriggered(UserConnection* connection, Entity* entity, const QString& action, const QStringList& params);
 };
-
-typedef boost::shared_ptr<UserConnection> UserConnectionPtr;
-typedef boost::weak_ptr<UserConnection> UserConnectionWeakPtr;
-typedef std::list<UserConnectionPtr> UserConnectionList;
-
-

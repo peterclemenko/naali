@@ -12,6 +12,7 @@
 #include "MsgLoginReply.h"
 #include "MsgClientJoined.h"
 #include "MsgClientLeft.h"
+#include "UserConnectedResponseData.h"
 
 #include "LoggingFunctions.h"
 #include "CoreStringUtils.h"
@@ -19,7 +20,7 @@
 #include "Scene.h"
 #include "Application.h"
 
-#include <QDomElement>
+#include <kNet.h>
 
 #include "MemoryLeakCheck.h"
 
@@ -146,10 +147,10 @@ void Client::Login(const QString& address, unsigned short port, kNet::SocketTran
     SetLoginProperty("client-name", Application::ApplicationName());
     SetLoginProperty("client-organization", Application::OrganizationName());
 
-    KristalliProtocol::KristalliProtocolModule *kristalli = framework_->GetModule<KristalliProtocol::KristalliProtocolModule>();
-    connect(kristalli, SIGNAL(NetworkMessageReceived(kNet::MessageConnection *, kNet::message_id_t, const char *, size_t)), 
-            this, SLOT(HandleKristalliMessage(kNet::MessageConnection*, kNet::message_id_t, const char*, size_t)), Qt::UniqueConnection);
-    connect(kristalli, SIGNAL(ConnectionAttemptFailed(QString)), this, SLOT(OnConnectionAttemptFailed(QString)), Qt::UniqueConnection);
+    KristalliProtocolModule *kristalli = framework_->GetModule<KristalliProtocolModule>();
+    connect(kristalli, SIGNAL(NetworkMessageReceived(kNet::MessageConnection *, kNet::packet_id_t, kNet::message_id_t, const char *, size_t)), 
+            this, SLOT(HandleKristalliMessage(kNet::MessageConnection*, kNet::packet_id_t, kNet::message_id_t, const char*, size_t)), Qt::UniqueConnection);
+    connect(kristalli, SIGNAL(ConnectionAttemptFailed()), this, SLOT(OnConnectionAttemptFailed()), Qt::UniqueConnection);
 
     owner_->GetKristalliModule()->Connect(address.toStdString().c_str(), port, protocol);
     loginstate_ = ConnectionPending;
@@ -212,9 +213,9 @@ void Client::DoLogout(bool fail)
 
     if (loginstate_list_.isEmpty())
     {
-        KristalliProtocol::KristalliProtocolModule *kristalli = framework_->GetModule<KristalliProtocol::KristalliProtocolModule>();
-        disconnect(kristalli, SIGNAL(NetworkMessageReceived(kNet::MessageConnection *, kNet::message_id_t, const char *, size_t)),
-                   this, SLOT(HandleKristalliMessage(kNet::MessageConnection*, kNet::message_id_t, const char*, size_t)));
+        KristalliProtocolModule *kristalli = framework_->GetModule<KristalliProtocolModule>();
+        disconnect(kristalli, SIGNAL(NetworkMessageReceived(kNet::MessageConnection *, kNet::packet_id_t, kNet::message_id_t, const char *, size_t)), 
+            this, SLOT(HandleKristalliMessage(kNet::MessageConnection*, kNet::packet_id_t, kNet::message_id_t, const char*, size_t)));
 
         disconnect(kristalli, SIGNAL(ConnectionAttemptFailed(QString&)), this, SLOT(OnConnectionAttemptFailed(QString&)));
     }
@@ -250,11 +251,12 @@ void Client::SetLoginProperty(QString key, QString value)
     properties[key] = value;
 }
 
-QString Client::GetLoginProperty(QString key)
+QString Client::GetLoginProperty(QString key) const
 {
     key = key.trimmed();
-    if (properties.count(key) > 0)
-        return properties[key];
+    std::map<QString, QString>::const_iterator i = properties.find(key);
+    if (i != properties.end())
+        return i->second;
     else
         return "";
 }
@@ -343,7 +345,7 @@ void Client::OnConnectionAttemptFailed(QString &key)
     DoLogout(true);
 }
 
-void Client::HandleKristalliMessage(MessageConnection* source, message_id_t id, const char* data, size_t numBytes)
+void Client::HandleKristalliMessage(MessageConnection* source, packet_id_t packetId, message_id_t messageId, const char* data, size_t numBytes)
 {
     QMapIterator<QString, Ptr(kNet::MessageConnection)> sourceIterator = owner_->GetKristalliModule()->GetConnectionArray();
 
@@ -358,13 +360,13 @@ void Client::HandleKristalliMessage(MessageConnection* source, message_id_t id, 
             continue;
         else
         {
-            ::LogWarning("Client: dropping message " + ToString(id) + " from unknown source");
+            ::LogWarning("Client: dropping message " + ToString(messageId) + " from unknown source");
             return;
         }
 
     }
     
-    switch (id)
+    switch(messageId)
     {
     case cLoginReplyMessage:
         {
@@ -385,7 +387,7 @@ void Client::HandleKristalliMessage(MessageConnection* source, message_id_t id, 
         }
         break;
     }
-    emit NetworkMessageReceived(id, data, numBytes);
+    emit NetworkMessageReceived(packetId, messageId, data, numBytes);
 }
 
 void Client::HandleLoginReply(MessageConnection* source, const MsgLoginReply& msg)

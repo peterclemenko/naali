@@ -3,8 +3,15 @@
 #pragma once
 
 #include "CoreTypes.h"
+#include "SceneFwd.h"
 
 #include "kNet/PolledTimer.h"
+#include "kNet/Types.h"
+#include "Transform.h"
+#include "Math/float3.h"
+
+#include <QObject>
+#include <QVariant>
 
 #include <list>
 #include <map>
@@ -154,139 +161,206 @@ struct EntitySyncState
     
     kNet::PolledTimer updateTimer; ///< Last update received timer
     float avgUpdateInterval; ///< Average network update interval in seconds
+
+    // Special cases for rigid body streaming:
+    // On the server side, remember the last sent rigid body parameters, so that we can perform effective pruning of redundant data.
+    Transform transform;
+    float3 linearVelocity;
+    float3 angularVelocity;
+    kNet::tick_t lastNetworkSendTime;
 };
 
-/// Scene's per-user network sync state
-struct SceneSyncState
+struct RigidBodyInterpolationState
 {
-    std::list<EntitySyncState*> dirtyQueue; ///< Dirty entities
-    std::map<entity_id_t, EntitySyncState> entities; ///< Entity syncstates
-    
-    void Clear()
+    // On the client side, remember the state for performing Hermite interpolation (C1, i.e. pos and vel are continuous).
+    struct RigidBodyState
     {
-        dirtyQueue.clear();
-        entities.clear();
+        float3 pos;
+        float3 vel;
+        Quat rot;
+        float3 scale;
+        float3 angVel; // Angular velocity in Euler ZYX.
+    };
+
+    RigidBodyState interpStart;
+    RigidBodyState interpEnd;
+    float interpTime;
+
+    // If true, we are using linear inter/extrapolation to move the entity.
+    // If false, we have handed off this entity for physics to extrapolate.
+    bool interpolatorActive;
+
+    /// Remembers the packet id of the most recently received network sync packet. Used to enforce
+    /// proper ordering (generate latest-data-guarantee messaging) for the received movement packets.
+    kNet::packet_id_t lastReceivedPacketCounter;
+};
+
+/// State change request to permit/deny changes.
+class StateChangeRequest : public QObject
+{
+    Q_OBJECT
+
+    Q_PROPERTY(bool accepted READ Accepted WRITE SetAccepted)
+    Q_PROPERTY(int connectionID READ ConnectionID)
+
+    Q_PROPERTY(entity_id_t entityId READ EntityId)
+    Q_PROPERTY(Entity* entity READ GetEntity)
+
+public:
+    StateChangeRequest(int connectionID) :
+        connectionID_(connectionID)
+    { 
+        Reset(); 
     }
-    
-    void RemoveFromQueue(entity_id_t id)
+
+    void Reset(entity_id_t entityId = 0)
     {
-        std::map<entity_id_t, EntitySyncState>::iterator i = entities.find(id);
-        if (i != entities.end())
-        {
-            if (i->second.isInQueue)
-            {
-                for (std::list<EntitySyncState*>::iterator j = dirtyQueue.begin(); j != dirtyQueue.end(); ++j)
-                {
-                    if ((*j) == &i->second)
-                    {
-                        dirtyQueue.erase(j);
-                        break;
-                    }
-                }
-                i->second.isInQueue = false;
-                for (std::map<component_id_t, ComponentSyncState>::iterator j = i->second.components.begin(); j != i->second.components.end(); ++j)
-                    j->second.isInQueue = false;
-                i->second.dirtyQueue.clear();
-            }
-        }
+        accepted_ = true;
+        entityId_ = entityId;
+        entity_ = 0;
     }
-    
-    void MarkEntityProcessed(entity_id_t id)
+
+public slots:
+    /// Set the change request accepted
+    void SetAccepted(bool accepted)         
+    { 
+        accepted_ = accepted; 
+    }
+
+    /// Accept the whole change request.
+    void Accept()
     {
-        EntitySyncState& entityState = entities[id];
-        if (!entityState.id)
-            entityState.id = id;
-        entityState.DirtyProcessed();
+        accepted_ = true;
     }
-    
-    void MarkComponentProcessed(entity_id_t id, component_id_t compId)
+
+    /// Reject the whole change request.
+    void Reject()
     {
-        EntitySyncState& entityState = entities[id];
-        if (!entityState.id)
-            entityState.id = id;
-        ComponentSyncState& compState = entityState.components[compId];
-        if (!compState.id)
-            compState.id = compId;
-        compState.DirtyProcessed();
+        accepted_ = false;
     }
+
+public:
+    bool Accepted()                         { return accepted_; }
+    bool Rejected()                         { return !accepted_; }
+
+    int ConnectionID()                      { return connectionID_; }
+
+    entity_id_t EntityId()                  { return entityId_; }
+    Entity* GetEntity()                     { return entity_; }
+    void SetEntity(Entity* entity)          { entity_ = entity; }
+
+private:
+    bool accepted_;
+    int connectionID_;
+
+    entity_id_t entityId_;
+    Entity* entity_;
+};
+
+typedef std::list<component_id_t> ComponentIdList;
+
+/// Scene's per-user network sync state
+class SceneSyncState : public QObject
+{
+    Q_OBJECT
+
+public:
+    SceneSyncState(int userConnectionID = 0, bool isServer = false);
+    virtual ~SceneSyncState();
+
+    /// Dirty entities pending processing
+    std::list<EntitySyncState*> dirtyQueue; 
+
+    /// Entity sync states
+    std::map<entity_id_t, EntitySyncState> entities; 
+
+    /// Entity interpolations
+    std::map<entity_id_t, RigidBodyInterpolationState> entityInterpolations;
+
+signals:
+    /// This signal is emitted when a entity is being added to the client sync state.
+    /// All needed data for evaluation logic is in the StateChangeRequest parameter object.
+    /// If 'request.Accepted()' is true (default) the entity will be added to the sync state,
+    /// otherwise it will be added to the pending entities list. 
+    /// @note See also HasPendingEntity and MarkPendingEntityDirty.
+    /// @param request StateChangeRequest object.
+    void AboutToDirtyEntity(StateChangeRequest *request);
+
+public slots:
+    /// Removes the entity from the sync state and puts it to the pending list.
+    /// @remark Enables a 'pending' logic in SyncManager, with which a script can throttle the sending of entities to clients.
+    void MarkEntityPending(entity_id_t id);
+
+    /// Adds all currently pending entities to the clients sync state.
+    /// @remark Enables a 'pending' logic in SyncManager, with which a script can throttle the sending of entities to clients.
+    void MarkPendingEntitiesDirty();
+
+    /// Adds entity with id to the clients sync state.
+    /// @remark Enables a 'pending' logic in SyncManager, with which a script can throttle the sending of entities to clients.
+    void MarkPendingEntityDirty(entity_id_t id);
+
+    /// Returns all pending entity IDs.
+    /// @remark Enables a 'pending' logic in SyncManager, with which a script can throttle the sending of entities to clients.
+    QVariantList PendingEntityIDs() const;
+
+    /// Returns 0 if no pending entities.
+    /// @remark Enables a 'pending' logic in SyncManager, with which a script can throttle the sending of entities to clients.
+    entity_id_t NextPendingEntityID() const;
+
+    /// Returns if we have any pending entitys.
+    /// @remark Enables a 'pending' logic in SyncManager, with which a script can throttle the sending of entities to clients.
+    bool HasPendingEntities() const;
+
+    /// Returns if we have pending entity with id.
+    /// @remark Enables a 'pending' logic in SyncManager, with which a script can throttle the sending of entities to clients.
+    bool HasPendingEntity(entity_id_t id) const;
+
+public:
+    void SetParentScene(SceneWeakPtr scene);
+    void Clear();
     
-    void MarkEntityDirty(entity_id_t id)
-    {
-        EntitySyncState& entityState = entities[id]; // Creates new if did not exist
-        if (!entityState.id)
-            entityState.id = id;
-        if (!entityState.isInQueue)
-        {
-            dirtyQueue.push_back(&entityState);
-            entityState.isInQueue = true;
-        }
-    }
+    void RemoveFromQueue(entity_id_t id);
+
+    void MarkEntityProcessed(entity_id_t id);
+    void MarkComponentProcessed(entity_id_t id, component_id_t compId);
+
+    void MarkEntityDirty(entity_id_t id);
+    void MarkEntityRemoved(entity_id_t id);
+
+    void MarkComponentDirty(entity_id_t id, component_id_t compId);
+    void MarkComponentRemoved(entity_id_t id, component_id_t compId);
+
+    void MarkAttributeDirty(entity_id_t id, component_id_t compId, u8 attrIndex);
+    void MarkAttributeCreated(entity_id_t id, component_id_t compId, u8 attrIndex);
+    void MarkAttributeRemoved(entity_id_t id, component_id_t compId, u8 attrIndex);
+
+    // Silently does the same as MarkEntityDirty without emitting signals.
+    EntitySyncState& MarkEntityDirtySilent(entity_id_t id);
+
+    // Removes entity from pending lists.
+    void RemovePendingEntity(entity_id_t id);
+
+private:
+    // Removes component from pending lists, removes entity from full pending list if there.
+    void RemovePendingComponent(entity_id_t id, component_id_t compId);
+
+    // Returns if entity with id should be added to the sync state.
+    bool ShouldMarkAsDirty(entity_id_t id);
+
+    // Fills changeRequest_ with entity data, returns if request is valid. 
+    bool FillRequest(entity_id_t id);
     
-    void MarkEntityRemoved(entity_id_t id)
-    {
-        // If user did not have the entity in the first place, do nothing
-        std::map<entity_id_t, EntitySyncState>::iterator i = entities.find(id);
-        if (i == entities.end())
-            return;
-        // If entity is marked new, it was not sent yet and can be simply removed from the sync state
-        if (i->second.isNew)
-        {
-            RemoveFromQueue(id);
-            entities.erase(id);
-            return;
-        }
-        // Else mark as removed and queue the update
-        i->second.removed = true;
-        if (!i->second.isInQueue)
-        {
-            dirtyQueue.push_back(&i->second);
-            i->second.isInQueue = true;
-        }
-    }
-    
-    void MarkComponentDirty(entity_id_t id, component_id_t compId)
-    {
-        MarkEntityDirty(id);
-        EntitySyncState& entityState = entities[id]; // Creates new if did not exist
-        if (!entityState.id)
-            entityState.id = id;
-        entityState.MarkComponentDirty(compId);
-    }
-    
-    void MarkComponentRemoved(entity_id_t id, component_id_t compId)
-    {
-        // If user did not have the entity or component in the first place, do nothing
-        std::map<entity_id_t, EntitySyncState>::iterator i = entities.find(id);
-        if (i == entities.end())
-            return;
-        MarkEntityDirty(id);
-        i->second.MarkComponentRemoved(compId);
-    }
-    
-    void MarkAttributeDirty(entity_id_t id, component_id_t compId, u8 attrIndex)
-    {
-        MarkEntityDirty(id);
-        EntitySyncState& entityState = entities[id];
-        entityState.MarkComponentDirty(compId);
-        ComponentSyncState& compState = entityState.components[compId];
-        compState.MarkAttributeDirty(attrIndex);
-    }
-    
-    void MarkAttributeCreated(entity_id_t id, component_id_t compId, u8 attrIndex)
-    {
-        MarkEntityDirty(id);
-        EntitySyncState& entityState = entities[id];
-        entityState.MarkComponentDirty(compId);
-        ComponentSyncState& compState = entityState.components[compId];
-        compState.MarkAttributeCreated(attrIndex);
-    }
-    
-    void MarkAttributeRemoved(entity_id_t id, component_id_t compId, u8 attrIndex)
-    {
-        MarkEntityDirty(id);
-        EntitySyncState& entityState = entities[id];
-        entityState.MarkComponentDirty(compId);
-        ComponentSyncState& compState = entityState.components[compId];
-        compState.MarkAttributeRemoved(attrIndex);
-    }
+    // Fills entitys pending components with all of its component ids.
+    void FillPendingComponents(entity_id_t id);
+
+    /// @remark Enables a 'pending' logic in SyncManager, with which a script can throttle the sending of entities to clients.
+    /// @todo This data structure needs to be removed. This is double book-keeping. Instead, track the dirty and pending entities
+    ///       with the same dirty bit in EntitySyncState and ComponentSyncState.
+    std::map<entity_id_t, ComponentIdList > pendingComponents;
+
+    StateChangeRequest changeRequest_;
+    bool isServer_;
+    int userConnectionID_;
+
+    SceneWeakPtr scene_;
 };

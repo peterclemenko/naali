@@ -20,7 +20,7 @@ public:
 
     virtual void DoUnload();
     /// Deserialize from XML data
-    virtual bool DeserializeFromData(const u8 *data, size_t numBytes, const bool allowAsynchronous);
+    virtual bool DeserializeFromData(const u8 *data, size_t numBytes, bool allowAsynchronous);
     /// Serialize to XML data
     virtual bool SerializeTo(std::vector<u8> &dst, const QString &serializationParameters) const;
     /// Return depended upon asset references
@@ -66,7 +66,7 @@ private:
     /// Write attachment to XML
     QDomElement WriteAttachment(QDomDocument& dest, const AvatarAttachment& attachment, const QString& mesh) const;
     /// Find modifier by name and type
-    AppearanceModifier* FindModifier(const std::string& name, AppearanceModifier::ModifierType type);
+    AppearanceModifier* FindModifier(const QString & name, AppearanceModifier::ModifierType type);
     /// Add reference to a reference vector if not empty
     void AddReference(std::vector<AssetReference>& refs, const QString& ref) const;
     
@@ -78,7 +78,7 @@ public slots:
     /// Change a material ref
     void SetMaterial(uint index, const QString& ref);
     /// Return whether a property exists
-    bool HasProperty(QString name) const;
+    bool HasProperty(const QString &name) const;
     /// Return property value, or empty if does not exist
     const QString& GetProperty(const QString& value);
     

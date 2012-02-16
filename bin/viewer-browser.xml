@@ -25,7 +25,7 @@
   
   <!-- The following are commented out as they are not a part of the default build -->
   <!-- <plugin path="KinectModule" /> -->               <!-- Depends on OgreRenderingModule -->
-  <plugin path="MumbleVoipModule" />            <!-- Depends on OgreRenderingModule, JavascriptModule and TundraLogicModule -->
+  <plugin path="MumblePlugin" />                <!-- Depends on OgreRenderingModule, JavascriptModule and TundraLogicModule -->
   <plugin path="VlcPlugin" />                   <!-- Depends on SceneWidgetComponents -->
   <plugin path="CAVEStereoModule" />            <!-- Depends on OgreRenderingModule -->
   

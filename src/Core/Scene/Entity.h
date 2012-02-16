@@ -352,6 +352,9 @@ public slots:
     /// introspection for the entity, returns all components
     const ComponentMap &Components() const { return components_; }
 
+    /// Returns entitys components as a QList<QObject*> for scripting purpouses.
+    QObjectList ComponentsList() const;
+
     /// Returns framework
     Framework *GetFramework() const { return framework_; }
 

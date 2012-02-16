@@ -18,7 +18,7 @@
   <plugin path="SceneWidgetComponents" />       <!-- Depends on OgreRenderingModule and TundraProtocolModule (and optionally on BrowserUiPlugin) -->
   <plugin path="PythonScriptModule" />          <!-- Depends on OgreRenderingModule, TundraProtocolModule -->
   <plugin path="XMPPModule" />                  <!-- This manly module doesn't depend on anyone -->
-  <plugin path="MumbleVoipModule" />            <!-- Depends on OgreRenderingModule, JavascriptModule and TundraLogicModule -->
+  <plugin path="MumblePlugin" />                <!-- Depends on OgreRenderingModule, JavascriptModule and TundraLogicModule -->
   <plugin path="VlcPlugin" />                   <!-- Depends on SceneWidgetComponents -->
   <plugin path="CAVEStereoModule" />            <!-- Depends on OgreRenderingModule -->
   
@@ -30,11 +30,8 @@
   <jsplugin path="MenuBar.js" />
   <jsplugin path="RendererSettings.js" />
   <jsplugin path="SoundSettings.js" />
-<<<<<<< HEAD
   <jsplugin path="gazetracking.js" />
-=======
-  <jsplugin path="LoginScreen.js" />
->>>>>>> 1aacc769bc165b765ad219eb9c80744c886e0933
+  <jsplugin path="LoadingScreen.js" />
 
   <!-- Python plugins -->
   <pyplugin path="pythonqt_asyncore.py"/>

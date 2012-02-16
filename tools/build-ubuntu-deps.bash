@@ -42,7 +42,7 @@ if [ x$private_ogre != xtrue ]; then
    more="$more libogre-dev"
 fi
 
-if lsb_release -c | egrep -q "lucid|maverick|natty|oneiric"; then
+if lsb_release -c | egrep -q "lucid|maverick|natty|oneiric" && tty >/dev/null; then
         which aptitude > /dev/null 2>&1 || sudo apt-get install aptitude
 	sudo aptitude -y install git-core python-dev libogg-dev libvorbis-dev \
 	 build-essential g++ libogre-dev libboost-all-dev \
@@ -102,9 +102,10 @@ if test -f $tags/$what-done; then
    echo $what is done
 else
     cd $build
-    rm -rf knet-sctp
-    hg clone http://bitbucket.org/karivatj/knet-sctp
-    cd knet-sctp
+    rm -rf kNet
+    git clone https://github.com/juj/kNet
+    cd kNet
+    git checkout stable
     sed -e "s/USE_TINYXML TRUE/USE_TINYXML FALSE/" -e "s/kNet STATIC/kNet SHARED/" < CMakeLists.txt > x
     mv x CMakeLists.txt
     cmake . -DCMAKE_BUILD_TYPE=Debug

@@ -33,7 +33,8 @@ std::map<QString, QString> ParseAssetRefArgs(const QString &url, QString *body);
 /// If an empty string is submitted, and empty string will be output, so that an empty string won't suddenly point to the filesystem root.
 QString GuaranteeTrailingSlash(const QString &source);
 
-typedef std::map<QString, AssetPtr> AssetMap;
+typedef std::map<QString, AssetPtr, QStringLessThanNoCase> AssetMap;
+typedef std::map<QString, AssetTransferPtr, QStringLessThanNoCase> AssetTransferMap;
 
 typedef std::vector<AssetStoragePtr> AssetStorageVector;
 
@@ -145,7 +146,6 @@ public:
         QString *outPath_Filename_SubAssetName = 0, QString *outPath_Filename = 0, QString *outPath = 0, QString *outFilename = 0, QString *outSubAssetName = 0,
         QString *outFullRef = 0, QString *outFullRefNoSubAssetName = 0);
 
-    typedef std::map<QString, AssetTransferPtr, QStringLessThanNoCase> AssetTransferMap;
     typedef std::vector<std::pair<QString, QString> > AssetDependenciesMap;
     
     /// Sanitates an assetref so that it can be used as a filename for caching.
@@ -386,7 +386,7 @@ public slots:
     void EmitAssetStorageAdded(AssetStoragePtr newStorage);
 
     /// Return current asset transfers
-    const AssetTransferMap& GetCurrentTransfers() const { return currentTransfers; }
+    AssetTransferMap GetCurrentTransfers() const { return currentTransfers; }
 
     /// A utility function that counts the number of current asset transfers.
     int NumCurrentTransfers() const { return currentTransfers.size(); }

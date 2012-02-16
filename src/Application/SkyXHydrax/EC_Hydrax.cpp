@@ -108,6 +108,7 @@ EC_Hydrax::~EC_Hydrax()
 
 void EC_Hydrax::Create()
 {
+    PROFILE(EC_Hydrax_Create);
     SAFE_DELETE(impl);
 
     if (framework->IsHeadless())
@@ -159,6 +160,7 @@ void EC_Hydrax::Create()
 
 void EC_Hydrax::OnActiveCameraChanged(Entity *newActiveCamera)
 {
+    PROFILE(EC_Hydrax_OnActiveCameraChanged);
     if (!newActiveCamera)
     {
         SAFE_DELETE(impl);
@@ -189,6 +191,7 @@ void EC_Hydrax::OnActiveCameraChanged(Entity *newActiveCamera)
 
 void EC_Hydrax::RequestConfigAsset()
 {
+    PROFILE(EC_Hydrax_RequestConfigAsset);
     QString ref = configRef.Get().ref.trimmed();
     if (ref.isEmpty())
         ref = "HydraxDefault.hdx";
@@ -197,6 +200,7 @@ void EC_Hydrax::RequestConfigAsset()
 
 void EC_Hydrax::UpdateAttribute(IAttribute *attr)
 {
+    PROFILE(EC_Hydrax_UpdateAttribute);
     if (attr == &configRef)
         RequestConfigAsset();
 
@@ -305,6 +309,7 @@ void EC_Hydrax::Update(float frameTime)
 
 void EC_Hydrax::ConfigLoadSucceeded(AssetPtr asset)
 {
+    PROFILE(EC_Hydrax_ConfigLoadSucceeded);
     // If we haven't yet initialized, do a full init.
     if (!impl || !impl->hydrax || !impl->module)
         Create();

@@ -8,6 +8,8 @@
 #include "Server.h"
 #include "SceneImporter.h"
 #include "SyncManager.h"
+#include "KristalliProtocolModule.h"
+
 #include "Profiler.h"
 #include "SceneAPI.h"
 #include "AssetAPI.h"
@@ -16,15 +18,10 @@
 #include "ConfigAPI.h"
 #include "IComponentFactory.h"
 #include "Scene.h"
-#include "Application.h"
-#include "KristalliProtocolModule.h"
-#include "CoreStringUtils.h"
 #include "AssetAPI.h"
 #include "ConsoleAPI.h"
 #include "AssetAPI.h"
-#include "GenericAssetFactory.h"
 #include "CoreException.h"
-#include "MemoryLeakCheck.h"
 
 #include "EC_Name.h"
 #include "EC_DynamicComponent.h"
@@ -75,11 +72,7 @@
 #include "EC_LaserPointer.h"
 #endif
 
-#include "EC_Camera.h"
-#include "EC_Placeable.h"
-#include "EC_AnimationController.h"
-#include "EC_Mesh.h"
-#include "EC_OgreCustomObject.h"
+#include "MemoryLeakCheck.h"
 
 namespace TundraLogic
 {
@@ -152,28 +145,31 @@ void TundraLogicModule::Initialize()
     client_ = boost::shared_ptr<Client>(new Client(this));
     server_ = boost::shared_ptr<Server>(new Server(this));
     
+    // Expose client and server to everyone
     framework_->RegisterDynamicObject("client", client_.get());
     framework_->RegisterDynamicObject("server", server_.get());
 
-    framework_->Console()->RegisterCommand("startserver",
-        "Starts a server. Usage: startserver(port,protocol)",
-        this, SLOT(StartServer(int,const QString &)));
+    // Expose SyncManager only on the server side for scripting
+    if (server_->IsAboutToStart())
+    {
+        LogInfo("Chiru fixme. Server does not export syncmanager by default!");
+        //framework_->RegisterDynamicObject("syncmanager", syncManagers_[0]);
+    }
 
-    framework_->Console()->RegisterCommand("stopserver",
-        "Stops the server",
-        this, SLOT(StopServer()));
+    framework_->Console()->RegisterCommand("startserver", "Starts a server. Usage: startserver(port,protocol)",
+        server_.get(), SLOT(Start(unsigned short,QString)));
+
+    framework_->Console()->RegisterCommand("stopserver", "Stops the server", server_.get(), SLOT(Stop()));
 
     framework_->Console()->RegisterCommand("connect",
-        "Connects to a server. Usage: connect(address,port,protocol,username,password)",
-        this, SLOT(Connect(QString,int,QString,QString,QString)));
+        "Connects to a server. Usage: connect(address,port,username,password,protocol)",
+        client_.get(), SLOT(Login(const QString &, unsigned short, const QString &, const QString&, const QString &)));
 
-    framework_->Console()->RegisterCommand("disconnect",
-        "Disconnects from a server.",
-        this, SLOT(Disconnect(QString)));
+    framework_->Console()->RegisterCommand("disconnect", "Disconnects from a server.", client_.get(), SLOT(Logout()));
 
     framework_->Console()->RegisterCommand("savescene",
         "Saves scene into XML or binary. Usage: savescene(filename,asBinary=false,saveTemporaryEntities=false,saveLocalEntities=true)",
-        this, SLOT(SaveScene(QString, bool, bool, bool)));
+        this, SLOT(SaveScene(QString, bool, bool, bool)), SLOT(SaveScene(QString)));
 
     framework_->Console()->RegisterCommand("loadscene",
         "Loads scene from XML or binary. Usage: loadscene(filename,clearScene=true,useEntityIDsFromFile=true)",
@@ -182,19 +178,20 @@ void TundraLogicModule::Initialize()
     framework_->Console()->RegisterCommand("importscene",
         "Loads scene from a dotscene file. Optionally clears the existing scene."
         "Replace-mode can be optionally disabled. Usage: importscene(filename,clearScene=false,replace=true)",
-        this, SLOT(ImportScene(QString, bool, bool)));
+        this, SLOT(ImportScene(QString, bool, bool)), SLOT(ImportScene(QString)));
 
     framework_->Console()->RegisterCommand("importmesh",
-        "Imports a single mesh as a new entity. Position can be specified optionally."
-        "Usage: importmesh(filename,x=0,y=0,z=0,xrot=0,yrot=0,zrot=0,xscale=1,yscale=1,zscale=1,inspectForMaterialsAndSkeleton=true)",
-        this, SLOT(ImportMesh(QString, float, float, float, float, float, float, float, float, float, bool)));
+        "Imports a single mesh as a new entity. Position, rotation, and scale can be specified optionally."
+        "Usage: importmesh(filename, pos = 0 0 0, rot = 0 0 0, scale = 1 1 1, inspectForMaterialsAndSkeleton=true)",
+        this, SLOT(ImportMesh(QString, const float3 &, const float3 &, const float3 &, bool)), SLOT(ImportMesh(QString)));
+
     framework_->Console()->RegisterCommand("switch",
         "Switches to different scene if multiple scenes exist."
         " Usage: switch(scenename). To get scenenames usage: switch(print).",
         this, SLOT(switchscene(QString)));
 
     // Take a pointer to KristalliProtocolModule so that we don't have to take/check it every time
-    kristalliModule_ = framework_->GetModule<KristalliProtocol::KristalliProtocolModule>();
+    kristalliModule_ = framework_->GetModule<KristalliProtocolModule>();
     if (!kristalliModule_)
         throw Exception("Fatal: could not get KristalliProtocolModule");
 
@@ -212,14 +209,14 @@ void TundraLogicModule::Initialize()
         if (portParam.size() > 0)
         {
             bool ok;
-            int port = portParam.first().toInt(&ok);
+            unsigned short port = portParam.first().toUShort(&ok);
             if (ok)
             {
                 autoStartServerPort_ = port;
             }
             else
             {
-                LogError("--port parameter is not a valid integer.");
+                LogError("--port parameter is not a valid unsigned short.");
                 GetFramework()->Exit();
             }
         }
@@ -300,7 +297,8 @@ void TundraLogicModule::Update(f64 frametime)
         {
             QStringList params = framework_->CommandLineParameters("--connect").first().split(';');
             if (params.size() >= 4)
-                Connect(params[0], params[1].toInt(), params[2], params[3], params.size() >= 5 ? params[4] : "");
+                client_->Login(/*addr*/params[0], /*port*/params[1].toInt(), /*username*/params[3],
+                    /*optional passwd*/ params.size() >= 5 ? params[4] : "", /*protocol*/params[2]);
             else
                 LogError("Not enought parameters for --connect. Usage '--connect serverIp;port;protocol;name;password'. Password is optional.");
         }
@@ -406,9 +404,9 @@ void TundraLogicModule::LoadStartupScene()
             LogInfo("[TundraLogic] Loading startup scene from " + startupScene);
             bool useBinary = startupScene.indexOf(".tbin") != -1;
             if (!useBinary)
-                scene->LoadSceneXML(startupScene, false/*clearScene*/, false/*replaceOnConflict*/, AttributeChange::Default);
+                scene->LoadSceneXML(startupScene, false/*clearScene*/, false/*useEntityIDsFromFile*/, AttributeChange::Default);
             else
-                scene->LoadSceneBinary(startupScene, false/*clearScene*/, false/*replaceOnConflict*/, AttributeChange::Default);
+                scene->LoadSceneBinary(startupScene, false/*clearScene*/, false/*useEntityIDsFromFile*/, AttributeChange::Default);
         }
     }
 }
@@ -424,9 +422,9 @@ void TundraLogicModule::StartupSceneLoaded(AssetPtr asset)
     {
         bool useBinary = sceneDiskSource.endsWith(".tbin");
         if (!useBinary)
-            scene->LoadSceneXML(sceneDiskSource, true/*clearScene*/, false/*replaceOnConflict*/, AttributeChange::Default);
+            scene->LoadSceneXML(sceneDiskSource, true/*clearScene*/, false/*useEntityIDsFromFile*/, AttributeChange::Default);
         else
-            scene->LoadSceneBinary(sceneDiskSource, true/*clearScene*/, false/*replaceOnConflict*/, AttributeChange::Default);
+            scene->LoadSceneBinary(sceneDiskSource, true/*clearScene*/, false/*useEntityIDsFromFile*/, AttributeChange::Default);
     }
     else
         LogError("Could not resolve disk source for loaded scene file " + asset->Name());
@@ -435,26 +433,6 @@ void TundraLogicModule::StartupSceneLoaded(AssetPtr asset)
 void TundraLogicModule::StartupSceneTransferFailed(IAssetTransfer *transfer, QString reason)
 {
     LogError("Failed to load startup scene from " + transfer->SourceUrl() + " reason: " + reason);
-}
-
-void TundraLogicModule::StartServer(int port, const QString &protocol)
-{
-    server_->Start(port, protocol);
-}
-
-void TundraLogicModule::StopServer()
-{
-    server_->Stop();
-}
-
-void TundraLogicModule::Connect(QString address, int port, QString protocol, QString username, QString password)
-{
-    client_->Login(address, port, username, password, protocol);
-}
-
-void TundraLogicModule::Disconnect(const QString& name)
-{
-    client_->Logout(name);
 }
 
 void TundraLogicModule::SaveScene(QString filename, bool asBinary, bool saveTemporaryEntities, bool saveLocalEntities)
@@ -533,7 +511,7 @@ void TundraLogicModule::ImportScene(QString filename, bool clearScene, bool repl
     LogInfo("TundraLogicModule::ImportScene: Imported " + QString::number(entities.size()) + " entities.");
 }
 
-void TundraLogicModule::ImportMesh(QString filename, float tx, float ty, float tz, float rx, float ry, float rz, float sx, float sy, float sz, bool inspect)
+void TundraLogicModule::ImportMesh(QString filename, const float3 &pos, const float3 &rot, const float3 &scale, bool inspect)
 {
     Scene *scene = GetFramework()->Scene()->MainCameraScene();
     if (!scene)
@@ -551,8 +529,9 @@ void TundraLogicModule::ImportMesh(QString filename, float tx, float ty, float t
     QString path = QFileInfo(filename).dir().path();
 
     SceneImporter importer(scene->shared_from_this());
-    EntityPtr entity = importer.ImportMesh(filename, path, Transform(float3(tx,ty,tz), float3(rx,ry,rz),
-        float3(sx,sy,sz)), "", "local://", AttributeChange::Default, inspect);
+    EntityPtr entity = importer.ImportMesh(filename, path, Transform(pos, rot, scale), "", "local://", AttributeChange::Default, inspect);
+    if (!entity)
+        LogError("TundraLogicModule::ImportMesh: import failed for " + filename + ".");
 }
 
 bool TundraLogicModule::IsServer() const
@@ -569,7 +548,7 @@ extern "C"
 DLLEXPORT void TundraPluginMain(Framework *fw)
 {
     Framework::SetInstance(fw); // Inside this DLL, remember the pointer to the global framework object.
-    fw->RegisterModule(new KristalliProtocol::KristalliProtocolModule());
+    fw->RegisterModule(new KristalliProtocolModule());
     fw->RegisterModule(new TundraLogic::TundraLogicModule());
 }
 }

@@ -2,31 +2,23 @@
 
 #pragma once
 
-#include "IComponent.h"
-#include "Entity.h"
+#include "TundraProtocolModuleFwd.h"
 #include "SyncState.h"
+#include "SceneFwd.h"
+#include "AttributeChangeType.h"
+#include "EntityAction.h"
+#include "kNetFwd.h"
+#include "kNet/Types.h"
 
 #include <QObject>
-#include <map>
-#include <set>
 
-struct MsgEntityAction;
-
-namespace kNet
-{
-    class MessageConnection;
-    typedef unsigned long message_id_t;
-}
-
-class UserConnection;
 class Framework;
 
 namespace TundraLogic
 {
-
-class TundraLogicModule;
-
 /// Performs synchronization of the changes in a scene between the server and the client.
+/** SyncManager and SceneSyncState combined can be used to implement prioritization logic on how and when
+    a sync state is filled per client connection. SyncManager object is only exposed to scripting on the server. */
 class SyncManager : public QObject
 {
     Q_OBJECT
@@ -53,6 +45,23 @@ public slots:
     
     /// Get update period
     float GetUpdatePeriod() { return updatePeriod_; }
+
+    /// Returns SceneSyncState for a client connection.
+    /// @note This slot is only exposed on Server, other wise will return 0.
+    /// @param int connection ID of the client.
+    /// @return SceneSyncState* State.
+    SceneSyncState* SceneState(int connectionId);
+
+    /// Returns SceneSyncState for a client connection.
+    /// @note This slot is only exposed on Server, other wise will return 0.
+    /// @param UserConnection* Client connection ptr.
+    /// @return SceneSyncState* State.
+    SceneSyncState* SceneState(UserConnection *connection);
+
+signals:
+    /// This signal is emitted when a new user connects and a new SceneSyncState is created for the connection.
+    /// @note See signals of the SceneSyncState object to build prioritization logic how the sync state is filled.
+    void SceneStateCreated(UserConnection *user, SceneSyncState *state);
     
 private slots:
     /// Trigger EC sync because of component attributes changing
@@ -82,9 +91,8 @@ private slots:
     /// Trigger sync of entity action to specific user
     void OnUserActionTriggered(UserConnection* user, Entity *entity, const QString &action, const QStringList &params);
 
-private slots:
     /// Handle a Kristalli protocol message
-    void HandleKristalliMessage(kNet::MessageConnection* source, kNet::message_id_t id, const char* data, size_t numBytes);
+    void HandleKristalliMessage(kNet::MessageConnection* source, kNet::packet_id_t, kNet::message_id_t id, const char* data, size_t numBytes);
 
 private:
     /// Queue a message to the receiver from a given DataSerializer.
@@ -114,6 +122,12 @@ private:
     /// Handle create components reply message.
     void HandleCreateComponentsReply(kNet::MessageConnection* source, const char* data, size_t numBytes);
     
+    void HandleRigidBodyChanges(kNet::MessageConnection* source, kNet::packet_id_t packetId, const char* data, size_t numBytes);
+
+    void ReplicateRigidBodyChanges(kNet::MessageConnection* destination, SceneSyncState* state);
+
+    void InterpolateRigidBodies(f64 frametime, SceneSyncState* state);
+
     /// Process one sync state for changes in the scene
     /** \todo For now, sends all changed entities/components. In the future, this shall be subject to interest management
         @param destination MessageConnection where to send the messages

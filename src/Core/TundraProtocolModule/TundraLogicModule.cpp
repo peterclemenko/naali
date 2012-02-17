@@ -72,7 +72,15 @@
 #include "EC_LaserPointer.h"
 #endif
 
-#include "MemoryLeakCheck.h"
+#ifdef EC_Portal_ENABLED
+#include "EC_Portal.h"
+#endif
+
+#include "EC_Camera.h"
+#include "EC_Placeable.h"
+#include "EC_AnimationController.h"
+#include "EC_Mesh.h"
+#include "EC_OgreCustomObject.h"
 
 namespace TundraLogic
 {
@@ -137,6 +145,9 @@ void TundraLogicModule::Load()
 #endif
 #ifdef EC_LaserPointer_ENABLED
     framework_->Scene()->RegisterComponentFactory(ComponentFactoryPtr(new GenericComponentFactory<EC_LaserPointer>));
+#endif
+#ifdef EC_Portal_ENABLED
+    framework_->Scene()->RegisterComponentFactory(ComponentFactoryPtr(new GenericComponentFactory<EC_Portal>));
 #endif
 }
 

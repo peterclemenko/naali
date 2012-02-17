@@ -223,7 +223,7 @@ void Client::DoLogout(bool fail)
     ::LogInfo("Client logged out.");
 }
 
-bool Client::IsConnected(const QString& address, unsigned short port, const QString &protocol) const
+bool Client::IsConnected(const QString& address, unsigned short port, const QString &protocol)
 {
     QMap< QString, std::map<QString, QString> >::const_iterator iter = properties_list_.begin();
     std::map<QString, QString> tempMap;
@@ -231,7 +231,10 @@ bool Client::IsConnected(const QString& address, unsigned short port, const QStr
     {
         tempMap = iter.value();
         if (tempMap["address"] == address && tempMap["port"] == QString::number(port) && tempMap["protocol"] == protocol)
+        {
+            emit switchScene(iter.key());
             return true;
+        }
         ++iter;
     }
     return false;

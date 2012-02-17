@@ -94,7 +94,7 @@ public slots:
     int GetConnectionID() const { return client_id_; }
 
     /// See if connected & authenticated
-    bool IsConnected(const QString& , unsigned short , const QString &) const;
+    bool IsConnected(const QString& , unsigned short , const QString &);
     bool IsConnected();
 
     /// Sets the given login property with the given value.

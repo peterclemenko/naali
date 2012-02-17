@@ -63,7 +63,7 @@ else
     tar zxf $tarballs/$what.tgz
     cd $whatdir
     sed -i s/OpenCL// src/BulletMultiThreaded/GpuSoftBodySolvers/CMakeLists.txt
-    cmake -DCMAKE_INSTALL_PREFIX=$prefix -DBUILD_DEMOS=OFF -DBUILD_{NVIDIA,AMD,MINICL}_OPENCL_DEMOS=OFF -DBUILD_CPU_DEMOS=OFF -DINSTALL_EXTRA_LIBS=ON -DCMAKE_CXX_FLAGS_RELEASE="-O2 -g -fPIC" .
+    cmake -DCMAKE_INSTALL_PREFIX=$prefix -DBUILD_DEMOS=OFF -DBUILD_{NVIDIA,AMD,MINICL}_OPENCL_DEMOS=OFF -DBUILD_CPU_DEMOS=OFF -DINSTALL_EXTRA_LIBS=ON -DCMAKE_CXX_FLAGS_RELEASE="-O2 -g -fPIC -DBT_NO_PROFILE" .
     make -j $nprocs
     make install
     touch $tags/$what-done

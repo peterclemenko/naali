@@ -1,0 +1,118 @@
+#include "EC_Portal.h"
+
+#include "Framework.h"
+#include "EC_Placeable.h"
+#include "Entity.h"
+#include "FrameAPI.h"
+#include "SceneAPI.h"
+#include "EntityAction.h"
+
+#include "TundraLogicModule.h"
+#include "Client.h"
+
+#include "LoggingFunctions.h"
+
+
+EC_Portal::EC_Portal(Scene *scene) :
+    IComponent(scene),
+    address(this, "Address:"),
+    port(this, "Port:"),
+    protocol(this, "Protocol:"),
+    position_(0,0,0),
+    pieru_(framework->Scene()->GetSceneInteract())
+{
+    //connect(this, SIGNAL(ParentEntitySet()), SLOT(UpdateMethod()));
+    connect(pieru_, SIGNAL(EntityClicked(Entity*,Qt::MouseButton,RaycastResult*)), this, SLOT(parentClicked(Entity*)));
+}
+
+EC_Portal::~EC_Portal()
+{
+}
+
+void EC_Portal::UpdateMethod()
+{
+    Entity* parent = ParentEntity();
+    if (parent)
+    {
+        FrameAPI* frame = framework->Frame();
+
+        EC_Portal *portal = parent->GetComponent<EC_Portal>().get();
+        if (portal)
+        {
+            LogWarning("Another Portal exists in this entity.");
+        }
+    }
+}
+
+void EC_Portal::Update(float frametime)
+{
+
+}
+
+void EC_Portal::parentClicked(Entity *ent)
+{
+    if (!(ent == ParentEntity()))
+        return;
+    LogInfo("Portal clicked!\n");
+    Entity* parent = ParentEntity();
+    if (!parent)
+        return;
+    Scene *scene = parent->ParentScene();
+    if (!scene)
+        return;
+    if (!(scene->Name() == framework->Scene()->MainCameraScene()->Name()))
+        return;
+
+    // Get placeable for portal position in 3D-space.
+    EC_Placeable* placeable = parent->GetComponent<EC_Placeable>().get();
+    if (placeable)
+    {
+        position_ = placeable->transform.Get().pos;
+    }
+
+    TundraLogic::TundraLogicModule* tundra = framework->GetModule<TundraLogic::TundraLogicModule>();
+    TundraLogic::Client *client = tundra->GetClient().get();
+
+    EntityPtr avatar = scene->GetEntityByName("Avatar" + QString::number(client->GetConnectionID()));
+    if (avatar)
+    {
+        EC_Placeable* placeable = avatar->GetComponent<EC_Placeable>().get();
+        if (placeable)
+        {
+            float3 avatarPos = placeable->transform.Get().pos;
+            LogInfo(QString::number(fabs(avatarPos.x - position_.x)) + "," + QString::number(fabs(avatarPos.z - position_.z)));
+            if (fabs(avatarPos.x - position_.x) <= 1.0 && fabs(avatarPos.z - position_.z) <= 1.0)
+            {
+                LogInfo("Connection initiated from portal!\n");
+                avatar->Exec(0,"Stop", "all", "all", "all");
+                avatar->Exec(1,"Stop", "all", "all", "all");
+                avatar->Exec(2,"Stop", "all", "all", "all");
+                avatar->Exec(4,"Stop", "all", "all", "all");
+                client->Login(address.Get(), port.Get().toInt(),"portal","portal", protocol.Get());
+                FrameAPI* frame = framework->Frame();
+            }
+        }
+    }
+    else
+    {
+        EntityPtr camera = scene->GetEntityByName("FreeLookCamera");
+        if (camera)
+        {
+            LogInfo("Got freelookcamera!!\n");
+            EC_Placeable *placeable = camera->GetComponent<EC_Placeable>().get();
+            if (placeable)
+            {
+                float3 cameraPos = placeable->transform.Get().pos;
+                LogInfo(QString::number(fabs(cameraPos.x - position_.x)) + "," + QString::number(fabs(cameraPos.z - position_.z)));
+                LogInfo("Camera derp!\n");
+                if (fabs(cameraPos.x - position_.x) <= 1.0 && fabs(cameraPos.z - position_.z) <= 1.0)
+                {
+                    LogInfo("Connection initiated from portal!\n");
+                    client->Login(address.Get(), port.Get().toInt(),"portal","portal", protocol.Get());
+                    FrameAPI* frame = framework->Frame();
+                }
+
+            }
+        }
+    }
+}

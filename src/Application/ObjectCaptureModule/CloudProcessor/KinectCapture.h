@@ -32,7 +32,7 @@ public:
 public slots:
     void startCapture();
     void stopCapture();
-    PointCloud::ConstPtr currentCloud() const;
+    PointCloud::ConstPtr currentCloud();
 
 signals:
     void cloudUpdated(PointCloud::ConstPtr cloud);

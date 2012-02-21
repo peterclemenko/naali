@@ -15,10 +15,11 @@ namespace ObjectCapture
 {
 
 KinectCapture::KinectCapture() :
-    rgb_update_frequency_(15)
+    rgb_update_frequency_(15),
+    current_cloud_(PointCloud::ConstPtr(new PointCloud))
 {
     kinect_interface_ = new pcl::OpenNIGrabber();
-    rgb_frame_ = QImage(640, 480, QImage::Format_RGB888);
+    rgb_frame_ = QImage(640, 480, QImage::Format_ARGB32);
 
     boost::function<void (const PointCloud::ConstPtr&)> f = boost::bind(&KinectCapture::kinect_callback_, this, _1);
     kinect_interface_->registerCallback(f);
@@ -59,10 +60,13 @@ bool KinectCapture::isRunning()
         return kinect_interface_->isRunning();
 }
 
-PointCloud::ConstPtr KinectCapture::currentCloud() const
+PointCloud::ConstPtr KinectCapture::currentCloud()
 {
-    if(current_cloud_.get())
-        return current_cloud_;
+    cloud_mutex_.lock();
+    PointCloud::ConstPtr cloud;
+    cloud = current_cloud_;
+    cloud_mutex_.unlock();
+    return cloud;
 }
 
 void KinectCapture::updateRGBImage()
@@ -73,8 +77,10 @@ void KinectCapture::updateRGBImage()
         return;
 
     if(cloud_mutex_.tryLock()) {
-        PointCloud::ConstPtr cloud = current_cloud_; // Could cause crash if kinect_callback_ is called at wrong time?
+        PointCloud::ConstPtr cloud = current_cloud_;
         cloud_mutex_.unlock();
+
+        cloud->points.size(); // Just here to ensure compiler doesn't optimize cloud out
 
         QRgb value;
         for(int u = 0; u < 480; u++) {
@@ -86,8 +92,6 @@ void KinectCapture::updateRGBImage()
                 rgb_frame_.setPixel(v, u, value);
             }
         }
-
-        rgb_frame_ = rgb_frame_.convertToFormat(QImage::Format_ARGB32);
 
         emit RGBUpdated(rgb_frame_);
     }

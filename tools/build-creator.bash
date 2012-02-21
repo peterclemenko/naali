@@ -4,10 +4,8 @@ set -x
 
 # script to build naali and most deps.
 #
-# if you want to use caelum, install ogre and nvidia cg from
-# ppa:andrewfenn/ogredev, change the caelum setting to 1 in
-# top-level CMakeBuildConfig.txt and enable Cg module in bin/plugins-unix.cfg
-
+# note: you need to enable the universe and multiverse software sources
+# as this script attempts to get part of the deps using apt-get
 
 viewer=$(dirname $(readlink -f $0))/..
 deps=$viewer/../naali-deps
@@ -19,8 +17,6 @@ prefix=$deps/install
 build=$deps/build
 tarballs=$deps/tarballs
 tags=$deps/tags
-
-
 
 # -j<n> param for make, for how many processes to run concurrently
 
@@ -38,35 +34,66 @@ export CC="ccache gcc"
 export CXX="ccache g++"
 export CCACHE_DIR=$deps/ccache
 
-what=bullet-2.77
+private_ogre=true # build own ogre by default, since ubuntu shipped ogre is too old and/or built without thread support
+
+if [ x$private_ogre != xtrue ]; then
+   more="$more libogre-dev"
+fi
+
+what=bullet-2.79-rev2440
 if test -f $tags/$what-done; then
     echo $what is done
 else
     cd $build
-    rm -rf $what
+    whatdir=${what%%-rev*}
+    rm -rf $whatdir
     test -f $tarballs/$what.tgz || wget -P $tarballs http://bullet.googlecode.com/files/$what.tgz
     tar zxf $tarballs/$what.tgz
-    cd $what
-    # This patch is for GCC 4.6. It overrides a known issue with bullet 2.77 and gcc 4.6
-    # When Tundra upgrades to bullet 2.78 or later, this should be removed.
-    if [ "`gcc --version |head -n 1|cut -f 4 -d " "|cut -c -3`" == "4.6" ]; then
-        sed -i "s/static const T[\t]zerodummy/memset(\&value, 0, sizeof(T))/" ./src/BulletSoftBody/btSoftBodyInternals.h
-        sed -i "s/value=zerodummy;//" ./src/BulletSoftBody/btSoftBodyInternals.h
-    fi
-    cmake -DCMAKE_INSTALL_PREFIX=$prefix -DBUILD_DEMOS=OFF -DINSTALL_EXTRA_LIBS=ON -DCMAKE_CXX_FLAGS_RELEASE="-O2 -fPIC -DNDEBUG -DBT_NO_PROFILE" .
+    cd $whatdir
+    sed -i s/OpenCL// src/BulletMultiThreaded/GpuSoftBodySolvers/CMakeLists.txt
+    cmake -DCMAKE_INSTALL_PREFIX=$prefix -DBUILD_DEMOS=OFF -DBUILD_{NVIDIA,AMD,MINICL}_OPENCL_DEMOS=OFF -DBUILD_CPU_DEMOS=OFF -DINSTALL_EXTRA_LIBS=ON -DCMAKE_CXX_FLAGS_RELEASE="-O2 -g -fPIC -DBT_NO_PROFILE" .
     make -j $nprocs
     make install
     touch $tags/$what-done
 fi
 
-what=knet
+what=qtscriptgenerator
 if test -f $tags/$what-done; then 
    echo $what is done
 else
     cd $build
-    rm -rf knet
-    hg clone http://bitbucket.org/clb/knet
-    cd knet
+    rm -rf $what
+    git clone git://gitorious.org/qt-labs/$what.git
+    cd $what
+
+    cd generator
+    qmake
+    make -j $nprocs
+    ./generator --include-paths=`qmake -query QT_INSTALL_HEADERS`
+    cd ..
+
+    cd qtbindings
+    sed -i 's/qtscript_phonon //' qtbindings.pro 
+    sed -i 's/qtscript_webkit //' qtbindings.pro 
+    qmake
+    make -j $nprocs
+    cd ..
+    cd ..
+    touch $tags/$what-done
+fi
+mkdir -p $viewer/bin/qtscript-plugins/script
+cp -lf $build/$what/plugins/script/* $viewer/bin/qtscript-plugins/script/
+
+
+what=kNet
+if test -f $tags/$what-done; then 
+   echo $what is done
+else
+    cd $build
+    rm -rf kNet
+    git clone https://github.com/juj/kNet
+    cd kNet
+    git checkout stable
     sed -e "s/USE_TINYXML TRUE/USE_TINYXML FALSE/" -e "s/kNet STATIC/kNet SHARED/" < CMakeLists.txt > x
     mv x CMakeLists.txt
     cmake . -DCMAKE_BUILD_TYPE=Debug
@@ -75,7 +102,6 @@ else
     rsync -r include/* $prefix/include/
     touch $tags/$what-done
 fi
-
 
 # HydraX, SkyX and PythonQT are build from the realxtend own dependencies.
 # At least for the time being, until changes to those components flow into
@@ -101,6 +127,7 @@ else
         echo "No changes in realxtend deps git."
     fi
 fi
+
 # HydraX build:
 if test -f $tags/hydrax-done; then
     echo "Hydrax-done"
@@ -113,18 +140,26 @@ else
     touch $tags/hydrax-done
 fi
 # SkyX build
-if test -f $tags/skyx-done; then
-    echo "SkyX-done"
-else
-    cd $build/$depdir/skyx
-    sed -i "s!^OGRE_CFLAGS.*!OGRE_CFLAGS = $(pkg-config OGRE --cflags)!" makefile
-    sed -i "s!^OGRE_LDFLAGS.*!OGRE_LDFLAGS = $(pkg-config OGRE --libs)!" makefile
-    make -j $nprocs PREFIX=$prefix
-    # Media should be media, linux files case sensitive..
-    sed -i "s/Media/media/" makefile
-    make PREFIX=$prefix install
-    touch $tags/skyx-done
-fi
+
+echo "NOTE: SkyX build is disabled. To enable, uncomment SkyX code from build-ubuntu-deps.bash, and enable SKYX in main CMakeFiles.txt"
+echo "See https://github.com/realXtend/naali/issues/320"
+#if test -f $tags/skyx-done; then
+#    echo "SkyX-done"
+#else
+#    cd $build/$depdir/skyx
+#    if [ -z "$OGRE_HOME" ]; then
+#	    OGRE_HOME=`pkg-config --variable=prefix OGRE`
+#        if [ -z "$OGRE_HOME" ]; then
+#            echo "OGRE_HOME not defined, check your pkg-config or set OGRE_HOME manually.";
+#            exit 0;
+#        fi
+#    fi
+#    echo "Using OGRE_HOME = $OGRE_HOME"
+#    SKYX_SOURCE_DIR=`pwd`
+#    cmake -DCMAKE_INSTALL_PREFIX=$prefix .
+#    make -j $nprocs install
+#    touch $tags/skyx-done
+#fi
 # PythonQT build
 if test -f $tags/pythonqt-done; then
     echo "PythonQt-done"
@@ -161,6 +196,27 @@ else
     cp lib/lib* $prefix/lib/
     # luckily only extensionless headers under src match Qt*:
     cp src/qt*.h src/Qt* $prefix/include/
+    touch $tags/$what-done
+fi
+
+cd $build
+what=qxmpp
+rev=r1671
+if test -f $tags/$what-done; then
+    echo $what is done
+else
+    rm -rf $what
+    svn checkout http://qxmpp.googlecode.com/svn/trunk@$rev $what
+    cd $what
+    sed 's/# DEFINES += QXMPP_USE_SPEEX/DEFINES += QXMPP_USE_SPEEX/g' src/src.pro > src/temp
+    sed 's/# LIBS += -lspeex/LIBS += -lspeex/g' src/temp > src/src.pro
+    sed 's/LIBS += $$QXMPP_LIBS/LIBS += $$QXMPP_LIBS -lspeex/g' tests/tests.pro > tests/temp && mv tests/temp tests/tests.pro
+    rm src/temp
+    qmake
+    make -j $nprocs
+    mkdir -p $prefix/include/$what
+    cp src/*.h $prefix/include/$what
+    cp lib/libqxmpp.a $prefix/lib/
     touch $tags/$what-done
 fi
 

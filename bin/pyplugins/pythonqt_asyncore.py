@@ -56,61 +56,12 @@ def make_handler(flag):
         if obj is None:
             print "asyncore handler called for unknown socket", fd
             return
-
         asyncore.readwrite(obj, flag)
 
     return handler
 
 import asyncore, socket
 
-class HTTPClient(asyncore.dispatcher):
-
-    def __init__(self, host, path):
-        asyncore.dispatcher.__init__(self, map=my_socket_map)
-        self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.connect( (host, 80) )
-        self.buffer = 'GET %s HTTP/1.0\r\n\r\n' % path
-
-    def handle_connect(self):
-        pass
-
-    def handle_close(self):
-        self.close()
-
-    def handle_read(self):
-        print self.recv(8192)
-
-    def writable(self):
-        return (len(self.buffer) > 0)
-
-    def handle_write(self):
-        sent = self.send(self.buffer)
-        self.buffer = self.buffer[sent:]
-
-#client = HTTPClient('www.python.org', '/')
-
-class EchoServer(asyncore.dispatcher):
-    def __init__(self):
-        asyncore.dispatcher.__init__(self, map=my_socket_map)
-        self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.set_reuse_addr()
-        self.bind(('', 4242))
-        self.listen(5)
-    
-    def handle_accept(self):
-        sock, addr = self.accept()
-        print 'echo client from', addr
-        
-        EchoHandler(sock, map=my_socket_map)
-
-class EchoHandler(asyncore.dispatcher_with_send):
-    def handle_read(self):
-        self.out_buffer = self.recv(1024)
-        print 'handle_read: got', repr(self.out_buffer)
-        if not self.out_buffer:
-            self.close()
-
-#server = EchoServer()
 
 import asynchat
 class LineHandler(asynchat.async_chat):
@@ -119,7 +70,12 @@ class LineHandler(asynchat.async_chat):
         self.set_terminator("\r\n")
         self.data = ""
 
+    def writable(self):
+        print 'writable called, vars', self.producer_fifo, self.connected
+        asynchat.async_chat.writable(self)
+
     def collect_incoming_data(self, data):
+        print 'collecting', repr(data)
         self.data = self.data + data
 
     def found_terminator(self):
@@ -180,7 +136,10 @@ class LineHandler(asynchat.async_chat):
             ent = tundra.Scene().MainCameraScene().GetEntityByNameRaw(entity)
         else:
             ent = tundra.Scene().MainCameraScene().GetEntityRaw(entity)
-            
+        if not ent:
+            self.report_err("entity not found for json aftion (name/id=%s)" % entity)
+            print "ent not found"
+            return
         rv = ent.Exec(exectype, action, *params)
         print "action %s executed on entity %d" % (action, ent.id)
         return dict(returnvalue=rv)
@@ -206,12 +165,17 @@ class LineServer(asyncore.dispatcher):
         self.bind(('', 4242))
         self.listen(5)
     
+    def writable(self):
+        return False
+
     def handle_accept(self):
         sock, addr = self.accept()
         print 'line client from %s (socket fd %d)' % (addr, sock.fileno())
         
         LineHandler(sock, map=my_socket_map)
 
+
 if not tundra.IsServer():
+#if 1:
     hook_all()
     server = LineServer()

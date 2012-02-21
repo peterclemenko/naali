@@ -15,8 +15,7 @@ namespace ObjectCapture
 {
 
 KinectCapture::KinectCapture() :
-    rgb_update_frequency_(15),
-    current_cloud_(PointCloud::ConstPtr(new PointCloud))
+    rgb_update_frequency_(15)
 {
     kinect_interface_ = new pcl::OpenNIGrabber();
     rgb_frame_ = QImage(640, 480, QImage::Format_ARGB32);
@@ -77,6 +76,9 @@ void KinectCapture::updateRGBImage()
         return;
 
     if(cloud_mutex_.tryLock()) {
+        if(!current_cloud_.get())
+            return;
+
         PointCloud::ConstPtr cloud = current_cloud_;
         cloud_mutex_.unlock();
 

@@ -66,14 +66,16 @@ var gaze_sum_y = 0;
 var gaze_points_x = [];
 var gaze_points_y = [];
 var index = 0;
+var rect_size = 25;
 
 
 if (!framework.IsHeadless())
 {
         var label = new QLabel();
         label.objectName = "InfoLabel";
-        label.setStyleSheet("QLabel#InfoLabel { padding: 10px; background-color: rgba(230,230,230,175); border: 1px solid black; font-size: 16px; }");
-        label.text = "GAZE";
+        label.setStyleSheet("QLabel#InfoLabel { padding: 0px; background-color: rgba(230,230,230,0); border: 2px solid red; font-size: 16px; }");
+        label.text = "";
+        label.resize(2*rect_size, 2*rect_size);
 
         var proxy = new UiProxyWidget(label);
         ui.AddProxyWidgetToScene(proxy);
@@ -97,10 +99,10 @@ if (framework.IsHeadless())
     action_added = false;
     gaze_x = parseInt(screen_width / 2);
     gaze_y = parseInt(screen_height / 2);
-        
-    //var inputContext = input.RegisterInputContextRaw("GazeTrackingInput", 102);
-    //inputContext.SetTakeMouseEventsOverQt(true);
-    //inputContext.MouseMove.connect(HandleMouseMove);
+
+    /*var inputContext = input.RegisterInputContextRaw("GazeTrackingInput", 102);
+    inputContext.SetTakeMouseEventsOverQt(true);
+    inputContext.MouseMove.connect(HandleMouseMove);*/
 }
 
 function MainWindowResized(width, height)
@@ -135,7 +137,7 @@ function TimerTimeout()
     if (entity_selected && !movement_mode)
         HandleEntityRotation();
     if (entity_selected && movement_mode)
-	HandleEntityMovement();
+        HandleEntityMovement();
 
     if (!entity_selected)
     {
@@ -148,7 +150,7 @@ function TimerTimeout()
 function SwitchGesture()
 {
     if (!entity_selected)
-	return;
+        return;
     movement_mode = !movement_mode;
 }
 
@@ -161,14 +163,14 @@ function HandleCameraRotation()
             return;
 
         speed = (delta_center_x - border_x) / 100;
-        
+
         if (speed > maximum_rotate_speed)
             speed = maximum_rotate_speed;
         var transform = cameraEnt.placeable.transform;
         transform.rot.y += speed;
         cameraEnt.placeable.transform = transform;
     }
-    
+
     else if (parseInt(delta_center_x) < -border_x)
     {
         var cameraEnt = scene.GetEntityByName("FreeLookCamera");
@@ -176,7 +178,7 @@ function HandleCameraRotation()
             return;
 
         speed = (delta_center_x + border_x) / 100;
-        
+
         if (speed < -maximum_rotate_speed)
             speed = -maximum_rotate_speed;
         var transform = cameraEnt.placeable.transform;
@@ -191,15 +193,15 @@ function HandleCameraRotation()
             return;
 
         speed = (delta_center_y - border_y) / 100;
-        
+
         if (speed > maximum_rotate_speed)
             speed = maximum_rotate_speed;
         var transform = cameraEnt.placeable.transform;
         transform.rot.x += speed;
         if (transform.rot.x > maximum_camera_angle_y)
-            transform.rot.x = maximum_camera_angle_y;            
+            transform.rot.x = maximum_camera_angle_y;
         cameraEnt.placeable.transform = transform;
-        
+
     }
 
     else if (parseInt(delta_center_y) < -border_y)
@@ -209,7 +211,7 @@ function HandleCameraRotation()
             return;
 
         speed = (delta_center_y + border_y) / 100;
-        
+
         if (speed < -maximum_rotate_speed)
             speed = -maximum_rotate_speed;
         var transform = cameraEnt.placeable.transform;
@@ -223,29 +225,29 @@ function HandleCameraRotation()
 function HandleCameraMovement()
 {
     if (entity_selected)
-	return;
+        return;
     //print(pitch_angle + ", " + roll_angle);
     if (pitch_angle >= rotate_threshold_1)
     {
         var cameraEnt = scene.GetEntityByName("FreeLookCamera");
         if (!cameraEnt)
             return;
-	cameraEnt.Exec(1, "Move", "back");  
+        cameraEnt.Exec(1, "Move", "back");
     }
     else if (pitch_angle <= -rotate_threshold_1)
     {
         var cameraEnt = scene.GetEntityByName("FreeLookCamera");
         if (!cameraEnt)
             return;
-	cameraEnt.Exec(1, "Move", "forward");
-    } 
+        cameraEnt.Exec(1, "Move", "forward");
+    }
     else
     {
         var cameraEnt = scene.GetEntityByName("FreeLookCamera");
         if (!cameraEnt)
             return;
         cameraEnt.Exec(1, "Stop", "forward");
-        cameraEnt.Exec(1, "Stop", "back"); 
+        cameraEnt.Exec(1, "Stop", "back");
     }
 
     if (roll_angle >= rotate_threshold_1)
@@ -260,15 +262,15 @@ function HandleCameraMovement()
         var cameraEnt = scene.GetEntityByName("FreeLookCamera");
         if (!cameraEnt)
             return;
-	cameraEnt.Exec(1, "Move", "left");   
-    } 
+        cameraEnt.Exec(1, "Move", "left");
+    }
     else
     {
         var cameraEnt = scene.GetEntityByName("FreeLookCamera");
         if (!cameraEnt)
             return;
         cameraEnt.Exec(1, "Stop", "left");
-        cameraEnt.Exec(1, "Stop", "right"); 
+        cameraEnt.Exec(1, "Stop", "right");
     }
 }
 
@@ -281,28 +283,28 @@ function HandleEntityMovement()
     {
         var transform = selected_entity.placeable.transform;
         transform.pos.z += 0.5;
-        selected_entity.placeable.transform = transform;   
+        selected_entity.placeable.transform = transform;
     }
 
     else if (pitch_angle <= -rotate_threshold_1)
     {
         var transform = selected_entity.placeable.transform;
         transform.pos.z -= 0.5;
-        selected_entity.placeable.transform = transform;   
+        selected_entity.placeable.transform = transform;
     }
 
     if (roll_angle >= rotate_threshold_1)
     {
         var transform = selected_entity.placeable.transform;
         transform.pos.x += 0.5;
-        selected_entity.placeable.transform = transform;   
+        selected_entity.placeable.transform = transform;
     }
 
     else if (roll_angle <= -rotate_threshold_1)
     {
         var transform = selected_entity.placeable.transform;
         transform.pos.x -= 0.5;
-        selected_entity.placeable.transform = transform;   
+        selected_entity.placeable.transform = transform;
     }
 
 }
@@ -316,6 +318,8 @@ function HandleMouseMove(mouse)
     gaze_y = mouse.y;
     delta_center_x = (screen_width / 2) - gaze_x;
     delta_center_y = (screen_height / 2) - gaze_y;
+    proxy.x = mouse.x - rect_size;
+    proxy.y = mouse.y - rect_size;
     EntitySelection();
 }
 
@@ -328,15 +332,17 @@ function GazeCoordinates(x, y)
     if (gaze_counter < amount_of_points)
     {
         gaze_points_x.unshift(parseInt(x));
-        gaze_points_y.unshift(parseInt(y));          
+        gaze_points_y.unshift(parseInt(y));
         gaze_counter += 1;
     }
     else
     {
         gaze_points_x.unshift(parseInt(x));
-        gaze_points_y.unshift(parseInt(y)); 
+        gaze_points_y.unshift(parseInt(y));
         gaze_points_x.pop();
         gaze_points_y.pop();
+
+
 
         for (index = 0; index < amount_of_points; index++)
         {
@@ -348,12 +354,32 @@ function GazeCoordinates(x, y)
         gaze_average_y = gaze_sum_y / amount_of_points;
         gaze_sum_x = 0;
         gaze_sum_y = 0;
+
+        if (((gaze_points_x[0] - gaze_average_x) > (screen_width / 2)) || ((gaze_points_x[0] - gaze_average_x) < (-screen_width / 2)))
+        {
+            gaze_average_x = gaze_points_x[0];
+            for (index = 1; index < amount_of_points; index++)
+            {
+                gaze_points_x[index] = gaze_points_x[0];
+            }
+
+        }
+        if (((gaze_points_y[0] - gaze_average_y) > (screen_width / 2)) || ((gaze_points_y[0] - gaze_average_y) < (-screen_height / 2)))
+        {
+            gaze_average_y = gaze_points_y[0];
+            for (index = 1; index < amount_of_points; index++)
+            {
+                gaze_points_y[index] = gaze_points_y[0];
+            }
+        }
+
         gaze_x = gaze_average_x;
         gaze_y = gaze_average_y;
     }
 
     delta_center_x = (screen_width / 2) - gaze_points_x[0];
     delta_center_y = (screen_height / 2) - gaze_points_y[0];
+
     if (!entity_selected)
         EntitySelection();
 
@@ -361,37 +387,45 @@ function GazeCoordinates(x, y)
         proxy.x = screen_width - 100;
     else if (gaze_x < 0)
         proxy.x = 0;
-    else 
-        proxy.x = gaze_x;
+    else
+        proxy.x = gaze_x - rect_size;
 
     if (gaze_y > screen_height)
         proxy.y = screen_height - 100;
     else if (gaze_y < 0)
         proxy_y = 0;
     else
-        proxy.y = gaze_y;
+        proxy.y = gaze_y - rect_size;
 }
 
 function EntitySelection()
 {
     var raycastResult = renderer.Raycast(gaze_x, gaze_y);
-    if (raycastResult.entity)
+
+    var cameraEnt = scene.GetEntityByName("FreeLookCamera");
+    if (!cameraEnt)
+        return;
+    var camera_position = cameraEnt.placeable.transform.pos;
+
+    var closest_entity = scene.ogre.FrustumQuery(gaze_x - rect_size, gaze_y - rect_size, gaze_x + rect_size, gaze_y + rect_size, camera_position);
+
+    if (closest_entity)
     {
-        if (raycastResult.entity.GetComponent("EC_Placeable"))
+        if (closest_entity.GetComponent("EC_Placeable"))
         {
-            if (raycastResult.entity != last_raycast_entity && last_raycast_entity)
+            if (closest_entity != last_raycast_entity && last_raycast_entity)
             {
                 var placeable = last_raycast_entity.placeable;
                 placeable.drawDebug = false;
                 last_raycast_entity.placeable = placeable;
             }
 
-            last_raycast_entity = scene.GetEntity(raycastResult.entity.id);
+            last_raycast_entity = closest_entity;
             var placeable = last_raycast_entity.placeable;
             placeable.drawDebug = true;
             last_raycast_entity.placeable = placeable;
         }
-        
+
     }
     else
     {
@@ -416,13 +450,13 @@ function GraspGesture()
         entity_selected = true;
         selected_entity = last_raycast_entity;
 
-	var cameraEnt = scene.GetEntityByName("FreeLookCamera");
+        var cameraEnt = scene.GetEntityByName("FreeLookCamera");
         if (!cameraEnt)
             return;
         cameraEnt.Exec(1, "Stop", "left");
         cameraEnt.Exec(1, "Stop", "right");
-	cameraEnt.Exec(1, "Stop", "forward");
-        cameraEnt.Exec(1, "Stop", "back");     
+        cameraEnt.Exec(1, "Stop", "forward");
+        cameraEnt.Exec(1, "Stop", "back");
     }
 }
 
@@ -440,11 +474,11 @@ function PitchAndRoll(pitch, roll)
 {
     //if (!entity_selected)
     //    return;
-    delta_pitch = parseInt(pitch - pitch_angle);    
+    delta_pitch = parseInt(pitch - pitch_angle);
     delta_roll = parseInt(roll - roll_angle);
 
     pitch_angle = parseInt(pitch);
-    roll_angle = parseInt(roll);        
+    roll_angle = parseInt(roll);
 }
 
 function HandleEntityRotation()
@@ -455,17 +489,17 @@ function HandleEntityRotation()
     if (delta_mode)
     {
         var transform = selected_entity.placeable.transform;
-    	transform.rot.x += delta_pitch;
+        transform.rot.x += delta_pitch;
         transform.rot.y += delta_roll;
         selected_entity.placeable.transform = transform;
-        return;   
+        return;
     }
 
     if (pitch_angle >= rotate_threshold_1 && pitch_angle < rotate_threshold_2)
     {
         var transform = selected_entity.placeable.transform;
         transform.rot.x += rotate_speed_1;
-        selected_entity.placeable.transform = transform;   
+        selected_entity.placeable.transform = transform;
     }
     else if (pitch_angle >= rotate_threshold_2 && pitch_angle < rotate_threshold_3)
     {
@@ -483,7 +517,7 @@ function HandleEntityRotation()
     {
         var transform = selected_entity.placeable.transform;
         transform.rot.x -= rotate_speed_1;
-        selected_entity.placeable.transform = transform;   
+        selected_entity.placeable.transform = transform;
     }
     else if (pitch_angle <= -rotate_threshold_2 && pitch_angle > -rotate_threshold_3)
     {
@@ -502,7 +536,7 @@ function HandleEntityRotation()
     {
         var transform = selected_entity.placeable.transform;
         transform.rot.y += rotate_speed_1;
-        selected_entity.placeable.transform = transform;   
+        selected_entity.placeable.transform = transform;
     }
     else if (roll_angle >= rotate_threshold_2 && roll_angle < rotate_threshold_3)
     {
@@ -520,7 +554,7 @@ function HandleEntityRotation()
     {
         var transform = selected_entity.placeable.transform;
         transform.rot.y -= rotate_speed_1;
-        selected_entity.placeable.transform = transform;   
+        selected_entity.placeable.transform = transform;
     }
     else if (roll_angle <= -rotate_threshold_2 && roll_angle > -rotate_threshold_3)
     {
@@ -535,4 +569,3 @@ function HandleEntityRotation()
         selected_entity.placeable.transform = transform;
     }
 }
-

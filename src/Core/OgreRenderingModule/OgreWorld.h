@@ -82,7 +82,7 @@ public slots:
         @param rectLeft Left border of the rectangle
         @param rectTop Top border of the rectangle
         @param rectRight Right border of the rectangle
-        @param rectBottom Left border of the rectangle
+        @param rectBottom Bottom border of the rectangle
         @param entity_pos Position of the entity (viewport)
         @return Entity closest to the viewport. */
     Entity* FrustumQuery(int rectLeft, int rectTop, int rectRight, int rectBottom, float3 entity_pos);

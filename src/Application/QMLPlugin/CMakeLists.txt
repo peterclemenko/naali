@@ -4,7 +4,7 @@ init_target (QMLPlugin OUTPUT plugins)
 # Define source files
 file (GLOB CPP_FILES *.cpp)
 file (GLOB H_FILES *.h)
-file (GLOB MOC_FILES QMLPlugin.h EC_QML.h)
+file (GLOB MOC_FILES QMLPlugin.h EC_QML.h GazeDialog.h)
 
 set (SOURCE_FILES ${CPP_FILES} ${H_FILES})
 

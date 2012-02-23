@@ -1,3 +1,5 @@
+//Currently, this script needs QMLPlugin to work correctly.
+
 if (framework.IsHeadless())
     return;
 
@@ -38,6 +40,12 @@ var rotate_threshold_3 = 60;
 //Defines the amount of gaze coordinates from which the average is counted from.
 var amount_of_points = 30;
 
+//The size of the FrustumQuery rect for selecting objects.
+var rect_size = 25;
+
+//If true, shows a second rectangle for the current gaze coordinates, in addition to average coordinates.
+var debug_mode = false;
+
 var scene = null;
 var timer = new QTimer();
 var gaze_x = 0;
@@ -66,14 +74,15 @@ var gaze_sum_y = 0;
 var gaze_points_x = [];
 var gaze_points_y = [];
 var index = 0;
-var rect_size = 25;
+var movement_speed = 0.1;
+var qmlmodule = 0;
 
 
 if (!framework.IsHeadless())
 {
         var label = new QLabel();
-        label.objectName = "InfoLabel";
-        label.setStyleSheet("QLabel#InfoLabel { padding: 0px; background-color: rgba(230,230,230,0); border: 2px solid red; font-size: 16px; }");
+        label.objectName = "GazeAverageLabel";
+        label.setStyleSheet("QLabel#GazeAverageLabel { padding: 0px; background-color: rgba(230,230,230,0); border: 2px solid red; font-size: 16px; }");
         label.text = "";
         label.resize(2*rect_size, 2*rect_size);
 
@@ -83,14 +92,47 @@ if (!framework.IsHeadless())
         proxy.y = 50;
         proxy.windowFlags = 0;
         proxy.visible = true;
+
+        var label2 = new QLabel();
+        label2.objectName = "GazeCurrentLabel";
+        label2.setStyleSheet("QLabel#GazeCurrentLabel { padding: 0px; background-color: rgba(230,230,230,100); border: 0px solid black; font-size: 16px; }");
+        label2.text = "";
+        label2.resize(20, 20);
+
+        var proxy2 = new UiProxyWidget(label2);
+        ui.AddProxyWidgetToScene(proxy2);
+        proxy2.x = 50
+        proxy2.y = 50;
+        proxy2.windowFlags = 0;
+        proxy2.visible = false;
+
+        qmlmodule = framework.GetModuleByName("QMLPlugin");
+        qmlmodule.GazeWindowOpened.connect(SendGazeParameters);
+        qmlmodule.GazeWindowAccepted.connect(SetGazeParameters);
 }
+
+function SendGazeParameters()
+{
+    qmlmodule.SetGazeParameters(center_size, amount_of_points, rect_size, delta_mode, debug_mode);
+}
+
+function SetGazeParameters(c_size, points, r_size, del_mode, deb_mode)
+{
+    center_size = parseFloat(c_size);
+    amount_of_points = parseInt(points);
+    rect_size = parseInt(r_size);
+    delta_mode = del_mode;
+    debug_mode = deb_mode;
+    label.resize(2*rect_size, 2*rect_size);
+    proxy2.visible = debug_mode;
+} 
 
 timer.timeout.connect(TimerTimeout);
 
 function OnSceneAdded(scenename)
 {
-if (framework.IsHeadless())
-    return;
+    if (framework.IsHeadless())
+        return;
 
     screen_width = ui.GraphicsView().viewport().size.width();
     screen_height = ui.GraphicsView().viewport().size.height();
@@ -103,12 +145,18 @@ if (framework.IsHeadless())
     /*var inputContext = input.RegisterInputContextRaw("GazeTrackingInput", 102);
     inputContext.SetTakeMouseEventsOverQt(true);
     inputContext.MouseMove.connect(HandleMouseMove);*/
+
+    border_x = parseInt(center_size * screen_width);
+    border_y = parseInt(center_size * screen_height);
 }
 
 function MainWindowResized(width, height)
 {
     screen_width = width;
     screen_height = height;
+    
+    border_x = parseInt(center_size * screen_width);
+    border_y = parseInt(center_size * screen_height);
 }
 
 function AddActionToFreeLookCamera()
@@ -282,28 +330,28 @@ function HandleEntityMovement()
     if (pitch_angle >= rotate_threshold_1)
     {
         var transform = selected_entity.placeable.transform;
-        transform.pos.z += 0.5;
+        transform.pos.z += movement_speed;
         selected_entity.placeable.transform = transform;
     }
 
     else if (pitch_angle <= -rotate_threshold_1)
     {
         var transform = selected_entity.placeable.transform;
-        transform.pos.z -= 0.5;
+        transform.pos.z -= movement_speed;
         selected_entity.placeable.transform = transform;
     }
 
     if (roll_angle >= rotate_threshold_1)
     {
         var transform = selected_entity.placeable.transform;
-        transform.pos.x += 0.5;
+        transform.pos.x += movement_speed;
         selected_entity.placeable.transform = transform;
     }
 
     else if (roll_angle <= -rotate_threshold_1)
     {
         var transform = selected_entity.placeable.transform;
-        transform.pos.x -= 0.5;
+        transform.pos.x -= movement_speed;
         selected_entity.placeable.transform = transform;
     }
 
@@ -312,23 +360,54 @@ function HandleMouseMove(mouse)
 {
     if (!scene)
         return;
-    border_x = parseInt(center_size * screen_width);
-    border_y = parseInt(center_size * screen_height);
-    gaze_x = mouse.x;
-    gaze_y = mouse.y;
-    delta_center_x = (screen_width / 2) - gaze_x;
-    delta_center_y = (screen_height / 2) - gaze_y;
-    proxy.x = mouse.x - rect_size;
-    proxy.y = mouse.y - rect_size;
-    EntitySelection();
+    
+    if (gaze_counter < amount_of_points)
+    {
+        gaze_points_x.unshift(parseInt(mouse.x));
+        gaze_points_y.unshift(parseInt(mouse.y));
+        gaze_counter += 1;
+    }
+    else
+    {
+        gaze_points_x.unshift(parseInt(mouse.x));
+        gaze_points_y.unshift(parseInt(mouse.y));
+        gaze_points_x.pop();
+        gaze_points_y.pop();
+
+        for (index = 0; index < amount_of_points; index++)
+        {
+            gaze_sum_x += gaze_points_x[index];
+            gaze_sum_y += gaze_points_y[index];
+        }
+
+        gaze_average_x = gaze_sum_x / amount_of_points;
+        gaze_average_y = gaze_sum_y / amount_of_points;
+        gaze_sum_x = 0;
+        gaze_sum_y = 0;
+
+        gaze_x = gaze_average_x;
+        gaze_y = gaze_average_y;
+    }
+
+    delta_center_x = (screen_width / 2) - gaze_points_x[0];
+    delta_center_y = (screen_height / 2) - gaze_points_y[0];
+
+    if (!entity_selected)
+        EntitySelection();
+
+    proxy.x = gaze_x - rect_size;
+
+    proxy.y = gaze_y - rect_size;
+
+    proxy2.x = gaze_points_x[0];
+    proxy2.y = gaze_points_y[0];
 }
 
 function GazeCoordinates(x, y)
 {
     if (!scene)
         return;
-    border_x = parseInt(center_size * screen_width);
-    border_y = parseInt(center_size * screen_height);
+
     if (gaze_counter < amount_of_points)
     {
         gaze_points_x.unshift(parseInt(x));
@@ -342,8 +421,6 @@ function GazeCoordinates(x, y)
         gaze_points_x.pop();
         gaze_points_y.pop();
 
-
-
         for (index = 0; index < amount_of_points; index++)
         {
             gaze_sum_x += gaze_points_x[index];
@@ -355,7 +432,7 @@ function GazeCoordinates(x, y)
         gaze_sum_x = 0;
         gaze_sum_y = 0;
 
-        if (((gaze_points_x[0] - gaze_average_x) > (screen_width / 2)) || ((gaze_points_x[0] - gaze_average_x) < (-screen_width / 2)))
+        /*if (((gaze_points_x[0] - gaze_average_x) > (screen_width / 2)) || ((gaze_points_x[0] - gaze_average_x) < (-screen_width / 2)))
         {
             gaze_average_x = gaze_points_x[0];
             for (index = 1; index < amount_of_points; index++)
@@ -371,7 +448,7 @@ function GazeCoordinates(x, y)
             {
                 gaze_points_y[index] = gaze_points_y[0];
             }
-        }
+        }*/
 
         gaze_x = gaze_average_x;
         gaze_y = gaze_average_y;
@@ -396,11 +473,13 @@ function GazeCoordinates(x, y)
         proxy_y = 0;
     else
         proxy.y = gaze_y - rect_size;
+
+    proxy2.x = gaze_x - 10;
+    proxy2.y = gaze_y - 10;
 }
 
 function EntitySelection()
 {
-    var raycastResult = renderer.Raycast(gaze_x, gaze_y);
 
     var cameraEnt = scene.GetEntityByName("FreeLookCamera");
     if (!cameraEnt)
@@ -467,13 +546,12 @@ function ReleaseGesture()
         print("Entity Released.");
         entity_selected = false;
         selected_entity = null;
+        movement_mode = false;
     }
 }
 
 function PitchAndRoll(pitch, roll)
 {
-    //if (!entity_selected)
-    //    return;
     delta_pitch = parseInt(pitch - pitch_angle);
     delta_roll = parseInt(roll - roll_angle);
 

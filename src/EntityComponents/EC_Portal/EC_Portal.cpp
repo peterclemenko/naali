@@ -19,10 +19,10 @@ EC_Portal::EC_Portal(Scene *scene) :
     port(this, "Port:"),
     protocol(this, "Protocol:"),
     position_(0,0,0),
-    pieru_(framework->Scene()->GetSceneInteract())
+    sceneInteract_(framework->Scene()->GetSceneInteract())
 {
     //connect(this, SIGNAL(ParentEntitySet()), SLOT(UpdateMethod()));
-    connect(pieru_, SIGNAL(EntityClicked(Entity*,Qt::MouseButton,RaycastResult*)), this, SLOT(parentClicked(Entity*)));
+    connect(sceneInteract_, SIGNAL(EntityClicked(Entity*,Qt::MouseButton,RaycastResult*)), this, SLOT(parentClicked(Entity*,Qt::MouseButton)));
 }
 
 EC_Portal::~EC_Portal()
@@ -49,11 +49,14 @@ void EC_Portal::Update(float frametime)
 
 }
 
-void EC_Portal::parentClicked(Entity *ent)
+void EC_Portal::parentClicked(Entity *ent, Qt::MouseButton button)
 {
     if (!(ent == ParentEntity()))
         return;
-    LogInfo("Portal clicked!\n");
+    if (button != Qt::LeftButton)
+    {
+        return;
+    }
     Entity* parent = ParentEntity();
     if (!parent)
         return;
@@ -80,16 +83,12 @@ void EC_Portal::parentClicked(Entity *ent)
         if (placeable)
         {
             float3 avatarPos = placeable->transform.Get().pos;
-            LogInfo(QString::number(fabs(avatarPos.x - position_.x)) + "," + QString::number(fabs(avatarPos.z - position_.z)));
-            if (fabs(avatarPos.x - position_.x) <= 1.0 && fabs(avatarPos.z - position_.z) <= 1.0)
+            float distance = avatarPos.Distance(position_);
+            ::LogInfo("Distance: " + QString::number(distance));
+            if (distance < 3)
             {
                 LogInfo("Connection initiated from portal!\n");
-                avatar->Exec(0,"Stop", "all", "all", "all");
-                avatar->Exec(1,"Stop", "all", "all", "all");
-                avatar->Exec(2,"Stop", "all", "all", "all");
-                avatar->Exec(4,"Stop", "all", "all", "all");
                 client->Login(address.Get(), port.Get().toInt(),"portal","portal", protocol.Get());
-                FrameAPI* frame = framework->Frame();
             }
         }
     }
@@ -98,14 +97,13 @@ void EC_Portal::parentClicked(Entity *ent)
         EntityPtr camera = scene->GetEntityByName("FreeLookCamera");
         if (camera)
         {
-            LogInfo("Got freelookcamera!!\n");
             EC_Placeable *placeable = camera->GetComponent<EC_Placeable>().get();
             if (placeable)
             {
                 float3 cameraPos = placeable->transform.Get().pos;
-                LogInfo(QString::number(fabs(cameraPos.x - position_.x)) + "," + QString::number(fabs(cameraPos.z - position_.z)));
-                LogInfo("Camera derp!\n");
-                if (fabs(cameraPos.x - position_.x) <= 1.0 && fabs(cameraPos.z - position_.z) <= 1.0)
+                float distance = cameraPos.Distance(position_);
+                ::LogInfo("Distance: " + QString::number(distance));
+                if (distance < 9)
                 {
                     LogInfo("Connection initiated from portal!\n");
                     client->Login(address.Get(), port.Get().toInt(),"portal","portal", protocol.Get());

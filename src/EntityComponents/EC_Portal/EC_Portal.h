@@ -8,7 +8,7 @@
 class EC_Portal : public IComponent
 {
     Q_OBJECT
-    COMPONENT_NAME("EC_Portal", 41)
+    COMPONENT_NAME("EC_Portal", 903)
 
 public:
     explicit EC_Portal(Scene *scene);
@@ -32,11 +32,11 @@ private slots:
 
     void Update(float);
 
-    void parentClicked(Entity*);
+    void parentClicked(Entity*, Qt::MouseButton);
 
 private:
     float3 position_;
 
     // Sceneinteract
-    SceneInteract *pieru_;
+    SceneInteract *sceneInteract_;
 };

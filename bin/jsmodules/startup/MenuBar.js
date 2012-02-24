@@ -133,11 +133,12 @@ if (!framework.IsHeadless())
         }
         else
             scene = framework.Scene().GetScene(sceneNames[0]);
-    	cameraentity = scene.GetEntityByName("AvatarCamera");
-    	if (!cameraentity)
-    	    cameraentity = scene.GetEntityByName("FreeLookCamera");
-    	var camera = cameraentity.camera;
-		camera.SetActive(camera);
+	    cameraentity = scene.GetEntityByName("AvatarCamera");
+    	    if (!cameraentity)
+    	        cameraentity = scene.GetEntityByName("FreeLookCamera");
+    	    var camera = cameraentity.camera;
+	    client.setActiveScenename(sceneNames[0]);
+	    camera.SetActive(camera);
 	}
     function Quit() {
         framework.Exit();

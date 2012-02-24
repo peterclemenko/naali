@@ -12,6 +12,18 @@
    <attribute value="ObjectCapture" name="Script application name"/>
    <attribute value="ObjectCapture" name="Script class name"/>
   </component>
+  <component type="EC_InputMapper" sync="0">
+   <attribute value="EC_InputMapper" name="Input context name"/>
+   <attribute value="100" name="Input context priority"/>
+   <attribute value="false" name="Take keyboard events over Qt"/>
+   <attribute value="false" name="Take mouse events over Qt"/>
+   <attribute value="1" name="Action execution type"/>
+   <attribute value="false" name="Key modifiers enable"/>
+   <attribute value="true" name="Enable actions"/>
+   <attribute value="false" name="Trigger on keyrepeats"/>
+   <attribute value="false" name="Suppress used keyboard events"/>
+   <attribute value="false" name="Suppress used mouse events"/>
+  </component>
  </entity>
  <entity id="2" sync="1">
   <component type="EC_Mesh" sync="1">
@@ -45,6 +57,7 @@
    <attribute value="0" name="Angular damping"/>
    <attribute value="1.000000 1.000000 1.000000" name="Linear factor"/>
    <attribute value="1.000000 1.000000 1.000000" name="Angular factor"/>
+   <attribute value="true" name="Gravity enabled"/>
    <attribute value="false" name="Kinematic"/>
    <attribute value="false" name="Phantom"/>
    <attribute value="false" name="Draw Debug"/>
@@ -74,28 +87,27 @@
    <attribute value="true" name="Draw first"/>
   </component>
  </entity>
- <entity id="4">
+ <entity id="4" sync="1">
   <component type="EC_Placeable" sync="1">
-    <attribute value="0 0 0" name="Position"/>
-    <attribute value="1 1 1" name="Scale"/>
-    <attribute value="0,13.7596,65.07,0,0,0,10,10,10" name="Transform"/>
-    <attribute value="false" name="Show bounding box"/>
-    <attribute value="true" name="Visible"/>
+   <attribute value="0,35,-90,-90,-180,0,10,9.99998,9.99999" name="Transform"/>
+   <attribute value="false" name="Show bounding box"/>
+   <attribute value="true" name="Visible"/>
+   <attribute value="1" name="Selection layer"/>
+   <attribute value="" name="Parent entity ref"/>
+   <attribute value="" name="Parent bone name"/>
   </component>
   <component type="EC_Mesh" sync="1">
-    <attribute value="0,0,0,90,0,180,1,1,1" name="Transform"/>
-    <attribute value="local://screen.mesh" name="Mesh ref"/>
-    <attribute value="" name="Skeleton ref"/>
-    <attribute value="local://screen_frames.material;local://screen.material" name="Mesh materials"/>
-    <attribute value="0" name="Draw distance"/>
-    <attribute value="false" name="Cast shadows"/>
+   <attribute value="0,0,0,90,0,180,1,1,1" name="Transform"/>
+   <attribute value="local://screen.mesh" name="Mesh ref"/>
+   <attribute value="" name="Skeleton ref"/>
+   <attribute value="local://screen_frames.material;local://screen.material" name="Mesh materials"/>
+   <attribute value="0" name="Draw distance"/>
+   <attribute value="false" name="Cast shadows"/>
   </component>
   <component type="EC_Name" sync="1">
-    <attribute value="screen" name="name"/>
-    <attribute value="" name="description"/>
-    <attribute value="false" name="user-defined"/>
+   <attribute value="screen" name="name"/>
+   <attribute value="" name="description"/>
   </component>
-  <component type="EC_WidgetCanvas" sync="1">
-  </component>
+  <component type="EC_WidgetCanvas" sync="1"/>
  </entity>
 </scene>

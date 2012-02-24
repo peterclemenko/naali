@@ -8,6 +8,8 @@
 
 #include "FrameworkFwd.h"
 #include "IModule.h"
+#include "InputAPI.h"
+#include "GazeDialog.h"
 
 class QMLPlugin : public IModule
 {
@@ -26,5 +28,23 @@ public:
 
     // IModule override
     void Unload();
+
+    // IModule override
+    void Initialize();
+
+public slots:
+    void HandleKeyPressedEvent(KeyEvent *event);
+
+    // For setting gaze parameters
+    void SetGazeParameters(float center_size, int points, int rect_size, bool delta_mode, bool debug_mode);
+    void GazeParametersAccepted(float center_size, int points, int rect_size, bool delta_mode, bool debug_mode);
+
+private:
+    InputContextPtr input_;
+    GazeDialog *gazedialog_;
+
+signals:
+    void GazeWindowOpened();
+    void GazeWindowAccepted(float center_size, int points, int rect_size, bool delta_mode, bool debug_mode);
 
 };

@@ -91,7 +91,7 @@ public slots:
     void Logout(const QString& name="\0");
 
     /// Returns client connection ID (from loginreply message). Is zero if not connected
-    int GetConnectionID() const { return client_id_; }
+    int GetConnectionID() const { return client_id_list_.empty() ? client_id_ : client_id_list_[activescenename_]; }
 
     /// See if connected & authenticated
     bool IsConnected(const QString& , unsigned short , const QString &);
@@ -194,6 +194,8 @@ private:
     QMap<QString, u8> client_id_list_;
     // Scene to be disconnected
     QString discScene;
+    // Current active scenename
+    QString activescenename_;
 
 };
 

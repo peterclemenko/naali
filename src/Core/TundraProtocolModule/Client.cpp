@@ -35,7 +35,8 @@ Client::Client(TundraLogicModule* owner) :
     loginstate_(NotConnected),
     reconnect_(false),
     client_id_(0),
-    discScene("\0")
+    discScene("\0"),
+    activescenename_("")
 {
 }
 
@@ -150,7 +151,7 @@ void Client::Login(const QString& address, unsigned short port, kNet::SocketTran
     KristalliProtocolModule *kristalli = framework_->GetModule<KristalliProtocolModule>();
     connect(kristalli, SIGNAL(NetworkMessageReceived(kNet::MessageConnection *, kNet::packet_id_t, kNet::message_id_t, const char *, size_t)), 
             this, SLOT(HandleKristalliMessage(kNet::MessageConnection*, kNet::packet_id_t, kNet::message_id_t, const char*, size_t)), Qt::UniqueConnection);
-    connect(kristalli, SIGNAL(ConnectionAttemptFailed()), this, SLOT(OnConnectionAttemptFailed()), Qt::UniqueConnection);
+    connect(kristalli, SIGNAL(ConnectionAttemptFailed(QString&)), this, SLOT(OnConnectionAttemptFailed(QString&)), Qt::UniqueConnection);
 
     owner_->GetKristalliModule()->Connect(address.toStdString().c_str(), port, protocol);
     loginstate_ = ConnectionPending;
@@ -226,11 +227,14 @@ void Client::DoLogout(bool fail)
 bool Client::IsConnected(const QString& address, unsigned short port, const QString &protocol)
 {
     QMap< QString, std::map<QString, QString> >::const_iterator iter = properties_list_.begin();
+    QString tempProtocol = protocol;
     std::map<QString, QString> tempMap;
+    if (protocol == "")
+        tempProtocol = "udp";
     while (iter != properties_list_.end())
     {
         tempMap = iter.value();
-        if (tempMap["address"] == address && tempMap["port"] == QString::number(port) && tempMap["protocol"] == protocol)
+        if (tempMap["address"] == address && tempMap["port"] == QString::number(port) && tempMap["protocol"] == tempProtocol)
         {
             emit switchScene(iter.key());
             return true;
@@ -285,6 +289,7 @@ void Client::CheckLogin()
     QMapIterator<QString, std::map<QString, QString> > propertiesIterator(properties_list_);
     QMapIterator<QString, Ptr(kNet::MessageConnection)> connectionIterator = owner_->GetKristalliModule()->GetConnectionArray();
 
+    activescenename_ = framework_->Scene()->MainCameraScene()->Name();
     // Checklogin only happens if atleast one connection is made in KristalliProtocolModule and set to ConnectionOK state.
     while (connectionIterator.hasNext() && loginstateIterator.hasNext())
     {
@@ -404,6 +409,7 @@ void Client::HandleLoginReply(MessageConnection* source, const MsgLoginReply& ms
         // Note: create scene & send info of login success only on first connection, not on reconnect
         if (!reconnect_list_[sceneName])
         {
+            ::LogInfo("New connection.\n");
             // This sets identifier in KristalliProtocolModule for this particular connection
             owner_->GetKristalliModule()->SetIdentifier(sceneName);
             // Create a non-authoritative scene for the client
@@ -420,6 +426,7 @@ void Client::HandleLoginReply(MessageConnection* source, const MsgLoginReply& ms
         }
         else
         {
+            ::LogInfo("Reconnection.\n");
             // If we are reconnecting, empty the scene, as the server will send everything again anyway
             // Note: when we move to unordered communication, we must guarantee that the server does not send
             // any scene data before the login reply
@@ -451,8 +458,22 @@ void Client::HandleClientLeft(MessageConnection* source, const MsgClientLeft& ms
 void Client::saveProperties(const QString name)
 {
     // Login happened and replace NEW-marked properties with scenename.
-    if (name != "NEW")
+    if (name != "NEW" && loginstate_list_.contains(name))
     {
+        ::LogInfo("Reconnection saving properties " + name + "\n");
+        // Container for all the connections loginstates
+        loginstate_list_.insert(name, loginstate_);
+        // Container for all the connections reconnect bool value
+        reconnect_list_.insert(name, reconnect_);
+        // Container for all the connections clientID values
+        client_id_list_.insert(name, client_id_);
+        // Container for all the connections properties
+        //properties_list_.insert(name, properties_list_[name]);
+        // Container for all the connections loginstates
+    }
+    else if (name != "NEW" && !loginstate_list_.contains(name))
+    {
+        ::LogInfo("NEW connection ready. Switching identifier to " + name + ".\n");
         // Container for all the connections loginstates
         loginstate_list_.insert(name, loginstate_);
         // Container for all the connections reconnect bool value
@@ -477,6 +498,7 @@ void Client::saveProperties(const QString name)
     {
         // Initial connection attempt.
 
+        ::LogInfo("New connection saving properties NEW.\n");
         // Container for all the connections loginstates
         loginstate_list_.insert(name, loginstate_);
         loginstate_ = NotConnected;
@@ -525,7 +547,9 @@ void Client::emitSceneSwitch(const QString name) {
     if (!loginstate_list_.contains(name))
         printSceneNames();
     else
+    {
         emit switchScene(name);
+    }
 }
 
 }

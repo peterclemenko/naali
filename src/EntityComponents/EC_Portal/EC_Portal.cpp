@@ -51,7 +51,6 @@ void EC_Portal::parentClicked(Entity *ent, Qt::MouseButton button)
     {
         return;
     }
-
     // Get placeable for portal position in 3D-space.
     EC_Placeable* placeable = parent_->GetComponent<EC_Placeable>().get();
     if (placeable)

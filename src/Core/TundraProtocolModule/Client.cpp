@@ -236,6 +236,7 @@ bool Client::IsConnected(const QString& address, unsigned short port, const QStr
         tempMap = iter.value();
         if (tempMap["address"] == address && tempMap["port"] == QString::number(port) && tempMap["protocol"] == tempProtocol)
         {
+            setActiveScenename(iter.key());
             emit switchScene(iter.key());
             return true;
         }

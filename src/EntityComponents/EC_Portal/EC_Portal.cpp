@@ -62,6 +62,7 @@ void EC_Portal::parentClicked(Entity *ent, Qt::MouseButton button)
     TundraLogic::Client *client = tundra->GetClient().get();
 
     EntityPtr avatar = scene_->GetEntityByName("Avatar" + QString::number(client->GetConnectionID()));
+    ::LogInfo("Portal got avatar" + QString::number(client->GetConnectionID()));
     if (avatar)
     {
         EC_Placeable* placeable = avatar->GetComponent<EC_Placeable>().get();

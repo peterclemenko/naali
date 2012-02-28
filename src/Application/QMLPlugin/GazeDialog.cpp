@@ -18,12 +18,14 @@ GazeDialog::GazeDialog(QWidget *parent, Qt::WindowFlags flags)
 {
     setModal(true);
     setWindowTitle(tr("Gaze Properties"));
+    setAttribute(Qt::WA_DeleteOnClose);
 
     center_size_ = 0;
     points_ = 0;
     rect_size_ = 0;
     delta_mode_ = false;
     debug_mode_ = false;
+    mouse_ = false;
 
     QPushButton *buttonOK = new QPushButton(tr("OK"));
     QPushButton *buttonCancel = new QPushButton(tr("Cancel"));
@@ -34,7 +36,6 @@ GazeDialog::GazeDialog(QWidget *parent, Qt::WindowFlags flags)
     buttonCancel->setAutoDefault(false);
 
     le_amount_of_points_ = new QLineEdit();
-    //le_amount_of_points_->setFocus(Qt::ActiveWindowFocusReason);
     le_amount_of_points_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 
     le_rect_= new QLineEdit();
@@ -49,11 +50,15 @@ GazeDialog::GazeDialog(QWidget *parent, Qt::WindowFlags flags)
     cb_debug_ = new QCheckBox(this);
     cb_debug_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 
+    cb_mouse_ = new QCheckBox(this);
+    cb_mouse_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+
     QLabel *lPoints = new QLabel(tr("Average points:"));
     QLabel *lRect = new QLabel(tr("Frustum rectangle size:"));
     QLabel *lCenter = new QLabel(tr("Center dead zone size:"));
     QLabel *lDelta = new QLabel(tr("Delta mode:"));
     QLabel *lDebug = new QLabel(tr("Debug mode:"));
+    QLabel *lMouse = new QLabel(tr("Use mouse as gaze:"));
 
 
     QGridLayout *grid = new QGridLayout();
@@ -73,6 +78,9 @@ GazeDialog::GazeDialog(QWidget *parent, Qt::WindowFlags flags)
 
     grid->addWidget(lDebug, 4, 0);
     grid->addWidget(cb_debug_, 4, 1, Qt::AlignLeft, 1);
+
+    grid->addWidget(lMouse, 5, 0);
+    grid->addWidget(cb_mouse_, 5, 1, Qt::AlignLeft, 1);
 
     QHBoxLayout *buttonLayout = new QHBoxLayout();
     buttonLayout->addWidget(buttonOK);
@@ -94,24 +102,21 @@ GazeDialog::~GazeDialog()
 
 }
 
-void GazeDialog::SetValues(float center_size, int points, int rect_size, bool delta_mode, bool debug_mode)
+void GazeDialog::SetValues(float center_size, int points, int rect_size, bool delta_mode, bool debug_mode, bool mouse)
 {
     center_size_ = center_size;
     points_ = points;
     rect_size_ = rect_size;
     delta_mode_ = delta_mode;
     debug_mode_ = debug_mode;
+    mouse_ = mouse;
 
     le_amount_of_points_->setText(QString::number(points_));
     le_center_->setText(QString::number(center_size_));
     le_rect_->setText(QString::number(rect_size_));
     cb_delta_->setChecked(delta_mode_);
     cb_debug_->setChecked(debug_mode_);
-}
-
-void GazeDialog::showEvent( QShowEvent *event )
-{
-
+    cb_mouse_->setChecked(mouse_);
 }
 
 void GazeDialog::accept()
@@ -121,6 +126,7 @@ void GazeDialog::accept()
     rect_size_ = le_rect_->text().toInt();
     delta_mode_ = cb_delta_->isChecked();
     debug_mode_ = cb_debug_->isChecked();
-    emit WindowAccepted(center_size_, points_, rect_size_, delta_mode_, debug_mode_);
+    mouse_ = cb_mouse_->isChecked();
+    emit WindowAccepted(center_size_, points_, rect_size_, delta_mode_, debug_mode_, mouse_);
     this->close();
 }

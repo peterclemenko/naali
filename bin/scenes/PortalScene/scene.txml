@@ -61,8 +61,8 @@
         <attribute name="Selection layer" value="1" />
     </component>
     <component type="EC_Portal" sync="1">
-    <attribute value="chiru.cie.fi" name="Address:"/>
-    <attribute value="3456" name="Port:"/>
+    <attribute value="localhost" name="Address:"/>
+    <attribute value="2346" name="Port:"/>
     <attribute value="udp" name="Protocol:"/>
     </component>
     <component type="EC_Mesh" sync="1" >

@@ -23,6 +23,9 @@ var maximum_rotate_speed = 1.5;
 //Adjusts the maximum angle for the camera turning up and down, so you can't go upside down.
 var maximum_camera_angle_y = 65;
 
+//Adjusts the entity movement speed when moving it.
+var movement_speed = 0.1;
+
 //Adjusts the entity rotating speed for the thresholds.
 var rotate_speed_1 = 1;
 var rotate_speed_2 = 7;
@@ -45,6 +48,9 @@ var rect_size = 25;
 
 //If true, shows a second rectangle for the current gaze coordinates, in addition to average coordinates.
 var debug_mode = false;
+
+//If true, uses mouse input as gaze coordinates.
+var use_mouse = false;
 
 var scene = null;
 var timer = new QTimer();
@@ -74,60 +80,90 @@ var gaze_sum_y = 0;
 var gaze_points_x = [];
 var gaze_points_y = [];
 var index = 0;
-var movement_speed = 0.1;
-var qmlmodule = 0;
+var gaze_window_open = false;
 
+var qmlmodule = 0;
 
 if (!framework.IsHeadless())
 {
-        var label = new QLabel();
-        label.objectName = "GazeAverageLabel";
-        label.setStyleSheet("QLabel#GazeAverageLabel { padding: 0px; background-color: rgba(230,230,230,0); border: 2px solid red; font-size: 16px; }");
-        label.text = "";
-        label.resize(2*rect_size, 2*rect_size);
+    var label = new QLabel();
+    label.objectName = "GazeAverageLabel";
+    label.setStyleSheet("QLabel#GazeAverageLabel { padding: 0px; background-color: rgba(230,230,230,0); border: 2px solid red; font-size: 16px; }");
+    label.text = "";
+    label.resize(2*rect_size, 2*rect_size);
 
-        var proxy = new UiProxyWidget(label);
-        ui.AddProxyWidgetToScene(proxy);
-        proxy.x = 50
-        proxy.y = 50;
-        proxy.windowFlags = 0;
-        proxy.visible = true;
+    var proxy = new UiProxyWidget(label);
+    ui.AddProxyWidgetToScene(proxy);
+    proxy.x = 50
+    proxy.y = 50;
+    proxy.windowFlags = 0;
+    proxy.visible = true;
 
-        var label2 = new QLabel();
-        label2.objectName = "GazeCurrentLabel";
-        label2.setStyleSheet("QLabel#GazeCurrentLabel { padding: 0px; background-color: rgba(230,230,230,100); border: 0px solid black; font-size: 16px; }");
-        label2.text = "";
-        label2.resize(20, 20);
+    var label2 = new QLabel();
+    label2.objectName = "GazeCurrentLabel";
+    label2.setStyleSheet("QLabel#GazeCurrentLabel { padding: 0px; background-color: rgba(255,0,0,100); border: 0px solid black; font-size: 16px; }");
+    label2.text = "";
+    label2.resize(20, 20);
 
-        var proxy2 = new UiProxyWidget(label2);
-        ui.AddProxyWidgetToScene(proxy2);
-        proxy2.x = 50
-        proxy2.y = 50;
-        proxy2.windowFlags = 0;
-        proxy2.visible = false;
+    var proxy2 = new UiProxyWidget(label2);
+    ui.AddProxyWidgetToScene(proxy2);
+    proxy2.x = 50
+    proxy2.y = 50;
+    proxy2.windowFlags = 0;
+    proxy2.visible = false;
 
+    if (framework.GetModuleByName("QMLPlugin"))
+    {
         qmlmodule = framework.GetModuleByName("QMLPlugin");
         qmlmodule.GazeWindowOpened.connect(SendGazeParameters);
         qmlmodule.GazeWindowAccepted.connect(SetGazeParameters);
+        qmlmodule.GazeWindowReject.connect(GazeWindowRejected);
+    }
+    else
+    {
+        print("QMLPlugin not in use, cannot use gaze properties dialog.");
+    }
+
+    var inputContext = input.RegisterInputContextRaw("GazeTrackingInput", 102);
 }
 
 function SendGazeParameters()
 {
-    qmlmodule.SetGazeParameters(center_size, amount_of_points, rect_size, delta_mode, debug_mode);
+    qmlmodule.SetGazeParameters(center_size, amount_of_points, rect_size, delta_mode, debug_mode, use_mouse);
+    gaze_window_open = true;
 }
 
-function SetGazeParameters(c_size, points, r_size, del_mode, deb_mode)
+function GazeWindowRejected()
+{
+    gaze_window_open = false;
+}
+
+function SetGazeParameters(c_size, points, r_size, del_mode, deb_mode, mouse)
 {
     center_size = parseFloat(c_size);
     amount_of_points = parseInt(points);
     rect_size = parseInt(r_size);
+
     delta_mode = del_mode;
     debug_mode = deb_mode;
+    use_mouse = mouse;
+
     label.resize(2*rect_size, 2*rect_size);
     proxy2.visible = debug_mode;
+
+    if (use_mouse)
+    {
+        inputContext.SetTakeMouseEventsOverQt(true);
+        inputContext.MouseMove.connect(HandleMouseMove);
+    }
+    else
+    {
+        inputContext.SetTakeMouseEventsOverQt(false);
+        inputContext.MouseMove.disconnect(HandleMouseMove);
+    }
 } 
 
-timer.timeout.connect(TimerTimeout);
+timer.timeout.connect(Update);
 
 function OnSceneAdded(scenename)
 {
@@ -141,10 +177,6 @@ function OnSceneAdded(scenename)
     action_added = false;
     gaze_x = parseInt(screen_width / 2);
     gaze_y = parseInt(screen_height / 2);
-
-    /*var inputContext = input.RegisterInputContextRaw("GazeTrackingInput", 102);
-    inputContext.SetTakeMouseEventsOverQt(true);
-    inputContext.MouseMove.connect(HandleMouseMove);*/
 
     border_x = parseInt(center_size * screen_width);
     border_y = parseInt(center_size * screen_height);
@@ -173,7 +205,7 @@ function AddActionToFreeLookCamera()
     print("Actions added to FreeLookCamera");
 }
 
-function TimerTimeout()
+function Update()
 {
     if (!scene)
         return;
@@ -181,6 +213,8 @@ function TimerTimeout()
     if (!action_added)
         AddActionToFreeLookCamera();
 
+    if (gaze_window_open)
+        return;
 
     if (entity_selected && !movement_mode)
         HandleEntityRotation();
@@ -191,6 +225,7 @@ function TimerTimeout()
     {
         HandleCameraRotation();
         HandleCameraMovement();
+        EntitySelection();
     }
 
 }
@@ -274,7 +309,7 @@ function HandleCameraMovement()
 {
     if (entity_selected)
         return;
-    //print(pitch_angle + ", " + roll_angle);
+
     if (pitch_angle >= rotate_threshold_1)
     {
         var cameraEnt = scene.GetEntityByName("FreeLookCamera");
@@ -360,6 +395,9 @@ function HandleMouseMove(mouse)
 {
     if (!scene)
         return;
+
+    if (gaze_window_open)
+        return;
     
     if (gaze_counter < amount_of_points)
     {
@@ -392,15 +430,12 @@ function HandleMouseMove(mouse)
     delta_center_x = (screen_width / 2) - gaze_points_x[0];
     delta_center_y = (screen_height / 2) - gaze_points_y[0];
 
-    if (!entity_selected)
-        EntitySelection();
-
     proxy.x = gaze_x - rect_size;
 
     proxy.y = gaze_y - rect_size;
 
-    proxy2.x = gaze_points_x[0];
-    proxy2.y = gaze_points_y[0];
+    proxy2.x = gaze_points_x[0] - 10;
+    proxy2.y = gaze_points_y[0] - 10;
 }
 
 function GazeCoordinates(x, y)
@@ -432,24 +467,6 @@ function GazeCoordinates(x, y)
         gaze_sum_x = 0;
         gaze_sum_y = 0;
 
-        /*if (((gaze_points_x[0] - gaze_average_x) > (screen_width / 2)) || ((gaze_points_x[0] - gaze_average_x) < (-screen_width / 2)))
-        {
-            gaze_average_x = gaze_points_x[0];
-            for (index = 1; index < amount_of_points; index++)
-            {
-                gaze_points_x[index] = gaze_points_x[0];
-            }
-
-        }
-        if (((gaze_points_y[0] - gaze_average_y) > (screen_width / 2)) || ((gaze_points_y[0] - gaze_average_y) < (-screen_height / 2)))
-        {
-            gaze_average_y = gaze_points_y[0];
-            for (index = 1; index < amount_of_points; index++)
-            {
-                gaze_points_y[index] = gaze_points_y[0];
-            }
-        }*/
-
         gaze_x = gaze_average_x;
         gaze_y = gaze_average_y;
     }
@@ -457,18 +474,15 @@ function GazeCoordinates(x, y)
     delta_center_x = (screen_width / 2) - gaze_points_x[0];
     delta_center_y = (screen_height / 2) - gaze_points_y[0];
 
-    if (!entity_selected)
-        EntitySelection();
-
     if (gaze_x > screen_width)
-        proxy.x = screen_width - 100;
+        proxy.x = screen_width - rect_size;
     else if (gaze_x < 0)
         proxy.x = 0;
     else
         proxy.x = gaze_x - rect_size;
 
     if (gaze_y > screen_height)
-        proxy.y = screen_height - 100;
+        proxy.y = screen_height - rect_size;
     else if (gaze_y < 0)
         proxy_y = 0;
     else
@@ -527,6 +541,7 @@ function GraspGesture()
     {
         print("Entity Grasped.");
         entity_selected = true;
+        label.setStyleSheet("QLabel#GazeAverageLabel { padding: 0px; background-color: rgba(230,230,230,0); border: 2px solid green; font-size: 16px; }");
         selected_entity = last_raycast_entity;
 
         var cameraEnt = scene.GetEntityByName("FreeLookCamera");
@@ -545,6 +560,7 @@ function ReleaseGesture()
     {
         print("Entity Released.");
         entity_selected = false;
+        label.setStyleSheet("QLabel#GazeAverageLabel { padding: 0px; background-color: rgba(230,230,230,0); border: 2px solid red; font-size: 16px; }");
         selected_entity = null;
         movement_mode = false;
     }

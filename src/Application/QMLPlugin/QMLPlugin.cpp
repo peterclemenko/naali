@@ -19,6 +19,7 @@
 QMLPlugin::QMLPlugin() :
     IModule("QMLPlugin")
 {
+    gazedialog_ = 0;
 }
 
 void QMLPlugin::Load()
@@ -46,22 +47,36 @@ void QMLPlugin::HandleKeyPressedEvent(KeyEvent *event)
 {
     if (event->Sequence() == QKeySequence(Qt::ShiftModifier + Qt::Key_G))
     {
+        if (gazedialog_)
+        {
+            LogInfo("Cannot open new gaze dialog, dialog already open");
+            return;
+        }
         gazedialog_ = new GazeDialog();
-        framework_->Ui()->AddWidgetToScene(gazedialog_);
+        framework_->Ui()->AddWidgetToScene(gazedialog_, Qt::Dialog);
         gazedialog_->show();
-        connect(gazedialog_, SIGNAL(WindowAccepted(float,int,int,bool,bool)), this, SLOT(GazeParametersAccepted(float,int,int,bool,bool)));
+        gazedialog_->move(200, 200);
+        connect(gazedialog_, SIGNAL(WindowAccepted(float,int,int,bool,bool,bool)), this, SLOT(GazeParametersAccepted(float,int,int,bool,bool,bool)));
+        connect(gazedialog_, SIGNAL(destroyed()), this, SLOT(GazeWindowDestroyed()));
         emit GazeWindowOpened();
     }
 }
 
-void QMLPlugin::SetGazeParameters(float center_size, int points, int rect_size, bool delta_mode, bool debug_mode)
+void QMLPlugin::SetGazeParameters(float center_size, int points, int rect_size, bool delta_mode, bool debug_mode, bool mouse)
 {
-   gazedialog_->SetValues(center_size, points, rect_size, delta_mode, debug_mode);
+   gazedialog_->SetValues(center_size, points, rect_size, delta_mode, debug_mode, mouse);
 }
 
-void QMLPlugin::GazeParametersAccepted(float center_size, int points, int rect_size, bool delta_mode, bool debug_mode)
+void QMLPlugin::GazeParametersAccepted(float center_size, int points, int rect_size, bool delta_mode, bool debug_mode, bool mouse)
 {
-    emit GazeWindowAccepted(center_size, points, rect_size, delta_mode, debug_mode);
+    emit GazeWindowAccepted(center_size, points, rect_size, delta_mode, debug_mode, mouse);
+}
+
+void QMLPlugin::GazeWindowDestroyed()
+{
+    gazedialog_ = 0;
+    delete gazedialog_;
+    emit GazeWindowReject();
 }
 
 extern "C"

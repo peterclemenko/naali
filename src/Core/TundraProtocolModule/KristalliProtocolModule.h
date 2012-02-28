@@ -93,7 +93,6 @@ public:
 #ifdef KNET_USE_QT
 public slots:
     void OpenKNetLogWindow();
-#endif
 
 signals:
     /// Triggered whenever a new message is received rom the network.

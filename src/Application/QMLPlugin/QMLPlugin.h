@@ -38,7 +38,7 @@ public slots:
     // For setting gaze parameters
     void SetGazeParameters(float center_size, int points, int rect_size, bool delta_mode, bool debug_mode, bool mouse);
     void GazeParametersAccepted(float center_size, int points, int rect_size, bool delta_mode, bool debug_mode, bool mouse);
-    void GazeWindowRejected();
+    void GazeWindowDestroyed();
 
 private:
     InputContextPtr input_;

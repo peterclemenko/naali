@@ -49,7 +49,7 @@ void QMLPlugin::HandleKeyPressedEvent(KeyEvent *event)
     {
         if (gazedialog_)
         {
-            LogInfo("Cannot open new dialog");
+            LogInfo("Cannot open new gaze dialog, dialog already open");
             return;
         }
         gazedialog_ = new GazeDialog();
@@ -57,8 +57,7 @@ void QMLPlugin::HandleKeyPressedEvent(KeyEvent *event)
         gazedialog_->show();
         gazedialog_->move(200, 200);
         connect(gazedialog_, SIGNAL(WindowAccepted(float,int,int,bool,bool,bool)), this, SLOT(GazeParametersAccepted(float,int,int,bool,bool,bool)));
-        connect(gazedialog_, SIGNAL(rejected()), this, SLOT(GazeWindowRejected()));
-        connect(gazedialog_, SIGNAL(destroyed()), this, SLOT(GazeWindowRejected()));
+        connect(gazedialog_, SIGNAL(destroyed()), this, SLOT(GazeWindowDestroyed()));
         emit GazeWindowOpened();
     }
 }
@@ -71,11 +70,9 @@ void QMLPlugin::SetGazeParameters(float center_size, int points, int rect_size, 
 void QMLPlugin::GazeParametersAccepted(float center_size, int points, int rect_size, bool delta_mode, bool debug_mode, bool mouse)
 {
     emit GazeWindowAccepted(center_size, points, rect_size, delta_mode, debug_mode, mouse);
-    gazedialog_ = 0;
-    delete gazedialog_;
 }
 
-void QMLPlugin::GazeWindowRejected()
+void QMLPlugin::GazeWindowDestroyed()
 {
     gazedialog_ = 0;
     delete gazedialog_;

@@ -36,7 +36,6 @@ GazeDialog::GazeDialog(QWidget *parent, Qt::WindowFlags flags)
     buttonCancel->setAutoDefault(false);
 
     le_amount_of_points_ = new QLineEdit();
-    //le_amount_of_points_->setFocus(Qt::ActiveWindowFocusReason);
     le_amount_of_points_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 
     le_rect_= new QLineEdit();
@@ -118,16 +117,6 @@ void GazeDialog::SetValues(float center_size, int points, int rect_size, bool de
     cb_delta_->setChecked(delta_mode_);
     cb_debug_->setChecked(debug_mode_);
     cb_mouse_->setChecked(mouse_);
-}
-
-void GazeDialog::showEvent( QShowEvent *event )
-{
-
-}
-
-void GazeDialog::closeEvent(QCloseEvent *event)
-{
-    emit closed();
 }
 
 void GazeDialog::accept()

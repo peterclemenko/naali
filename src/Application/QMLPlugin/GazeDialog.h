@@ -40,10 +40,6 @@ private slots:
 
 signals:
     void WindowAccepted(float center_size, int points, int rect_size, bool delta_mode, bool debug_mode, bool mouse);
-    void closed();
-protected:
-    void showEvent(QShowEvent *event);
-    void closeEvent(QCloseEvent *event);
 };
 
 

@@ -51,7 +51,6 @@ void EC_Portal::parentClicked(Entity *ent, Qt::MouseButton button)
     {
         return;
     }
-
     // Get placeable for portal position in 3D-space.
     EC_Placeable* placeable = parent_->GetComponent<EC_Placeable>().get();
     if (placeable)
@@ -63,6 +62,7 @@ void EC_Portal::parentClicked(Entity *ent, Qt::MouseButton button)
     TundraLogic::Client *client = tundra->GetClient().get();
 
     EntityPtr avatar = scene_->GetEntityByName("Avatar" + QString::number(client->GetConnectionID()));
+    ::LogInfo("Portal got avatar" + QString::number(client->GetConnectionID()));
     if (avatar)
     {
         EC_Placeable* placeable = avatar->GetComponent<EC_Placeable>().get();

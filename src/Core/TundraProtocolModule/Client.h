@@ -135,6 +135,9 @@ public slots:
     /// Get connected scene names
     QStringList getSceneNames();
 
+    /// Set active scenename for multiconnection
+    void setActiveScenename(const QString &name) { activescenename_ = name; }
+
 signals:
     /// This signal is emitted right before this client is starting to connect to a Tundra server.
     /** Any script or other piece of code can listen to this signal, and as at this point, fill in any internal

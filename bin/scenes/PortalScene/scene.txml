@@ -1,0 +1,120 @@
+<scene >
+<entity id="2" sync="1">
+    <component type="EC_Script" sync="1">
+        <attribute value="avatarapplication.js;simpleavatar.js" name="Script ref"/>
+        <attribute value="true" name="Run on load"/>
+        <attribute value="0" name="Run mode"/>
+        <attribute value="AvatarApp" name="Script application name"/>
+        <attribute value="" name="Script class name"/>
+    </component>
+    <component type="EC_Name" sync="1">
+        <attribute value="AvatarApp" name="name"/>
+        <attribute value="" name="description"/>
+    </component>
+</entity>
+<entity id="102" >
+    <component type="EC_Name" sync="1" >
+        <attribute name="name" value="Plane" />
+        <attribute name="description" value="" />
+    </component>
+    <component type="EC_Placeable" sync="1" >
+        <attribute name="Transform" value="0.605944,-1.043691,1.402213,0.000000,0.000000,0.000000,92.015465,92.015465,92.015465" />
+        <attribute name="Show bounding box" value="false" />
+        <attribute name="Visible" value="true" />
+        <attribute name="Selection layer" value="1" />
+    </component>
+    <component type="EC_Mesh" sync="1" >
+        <attribute name="Mesh ref" value="local://Plane.mesh" />
+        <attribute name="Mesh materials" value="" />
+        <attribute name="Draw distance" value="0" />
+        <attribute name="Cast shadows" value="false" />
+    </component>
+    <component type="EC_RigidBody" sync="1">
+        <attribute value="0" name="Mass"/>
+        <attribute value="6" name="Shape type"/>
+        <attribute value="1.000000 0 1.000000" name="Size"/>
+        <attribute value="Plane.mesh" name="Collision mesh ref"/>
+        <attribute value="0.5" name="Friction"/>
+        <attribute value="0" name="Restitution"/>
+        <attribute value="0" name="Linear damping"/>
+        <attribute value="0" name="Angular damping"/>
+        <attribute value="1.000000 1.000000 1.000000" name="Linear factor"/>
+        <attribute value="1.000000 1.000000 1.000000" name="Angular factor"/>
+        <attribute value="false" name="Kinematic"/>
+        <attribute value="false" name="Phantom"/>
+        <attribute value="false" name="Draw Debug"/>
+        <attribute value="0.000000 0.000000 0.000000" name="Linear velocity"/>
+        <attribute value="0.000000 0.000000 0.000000" name="Angular velocity"/>
+        <attribute value="-1" name="Collision Layer"/>
+        <attribute value="-1" name="Collision Mask"/>
+    </component>
+</entity>
+    <entity id="100" >
+    <component type="EC_Name" sync="1" >
+        <attribute name="name" value="Cube" />
+        <attribute name="description" value="" />
+    </component>
+    <component type="EC_Placeable" sync="1" >
+        <attribute name="Transform" value="0.000000,0.000000,-0.000000,0.000000,0.000000,0.000000,1.000000,1.000000,1.000000" />
+        <attribute name="Show bounding box" value="false" />
+        <attribute name="Visible" value="true" />
+        <attribute name="Selection layer" value="1" />
+    </component>
+    <component type="EC_Portal" sync="1">
+    <attribute value="chiru.cie.fi" name="Address:"/>
+    <attribute value="3456" name="Port:"/>
+    <attribute value="udp" name="Protocol:"/>
+    </component>
+    <component type="EC_Mesh" sync="1" >
+        <attribute name="Mesh ref" value="local://Cube.mesh" />
+        <attribute name="Mesh materials" value="local://Material.material" />
+        <attribute name="Draw distance" value="0" />
+        <attribute name="Cast shadows" value="true" />
+    </component>
+    <component type="EC_RigidBody" sync="1">
+        <attribute value="10" name="Mass"/>
+        <attribute value="6" name="Shape type"/>
+        <attribute value="1.000000 1.00000 1.000000" name="Size"/>
+        <attribute value="Cube.mesh" name="Collision mesh ref"/>
+        <attribute value="0.5" name="Friction"/>
+        <attribute value="0" name="Restitution"/>
+        <attribute value="0" name="Linear damping"/>
+        <attribute value="0" name="Angular damping"/>
+        <attribute value="1.000000 1.000000 1.000000" name="Linear factor"/>
+        <attribute value="1.000000 1.000000 1.000000" name="Angular factor"/>
+        <attribute value="false" name="Kinematic"/>
+        <attribute value="false" name="Phantom"/>
+        <attribute value="false" name="Draw Debug"/>
+        <attribute value="0.000000 0.000000 0.000000" name="Linear velocity"/>
+        <attribute value="0.000000 0.000000 0.000000" name="Angular velocity"/>
+        <attribute value="-1" name="Collision Layer"/>
+        <attribute value="-1" name="Collision Mask"/>
+    </component>
+    </entity>
+<entity id="101" >
+    <component type="EC_Name" sync="1" >
+    <attribute name="name" value="Lamp" />
+    <attribute name="description" value="" />
+    </component>
+    <component type="EC_Placeable" sync="1" >
+    <attribute name="Transform" value="6.763016,5.903862,0.417051,127.261052,106.936317,-3.163707,1.000000,1.000000,1.000000" />
+    <attribute name="Show bounding box" value="true" />
+    <attribute name="Visible" value="true" />
+    <attribute name="Selection layer" value="1" />
+    </component>
+    <component type="EC_Name" sync="1" >
+    <attribute name="name" value="Lamp" />
+    </component>
+    <component type="EC_Light" sync="1" >
+    <attribute name="light type" value="0" />
+    <attribute name="diffuse color" value="1.0 1.0 1.0 1" />
+    <attribute name="specular color" value="1.0 1.0 1.0 1" />
+    <attribute name="cast shadows" value="true" />
+    <attribute name="light range" value="59.99996566772461" />
+    <attribute name="brightness" value="1.0" />
+    <attribute name="constant atten" value="0" />
+    <attribute name="linear atten" value="0.25" />
+    <attribute name="quadratic atten" value="0.0" />
+    </component>
+</entity>
+</scene>

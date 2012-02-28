@@ -239,6 +239,7 @@ bool Client::IsConnected(const QString& address, unsigned short port, const QStr
         tempMap = iter.value();
         if (tempMap["address"] == address && tempMap["port"] == QString::number(port) && tempMap["protocol"] == tempProtocol)
         {
+            setActiveScenename(iter.key());
             emit switchScene(iter.key());
             return true;
         }
@@ -292,7 +293,6 @@ void Client::CheckLogin()
     QMapIterator<QString, std::map<QString, QString> > propertiesIterator(properties_list_);
     QMapIterator<QString, Ptr(kNet::MessageConnection)> connectionIterator = owner_->GetKristalliModule()->GetConnectionArray();
 
-    activescenename_ = framework_->Scene()->MainCameraScene()->Name();
     // Checklogin only happens if atleast one connection is made in KristalliProtocolModule and set to ConnectionOK state.
     while (connectionIterator.hasNext() && loginstateIterator.hasNext())
     {
@@ -407,6 +407,7 @@ void Client::HandleLoginReply(MessageConnection* source, const MsgLoginReply& ms
         loginstate_ = LoggedIn;
         client_id_ = msg.userID;
         sceneName = QString::fromStdString(BufferToString(msg.uuid));
+        setActiveScenename(sceneName);
 
         // Note: create scene & send info of login success only on first connection, not on reconnect
         if (!reconnect_list_[sceneName])
@@ -550,6 +551,7 @@ void Client::emitSceneSwitch(const QString name) {
         printSceneNames();
     else
     {
+        setActiveScenename(name);
         emit switchScene(name);
     }
 }

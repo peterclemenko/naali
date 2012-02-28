@@ -374,7 +374,7 @@ void Client::HandleKristalliMessage(MessageConnection* source, packet_id_t packe
             ::LogWarning("Client: dropping message " + ToString(messageId) + " from unknown source");
             return;
         }
-
+    }
     
     switch(messageId)
     {

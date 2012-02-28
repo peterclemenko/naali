@@ -64,7 +64,8 @@ function Initialize()
     me.Action("Stop").Triggered.connect(HandleStop);
     me.Action("MouseLookX").Triggered.connect(HandleMouseLookX);
     me.Action("MouseLookY").Triggered.connect(HandleMouseLookY);
-
+    
+    /*
     // Connect gestures
     var inputContext = inputmapper.GetInputContext();
     if (inputContext.GestureStarted && inputContext.GestureUpdated)
@@ -72,6 +73,7 @@ function Initialize()
 	    inputContext.GestureStarted.connect(GestureStarted);
 	    inputContext.GestureUpdated.connect(GestureUpdated);
     }
+    */
 }
 
 function IsCameraActive()

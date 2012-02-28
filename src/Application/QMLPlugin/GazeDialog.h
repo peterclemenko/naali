@@ -18,7 +18,7 @@ public:
     GazeDialog(QWidget *parent = 0, Qt::WindowFlags flags = 0);
     ~GazeDialog();
 
-    void SetValues(float center_size, int points, int rect_size, bool delta_mode, bool debug_mode);
+    void SetValues(float center_size, int points, int rect_size, bool delta_mode, bool debug_mode, bool mouse);
 
 private:
     QLineEdit *le_amount_of_points_;
@@ -26,20 +26,24 @@ private:
     QLineEdit *le_rect_;
     QCheckBox *cb_delta_;
     QCheckBox *cb_debug_;
+    QCheckBox *cb_mouse_;
 
     float center_size_;
     int points_;
     int rect_size_;
     bool delta_mode_;
     bool debug_mode_;
+    bool mouse_;
 
 private slots:
     void accept();
 
 signals:
-    void WindowAccepted(float center_size, int points, int rect_size, bool delta_mode, bool debug_mode);
+    void WindowAccepted(float center_size, int points, int rect_size, bool delta_mode, bool debug_mode, bool mouse);
+    void closed();
 protected:
     void showEvent(QShowEvent *event);
+    void closeEvent(QCloseEvent *event);
 };
 
 

@@ -36,8 +36,9 @@ public slots:
     void HandleKeyPressedEvent(KeyEvent *event);
 
     // For setting gaze parameters
-    void SetGazeParameters(float center_size, int points, int rect_size, bool delta_mode, bool debug_mode);
-    void GazeParametersAccepted(float center_size, int points, int rect_size, bool delta_mode, bool debug_mode);
+    void SetGazeParameters(float center_size, int points, int rect_size, bool delta_mode, bool debug_mode, bool mouse);
+    void GazeParametersAccepted(float center_size, int points, int rect_size, bool delta_mode, bool debug_mode, bool mouse);
+    void GazeWindowRejected();
 
 private:
     InputContextPtr input_;
@@ -45,6 +46,6 @@ private:
 
 signals:
     void GazeWindowOpened();
-    void GazeWindowAccepted(float center_size, int points, int rect_size, bool delta_mode, bool debug_mode);
-
+    void GazeWindowAccepted(float center_size, int points, int rect_size, bool delta_mode, bool debug_mode, bool mouse);
+    void GazeWindowReject();
 };

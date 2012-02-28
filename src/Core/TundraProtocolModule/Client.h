@@ -37,6 +37,10 @@ namespace TundraLogic
 class TUNDRAPROTOCOL_MODULE_API Client : public QObject
 {
     Q_OBJECT
+    Q_PROPERTY(int connectionId READ GetConnectionID)
+    Q_PROPERTY(ClientLoginState loginState READ LoginState)
+    Q_PROPERTY(bool connected READ IsConnected)
+    Q_ENUMS(ClientLoginState)
 
 public:
     /// Constructor
@@ -56,26 +60,30 @@ public:
     };
 
     /// Returns connection/login state
-    ClientLoginState GetLoginState() const { return loginstate_; }
+    ClientLoginState LoginState() const { return loginstate_; }
+
+    /// Returns client connection ID (from loginreply message), or zero if not connected.
+    int ConnectionId() const { return client_id_; }
 
     /// Returns the underlying kNet MessageConnection object that represents this connection.
     /// This function may return null in the case the connection is not active.
     kNet::MessageConnection* GetConnection(const QString&);
 
     /// Logout immediately and delete the client scene content
-    /// @param fail Pass in true if the logout was due to connection/login failure. False, if the connection was aborted deliberately by the client.
+    /** @param fail Pass in true if the logout was due to connection/login failure. False, if the connection was aborted deliberately by the client. */
     void DoLogout(bool fail = false);
 
 public slots:
-    /// Connects and logs in. The QUrl's query parameters will be evaluated for the login data. 
-    /// All query parameters that are not recognized will be added to the clients login properties as custom data.
-    /** Minimum information needed to try a connection in the url are host and username. For query parameters only username, protocol and password 
+    /// Connects and logs in.
+    /** loginUrl's query parameters will be evaluated for the login data.
+        All query parameters that are not recognized will be added to the clients login properties as custom data.
+        Minimum information needed to try a connection in the url are host and username. For query parameters only username, protocol and password 
         get special treatment, other params are inserted to the login properties as is.
         URL syntax: {tundra|http|https}://host[:port]/?username=x[&password=y][&protocol={udp|tcp}][&XXX=YYY]
         URL examples: tundra://server.com/?username=John%20Doe tundra://server.com:5432/?username=John%20Doe&password=pWd123&protocol=udp&myCustomValue=YYY&myOtherValue=ZZZ
         @param loginUrl The login URL.
-        @note The input QUrl is expected to be in full percent encoding if it contains non ascii characters (so dont use QUrl::TolerantMode for parsing). 
-        Username will be automatically decoded, other params are inserted to the login properties as is.
+        @note The input QUrl is expected to be in full percent encoding if it contains non ascii characters (so dont use QUrl::TolerantMode for parsing).
+            Username will be automatically decoded, other params are inserted to the login properties as is.
         @note The destination port is obtained from the URL's port, not from a query parameter. If no port is present, using Tundra's default port 2345. */
     void Login(const QUrl& loginUrl);
 
@@ -104,13 +112,15 @@ public slots:
     void SetLoginProperty(QString key, QString value);
 
     /// Returns the login property value of the given name.
-    /// @return value of the key, or an empty string if the key was not found.
+    /** @return value of the key, or an empty string if the key was not found.
+        @todo Rename to LoginProperty */
     QString GetLoginProperty(QString key) const;
 
     /// Returns all the currently set login properties as an XML text.
     QString LoginPropertiesAsXml() const;
 
     /// Returns all the login properties that will be used to login to the server.
+    /// @todo Rename to LoginProperties
     std::map<QString, QString> &GetAllLoginProperties() { return properties; }
 
     /// Deletes all set login properties.
@@ -124,6 +134,9 @@ public slots:
 
     /// Get connected scene names
     QStringList getSceneNames();
+
+    /// Set active scenename for multiconnection
+    void setActiveScenename(const QString &name) { activescenename_ = name; }
 
 signals:
     /// This signal is emitted right before this client is starting to connect to a Tundra server.

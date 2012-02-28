@@ -64,8 +64,11 @@ void MeshConverter::createMesh()
         {
             int index = input_mesh_->polygons[loop1].vertices[loop2];
 
-            /// \bug Colors from input_cloud_ are not in same format than it is needed by Ogre manual object.
-            ogreManual_->colour(input_cloud_->points[index].r, input_cloud_->points[index].g, input_cloud_->points[index].b);
+            Ogre::Real r = (Ogre::Real)input_cloud_->points[index].r / (Ogre::Real)255;
+            Ogre::Real g = (Ogre::Real)input_cloud_->points[index].g / (Ogre::Real)255;
+            Ogre::Real b = (Ogre::Real)input_cloud_->points[index].b / (Ogre::Real)255;
+
+            ogreManual_->colour(r, g, b);
             ogreManual_->position(input_cloud_->points[index].x, input_cloud_->points[index].y, input_cloud_->points[index].z);
             ogreManual_->normal(input_cloud_->points[index].data_c[0], input_cloud_->points[index].data_c[1], input_cloud_->points[index].data_c[2]);
             ogreManual_->index(i);
@@ -75,7 +78,7 @@ void MeshConverter::createMesh()
     ogreManual_->end();
     LogInfo("MeshConverter: Object created!");
 
-    ogreManual_->setVisible(true);
+    //ogreManual_->setVisible(true);
 
     LogInfo("MeshConverter: create EC_OgreCustomObject");
     EntityPtr entity = scene_->CreateEntity();

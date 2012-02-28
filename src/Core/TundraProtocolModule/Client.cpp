@@ -108,13 +108,16 @@ void Client::Login(const QString& address, unsigned short port, const QString& u
     SetLoginProperty("password", password);
 
     QString p = protocol.trimmed().toLower();
-    kNet::SocketTransportLayer transportLayer = kNet::InvalidTransportLayer;
+    kNet::SocketTransportLayer transportLayer = kNet::SocketOverUDP;
     if (p == "tcp")
         transportLayer = kNet::SocketOverTCP;
     else if (p == "udp")
         transportLayer = kNet::SocketOverUDP;
     else
-        ::LogInfo("Client::Login: Unrecognized protocol: " + p);
+    {
+        ::LogError("Client::Login: Unrecognized protocol: " + p);
+        return;
+    }
     Login(address, port, transportLayer);
 }
 
@@ -236,12 +239,10 @@ bool Client::IsConnected(const QString& address, unsigned short port, const QStr
         tempMap = iter.value();
         if (tempMap["address"] == address && tempMap["port"] == QString::number(port) && tempMap["protocol"] == tempProtocol)
         {
-            activescenename_ = iter.key();
+            setActiveScenename(iter.key());
             emit switchScene(iter.key());
-            ::LogInfo("Switch scene to: " + address + ":" + QString::number(port));
             return true;
         }
-        ::LogInfo("No match: " + tempMap["address"] + ":" + tempMap["port"] + ":" + tempMap["protocol"] + "\n");
         ++iter;
     }
     return false;
@@ -373,24 +374,23 @@ void Client::HandleKristalliMessage(MessageConnection* source, packet_id_t packe
             ::LogWarning("Client: dropping message " + ToString(messageId) + " from unknown source");
             return;
         }
-
     }
     
     switch(messageId)
     {
-    case cLoginReplyMessage:
+    case MsgLoginReply::messageID:
         {
             MsgLoginReply msg(data, numBytes);
             HandleLoginReply(source, msg);
         }
         break;
-    case cClientJoinedMessage:
+    case MsgClientJoined::messageID:
         {
             MsgClientJoined msg(data, numBytes);
             HandleClientJoined(source, msg);
         }
         break;
-    case cClientLeftMessage:
+    case MsgClientLeft::messageID:
         {
             MsgClientLeft msg(data, numBytes);
             HandleClientLeft(source, msg);
@@ -407,7 +407,7 @@ void Client::HandleLoginReply(MessageConnection* source, const MsgLoginReply& ms
         loginstate_ = LoggedIn;
         client_id_ = msg.userID;
         sceneName = QString::fromStdString(BufferToString(msg.uuid));
-        activescenename_ = sceneName;
+        setActiveScenename(sceneName);
 
         // Note: create scene & send info of login success only on first connection, not on reconnect
         if (!reconnect_list_[sceneName])
@@ -450,11 +450,11 @@ void Client::HandleLoginReply(MessageConnection* source, const MsgLoginReply& ms
     }
 }
 
-void Client::HandleClientJoined(MessageConnection* source, const MsgClientJoined& msg)
+void Client::HandleClientJoined(MessageConnection* /*source*/, const MsgClientJoined& /*msg*/)
 {
 }
 
-void Client::HandleClientLeft(MessageConnection* source, const MsgClientLeft& msg)
+void Client::HandleClientLeft(MessageConnection* /*source*/, const MsgClientLeft& /*msg*/)
 {
 }
 
@@ -551,7 +551,7 @@ void Client::emitSceneSwitch(const QString name) {
         printSceneNames();
     else
     {
-        activescenename_ = name;
+        setActiveScenename(name);
         emit switchScene(name);
     }
 }

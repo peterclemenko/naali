@@ -2,7 +2,7 @@
 
 # Note: You can define custom version from outside this script by using /DVERSION=YourCustomVersion
 !ifndef VERSION
-!define VERSION "2.2.0"
+!define VERSION "2.3.0"
 !endif
 
 Name "Tundra ${VERSION}"
@@ -91,6 +91,7 @@ Section "Start Menu Shortcuts"
   CreateShortCut "$SMPROGRAMS\Tundra ${VERSION}\Server-Client Demos\Host ChatApplication Demo Locally.lnk" "$INSTDIR\tundra.exe" "--file $\"$INSTDIR\scenes\ChatApplication\scene.txml$\" --server --headless"
   CreateShortCut "$SMPROGRAMS\Tundra ${VERSION}\Server-Client Demos\Host EntityMoveTest Demo Locally.lnk" "$INSTDIR\tundra.exe" "--file $\"$INSTDIR\scenes\EntityMoveTest\scene.txml$\" --server --headless"
   CreateShortCut "$SMPROGRAMS\Tundra ${VERSION}\Server-Client Demos\Host ReplicationTest Demo Locally.lnk" "$INSTDIR\tundra.exe" "--file $\"$INSTDIR\scenes\ReplicationTest\scene.txml$\" --server --headless"
+  CreateShortCut "$SMPROGRAMS\Tundra ${VERSION}\Server-Client Demos\Host SynchronizedPhysicsTest Demo Locally.lnk" "$INSTDIR\tundra.exe" "--file $\"$INSTDIR\scenes\Physics2\scene.txml$\" --server --headless"
   CreateShortCut "$SMPROGRAMS\Tundra ${VERSION}\Server-Client Demos\Connect to Localhost.lnk" "$INSTDIR\tundra.exe" "--connect localhost;2345;udp;avatar"
 
   CreateDirectory "$SMPROGRAMS\Tundra ${VERSION}\Visit Online"

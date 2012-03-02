@@ -4,6 +4,43 @@
 #include "Scene.h"
 #include "SceneInteract.h"
 
+/// EntityComponent that initiates new connection to specified address.
+/**
+<table class="header">
+<tr>
+<td>
+<h2>Portal</h2>
+EntityComponent that initiates new connection to specified address.
+NOTE: Assumes the entity already has: EC_Placeable. Otherwise EC_Portal cannot get location properly. Connection initiates only if avatar/freelookcam is near the entity.
+
+<b>Attributes</b>:
+<ul>
+<li>QString: address
+<div>Specifies destination server address.</div>
+<li>QString: port
+<div>Specifies destination server port.</div>
+<li>QString: protocol
+<div>Specifies destination server protocol.</div>
+</ul>
+
+<b>Exposes the following scriptable functions:</b>
+<ul>
+<li>...
+</ul>
+
+<b>Reacts on the following actions:</b>
+<ul>
+<li>...
+</ul>
+</td>
+</tr>
+
+Does not emit any actions.
+
+<b>Depends on ...</b>
+</table>
+*/
+
 
 class EC_Portal : public IComponent
 {

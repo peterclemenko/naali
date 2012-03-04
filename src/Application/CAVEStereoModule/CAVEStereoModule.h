@@ -5,6 +5,7 @@
 
 #include "IModule.h"
 #include "CAVEStereoModuleApi.h"
+#include "CAVEManager.h"
 
 #include <QVector>
 #include <QObject>
@@ -41,6 +42,8 @@ namespace CAVEStereo
         void ShowCaveWindow();
         void TakeScreenshots(QString path, QString filename);
         void EnableStereo(QString tech_type, qreal eye_dist, qreal focal_l, qreal offset, qreal scrn_width);
+
+        QObject *Manager() { return cave_; }
 
     private:
         /// Manager for stereo.

@@ -132,6 +132,7 @@ namespace CAVEStereo
         render_window_ = new ExternalRenderWindow();
         render_window_->CreateRenderWindow(std_name, window_width, window_height,0,0,false);
         render_window_->setGeometry(20,20,window_width,window_height);
+
         camera_ = renderer_.lock()->GetActiveOgreWorld()->OgreSceneManager()->createCamera(std_name + "_camera");
         render_window_->getRenderWindow()->addViewport(camera_);
         camera_->getViewport()->setOverlaysEnabled(false);
@@ -148,6 +149,12 @@ namespace CAVEStereo
             node->attachObject(camera_);
 
         ReCalculateProjection(top_left, bottom_left, bottom_right, eye_pos);
+    }
+
+    void CAVEView::ShowFullscreen()
+    {
+        if (render_window_)
+            render_window_->showFullScreen();
     }
 
     void CAVEView::InitializePanorama(const QString& name, qreal window_width, qreal window_height, Ogre::Vector3 &top_left, Ogre::Vector3 &bottom_left, Ogre::Vector3 &bottom_right, Ogre::Vector3 &eye_pos, int window_number)

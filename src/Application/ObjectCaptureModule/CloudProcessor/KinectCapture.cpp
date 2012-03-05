@@ -6,7 +6,7 @@
 
 #include "KinectCapture.h"
 
-#include <pcl-1.4/pcl/io/openni_grabber.h>
+#include <pcl/io/openni_grabber.h>
 #include <QRgb>
 
 #include "MemoryLeakCheck.h"

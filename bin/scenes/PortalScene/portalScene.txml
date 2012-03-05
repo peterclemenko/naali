@@ -24,7 +24,7 @@
         <attribute name="Selection layer" value="1" />
     </component>
     <component type="EC_Mesh" sync="1" >
-        <attribute name="Mesh ref" value="local://Plane.mesh" />
+        <attribute name="Mesh ref" value="local://PortalScenePlane.mesh" />
         <attribute name="Mesh materials" value="" />
         <attribute name="Draw distance" value="0" />
         <attribute name="Cast shadows" value="false" />
@@ -33,7 +33,7 @@
         <attribute value="0" name="Mass"/>
         <attribute value="6" name="Shape type"/>
         <attribute value="1.000000 0 1.000000" name="Size"/>
-        <attribute value="Plane.mesh" name="Collision mesh ref"/>
+        <attribute value="PortalScenePlane.mesh" name="Collision mesh ref"/>
         <attribute value="0.5" name="Friction"/>
         <attribute value="0" name="Restitution"/>
         <attribute value="0" name="Linear damping"/>
@@ -66,7 +66,7 @@
     <attribute value="udp" name="Protocol:"/>
     </component>
     <component type="EC_Mesh" sync="1" >
-        <attribute name="Mesh ref" value="local://Cube.mesh" />
+        <attribute name="Mesh ref" value="local://PortalSceneCube.mesh" />
         <attribute name="Mesh materials" value="local://Material.material" />
         <attribute name="Draw distance" value="0" />
         <attribute name="Cast shadows" value="true" />
@@ -75,7 +75,7 @@
         <attribute value="10" name="Mass"/>
         <attribute value="6" name="Shape type"/>
         <attribute value="1.000000 1.00000 1.000000" name="Size"/>
-        <attribute value="Cube.mesh" name="Collision mesh ref"/>
+        <attribute value="PortalSceneCube.mesh" name="Collision mesh ref"/>
         <attribute value="0.5" name="Friction"/>
         <attribute value="0" name="Restitution"/>
         <attribute value="0" name="Linear damping"/>

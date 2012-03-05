@@ -62,7 +62,7 @@ void EC_Portal::parentClicked(Entity *ent, Qt::MouseButton button)
     TundraLogic::Client *client = tundra->GetClient().get();
 
     EntityPtr avatar = scene_->GetEntityByName("Avatar" + QString::number(client->GetConnectionID()));
-    ::LogInfo("Portal got avatar" + QString::number(client->GetConnectionID()));
+    //::LogInfo("Portal got avatar" + QString::number(client->GetConnectionID()));
     if (avatar)
     {
         EC_Placeable* placeable = avatar->GetComponent<EC_Placeable>().get();
@@ -70,7 +70,7 @@ void EC_Portal::parentClicked(Entity *ent, Qt::MouseButton button)
         {
             float3 avatarPos = placeable->transform.Get().pos;
             float distance = avatarPos.Distance(position_);
-            ::LogInfo("Avatar distance: " + QString::number(distance));
+            //::LogInfo("Avatar distance: " + QString::number(distance));
             if (distance < 3)
             {
                 LogInfo("Connection initiated from portal!\n");
@@ -88,7 +88,7 @@ void EC_Portal::parentClicked(Entity *ent, Qt::MouseButton button)
             {
                 float3 cameraPos = placeable->transform.Get().pos;
                 float distance = cameraPos.Distance(position_);
-                ::LogInfo("Camera distance: " + QString::number(distance));
+                //::LogInfo("Camera distance: " + QString::number(distance));
                 if (distance < 9)
                 {
                     LogInfo("Connection initiated from portal!\n");

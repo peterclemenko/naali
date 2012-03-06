@@ -7,7 +7,7 @@
 
 #include <pcl/surface/reconstruction.h>
 #include <pcl/surface/surfel_smoothing.h>
-#include <pcl/surface/mls.h>
+#include <pcl/surface/mls_omp.h>
 
 #include <pcl/io/io.h>
 #include <pcl/io/pcd_io.h>
@@ -44,7 +44,8 @@ void MeshReconstructor::processCloud(PointCloud::Ptr cloud)
 {
     // Convert PointXYZRGBA cloud to PointXYZRGB
     point_cloud_->points.resize(cloud->size());
-    for (size_t i = 0; i < cloud->points.size(); i++) {
+    for (size_t i = 0; i < cloud->points.size(); i++)
+    {
         point_cloud_->points[i].x = cloud->points[i].x;
         point_cloud_->points[i].y = cloud->points[i].y;
         point_cloud_->points[i].z = cloud->points[i].z;
@@ -85,7 +86,7 @@ void MeshReconstructor::MovingLeastSquares()
     pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGB>(false));
 
     // Init object (second point type is for the normals, even if unused)
-    pcl::MovingLeastSquares<pcl::PointXYZRGB, pcl::Normal> mls;
+    pcl::MovingLeastSquaresOMP<pcl::PointXYZRGB, pcl::Normal> mls;
 
     // Optionally, a pointer to a cloud can be provided, to be set by MLS
     mls.setOutputNormals (normals_);

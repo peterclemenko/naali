@@ -36,9 +36,9 @@ signals:
     void cloudProcessingFinished();
 
 private:
-    PointCloud::Ptr point_cloud_;
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr point_cloud_;
     SurfaceNormals::Ptr normals_;
-    PointCloud::Ptr smoothed_cloud_;
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr smoothed_cloud_;
     //pcl::PolygonMesh::Ptr polygonMesh_;
 
 };

@@ -28,9 +28,9 @@ namespace ObjectCapture
 {
 
 MeshReconstructor::MeshReconstructor() :
-    point_cloud_(new PointCloud()),
+    point_cloud_(new pcl::PointCloud<pcl::PointXYZRGB>()),
     normals_(new SurfaceNormals()),
-    smoothed_cloud_(new PointCloud())
+    smoothed_cloud_(new pcl::PointCloud<pcl::PointXYZRGB>())
 {
 
 }
@@ -42,7 +42,16 @@ MeshReconstructor::~MeshReconstructor()
 
 void MeshReconstructor::processCloud(PointCloud::Ptr cloud)
 {
-    point_cloud_ = cloud;
+    // Convert PointXYZRGBA cloud to PointXYZRGB
+    point_cloud_->points.resize(cloud->size());
+    for (size_t i = 0; i < cloud->points.size(); i++) {
+        point_cloud_->points[i].x = cloud->points[i].x;
+        point_cloud_->points[i].y = cloud->points[i].y;
+        point_cloud_->points[i].z = cloud->points[i].z;
+        point_cloud_->points[i].r = cloud->points[i].r;
+        point_cloud_->points[i].g = cloud->points[i].g;
+        point_cloud_->points[i].b = cloud->points[i].b;
+    }
 
     MovingLeastSquares();
     //NormalEstimation();
@@ -74,7 +83,6 @@ void MeshReconstructor::MovingLeastSquares()
     LogInfo("ObjectCapture: Smoothing object geometry..");
     // Create a KD-Tree
     pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGB>(false));
-    //pcl::search::Search<PointCloud>::Ptr tree (new pcl::search::Search<PointCloud>(false));
 
     // Init object (second point type is for the normals, even if unused)
     pcl::MovingLeastSquares<pcl::PointXYZRGB, pcl::Normal> mls;
@@ -123,11 +131,12 @@ void MeshReconstructor::GreedyProjection_Mesher()
     pcl::GreedyProjectionTriangulation<pcl::PointXYZRGBNormal> mesher;
     pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr cloud_with_normals(new pcl::PointCloud<pcl::PointXYZRGBNormal>());
     pcl::concatenateFields(*smoothed_cloud_, *normals_, *cloud_with_normals);
+
     mesher.setInputCloud(cloud_with_normals);
 
     //std::cout << "Setting search method" << std::endl;
     pcl::search::KdTree<pcl::PointXYZRGBNormal>::Ptr tree2 (new pcl::search::KdTree<pcl::PointXYZRGBNormal>());
-    mesher.setSearchMethod(tree2);//pcl::search::Search<pcl::PointNormal>::Ptr()
+    mesher.setSearchMethod(tree2);
 
     //std::cout << "Setting search radius" << std::endl;
     mesher.setSearchRadius(0.05);

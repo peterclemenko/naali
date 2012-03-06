@@ -72,7 +72,7 @@ PointCloud::Ptr CloudFilter::removePlanar(PointCloud::ConstPtr cloud)
 PointCloud::Ptr CloudFilter::extractLargestCluster(PointCloud::ConstPtr cloud, float cluster_tolerance)
 {
     PointCloud::Ptr output(new PointCloud);
-    pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGB>);
+    pcl::search::KdTree<pcl::PointXYZRGBA>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGBA>);
     std::vector<pcl::PointIndices> cluster_indices;
     tree->setInputCloud (cloud);
     cluster_extractor_.setClusterTolerance(cluster_tolerance);

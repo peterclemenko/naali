@@ -40,11 +40,11 @@ public:
     PointCloud::Ptr segmentCloud(PointCloud::ConstPtr cloud, float cluster_tolerance);
 
 private:
-    pcl::PassThrough<pcl::PointXYZRGB> passthrough_filter_;
-    pcl::SACSegmentation<pcl::PointXYZRGB> sac_segmentation_;
-    pcl::VoxelGrid<pcl::PointXYZRGB> voxelgrid_filter_;
-    pcl::EuclideanClusterExtraction<pcl::PointXYZRGB> cluster_extractor_;
-    pcl::ExtractIndices<pcl::PointXYZRGB> indice_extractor_;
+    pcl::PassThrough<pcl::PointXYZRGBA> passthrough_filter_;
+    pcl::SACSegmentation<pcl::PointXYZRGBA> sac_segmentation_;
+    pcl::VoxelGrid<pcl::PointXYZRGBA> voxelgrid_filter_;
+    pcl::EuclideanClusterExtraction<pcl::PointXYZRGBA> cluster_extractor_;
+    pcl::ExtractIndices<pcl::PointXYZRGBA> indice_extractor_;
 };
 
 }

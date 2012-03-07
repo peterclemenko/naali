@@ -11,6 +11,7 @@
 #include "CoreStringUtils.h"
 
 #include "ObjectCaptureModuleDefines.h"
+#include "pcl/PolygonMesh.h"
 
 #include <QObject>
 #include <QImage>
@@ -20,6 +21,7 @@ namespace ObjectCapture
 {
 class CloudProcessor;
 class MeshReconstructor;
+class MeshConverter;
 
 /**
  *  XMPP Communications support for tundra
@@ -77,6 +79,7 @@ private slots:
 private:
     CloudProcessor *cloud_processor_;
     MeshReconstructor *mesh_reconstructor_;
+    MeshConverter *mesh_converter_;
     QThread *worker_thread_;
 };
 

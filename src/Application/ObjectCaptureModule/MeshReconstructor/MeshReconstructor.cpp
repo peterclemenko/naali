@@ -2,6 +2,7 @@
 
 #include "StableHeaders.h"
 #include "DebugOperatorNew.h"
+#include "IModule.h"
 
 #include "MeshReconstructor.h"
 
@@ -20,8 +21,10 @@
 #include <boost/thread/thread.hpp>
 
 #include <pcl/surface/gp3.h>
+#include <pcl/common/time.h>
 
 #include "LoggingFunctions.h"
+#include "CoreStringUtils.h"
 #include "MemoryLeakCheck.h"
 
 namespace ObjectCapture
@@ -30,19 +33,25 @@ namespace ObjectCapture
 MeshReconstructor::MeshReconstructor() :
     point_cloud_(new pcl::PointCloud<pcl::PointXYZRGB>()),
     normals_(new SurfaceNormals()),
-    smoothed_cloud_(new pcl::PointCloud<pcl::PointXYZRGB>())
+    smoothed_cloud_(new pcl::PointCloud<pcl::PointXYZRGB>()),
+    cloud_with_normals_(new pcl::PointCloud<pcl::PointXYZRGBNormal>()),
+    polygonMesh_(new pcl::PolygonMesh())
 {
 
 }
 
 MeshReconstructor::~MeshReconstructor()
 {
-
+    point_cloud_.reset();
+    normals_.reset();
+    smoothed_cloud_.reset();
+    cloud_with_normals_.reset();
+    polygonMesh_.reset();
 }
 
 void MeshReconstructor::processCloud(PointCloud::Ptr cloud)
 {
-    // Convert PointXYZRGBA cloud to PointXYZRGB
+    // Convert input cloud PointXYZRGBA to PointXYZRGB cloud
     point_cloud_->points.resize(cloud->size());
     for (size_t i = 0; i < cloud->points.size(); i++)
     {
@@ -57,14 +66,26 @@ void MeshReconstructor::processCloud(PointCloud::Ptr cloud)
     MovingLeastSquares();
     //NormalEstimation();
     GreedyProjection_Mesher();
-    convertVtkToMesh();
+    //convertVtkToMesh();
 
-    emit cloudProcessingFinished();
+    emit cloudProcessingFinished(polygonMesh_, cloud_with_normals_);
 }
 
 void MeshReconstructor::convertVtkToMesh()
 {
+    if (!polygonMesh_)
+        return;
+
+    double starttime = pcl::getTime();
     char Command[100];
+    std::stringstream filename;
+
+    filename << "testmesh.vtk";
+
+    LogInfo( "Saving file: " + filename.str());
+
+    // Save polygon mesh to vtk file
+    pcl::io::saveVTKFile(filename.str(), *polygonMesh_);
 
     sprintf(Command, "python OgreMeshXML.py -i testmesh.vtk -o testmesh.xml");
     if (system(Command))
@@ -77,6 +98,8 @@ void MeshReconstructor::convertVtkToMesh()
     sprintf(Command, "mv testmesh.mesh data/assets/");
     if (system(Command))
         LogError("ObjectCapture: Error while moving mesh to scenes folder!\n");
+
+    LogInfo("Mesh conversion time: " + ToString(pcl::getTime() - starttime));
 }
 
 void MeshReconstructor::MovingLeastSquares()
@@ -87,6 +110,7 @@ void MeshReconstructor::MovingLeastSquares()
 
     // Init object (second point type is for the normals, even if unused)
     pcl::MovingLeastSquaresOMP<pcl::PointXYZRGB, pcl::Normal> mls;
+    mls.setNumberOfThreads(4);
 
     // Optionally, a pointer to a cloud can be provided, to be set by MLS
     mls.setOutputNormals (normals_);
@@ -127,21 +151,17 @@ void MeshReconstructor::GreedyProjection_Mesher()
 {
     LogInfo("ObjectCapture: Reconstructing object surface..");
     // beging of meshing
-    pcl::PolygonMesh output;
 
     pcl::GreedyProjectionTriangulation<pcl::PointXYZRGBNormal> mesher;
-    pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr cloud_with_normals(new pcl::PointCloud<pcl::PointXYZRGBNormal>());
-    pcl::concatenateFields(*smoothed_cloud_, *normals_, *cloud_with_normals);
 
-    mesher.setInputCloud(cloud_with_normals);
+    pcl::concatenateFields(*smoothed_cloud_, *normals_, *cloud_with_normals_);
+    mesher.setInputCloud(cloud_with_normals_);
 
-    //std::cout << "Setting search method" << std::endl;
     pcl::search::KdTree<pcl::PointXYZRGBNormal>::Ptr tree2 (new pcl::search::KdTree<pcl::PointXYZRGBNormal>());
     mesher.setSearchMethod(tree2);
 
-    //std::cout << "Setting search radius" << std::endl;
     mesher.setSearchRadius(0.05);
-    //mesher.setConsistentVertexOrdering(true); // Requires PCL-1.5 or higher!
+    mesher.setConsistentVertexOrdering(true); // Requires PCL-1.5 or higher!
 
     mesher.setMu(2.5);
     mesher.setMaximumNearestNeighbors(1000);
@@ -150,13 +170,7 @@ void MeshReconstructor::GreedyProjection_Mesher()
     mesher.setMaximumAngle(2*M_PI/3); // 120 degrees
     mesher.setNormalConsistency(false);
 
-    mesher.reconstruct(output);
-
-    std::stringstream ssp;
-    ssp << "testmesh.vtk";
-
-    LogInfo( "Saving file: " + ssp.str());
-    pcl::io::saveVTKFile(ssp.str(), output);
+    mesher.reconstruct(*polygonMesh_);
 }
 } //end of namespace ObjectCapture
 

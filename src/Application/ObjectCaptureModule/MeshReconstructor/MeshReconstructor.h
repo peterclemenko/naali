@@ -6,6 +6,9 @@
 #include "ObjectCaptureModuleDefines.h"
 #include <pcl/point_types.h>
 #include <pcl/pcl_base.h>
+#include <pcl/PolygonMesh.h>
+
+class IModule;
 
 namespace ObjectCapture
 {
@@ -20,9 +23,9 @@ public:
 
 public slots:
     void processCloud(PointCloud::Ptr cloud);
+    void convertVtkToMesh();
 
 private slots:
-    void convertVtkToMesh();
     void MovingLeastSquares();
     void NormalEstimation();
 
@@ -30,16 +33,17 @@ private slots:
     /// @param outputCloud Boost pointer to output cloud
     void GreedyProjection_Mesher();
 
-    void ConvertPolygonsToOgreMesh();
+    void ConvertPolygonsToCollada();
 
 signals:
-    void cloudProcessingFinished();
+    void cloudProcessingFinished(pcl::PolygonMesh::Ptr, pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr);
 
 private:
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr point_cloud_;
     SurfaceNormals::Ptr normals_;
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr smoothed_cloud_;
-    //pcl::PolygonMesh::Ptr polygonMesh_;
+    pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr cloud_with_normals_;
+    pcl::PolygonMesh::Ptr polygonMesh_;
 
 };
 } //end of namespace ObjectCapture

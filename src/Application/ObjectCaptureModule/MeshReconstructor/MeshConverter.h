@@ -28,7 +28,7 @@ private slots:
     void createMesh();
 
 private:
-    pcl::PolygonMesh::Ptr input_mesh_;
+    pcl::PolygonMesh::Ptr polygon_mesh_;
     pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr input_cloud_;
 
     IModule *module_;

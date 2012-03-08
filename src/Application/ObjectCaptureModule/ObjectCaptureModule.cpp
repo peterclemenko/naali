@@ -9,6 +9,7 @@
 #include <pcl/io/pcd_io.h>
 #include "CloudProcessor/CloudProcessor.h"
 #include "MeshReconstructor/MeshReconstructor.h"
+#include "MeshReconstructor/MeshConverter.h"
 
 #include "Framework.h"
 #include "SceneAPI.h"
@@ -30,10 +31,15 @@ ObjectCaptureModule::ObjectCaptureModule() :
     IModule("ObjectCapture"),
     cloud_processor_(new CloudProcessor()),
     mesh_reconstructor_(new MeshReconstructor()),
+    mesh_converter_(new MeshConverter(this)),
     worker_thread_(new QThread)
 {
     qRegisterMetaType<PointCloud>("PointCloud");
     qRegisterMetaType<PointCloud::Ptr>("PointCloud::Ptr");
+    qRegisterMetaType<pcl::PolygonMesh>("pcl::PolygonMesh");
+    qRegisterMetaType<pcl::PolygonMesh::Ptr>("pcl::PolygonMesh::Ptr");
+    qRegisterMetaType<pcl::PointCloud<pcl::PointXYZRGBNormal> >("pcl::PointCloud<pcl::PointXYZRGBNormal>");
+    qRegisterMetaType<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>("pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr");
 
     mesh_reconstructor_->moveToThread(worker_thread_);
     cloud_processor_->moveToThread(worker_thread_);
@@ -46,7 +52,9 @@ ObjectCaptureModule::ObjectCaptureModule() :
     check = connect(cloud_processor_, SIGNAL(registrationFinished(PointCloud::Ptr)), mesh_reconstructor_, SLOT(processCloud(PointCloud::Ptr)), Qt::QueuedConnection);
     Q_ASSERT(check);
 
-    check = connect(mesh_reconstructor_, SIGNAL(cloudProcessingFinished()), this, SLOT(meshReconstructed()), Qt::QueuedConnection);
+    check = connect(mesh_reconstructor_, SIGNAL(cloudProcessingFinished(pcl::PolygonMesh::Ptr, pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr)),
+                    mesh_converter_, SLOT(Create(pcl::PolygonMesh::Ptr, pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr)), Qt::QueuedConnection);
+    //check = connect(mesh_reconstructor_, SIGNAL(cloudProcessingFinished(pcl::PolygonMesh::Ptr, pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr)), this, SLOT(meshReconstructed()), Qt::QueuedConnection);
     Q_ASSERT(check);
 }
 
@@ -55,6 +63,7 @@ ObjectCaptureModule::~ObjectCaptureModule()
     worker_thread_->quit();
     SAFE_DELETE(cloud_processor_);
     SAFE_DELETE(mesh_reconstructor_);
+    SAFE_DELETE(mesh_converter_);
     SAFE_DELETE(worker_thread_);
 }
 
@@ -97,6 +106,8 @@ void ObjectCaptureModule::finalizeCapturing()
 
 void ObjectCaptureModule::meshReconstructed()
 {
+    mesh_reconstructor_->convertVtkToMesh();
+
     Scene *scene = framework_->Scene()->MainCameraScene();
 
     EntityPtr entity_ = scene->CreateEntity(scene->NextFreeIdLocal(), QStringList(), AttributeChange::LocalOnly, false);
@@ -110,7 +121,7 @@ void ObjectCaptureModule::meshReconstructed()
         {
             EC_Mesh *mesh = dynamic_cast<EC_Mesh*>(iComponent);
             AssetReferenceList materials;
-            materials.Append(AssetReference("local://testmesh.material"));
+            materials.Append(AssetReference("local://CapturedObject.material"));
             mesh->SetMeshRef("local://testmesh.mesh");
             mesh->setmeshMaterial(materials);
             mesh->SetAdjustOrientation(Quat(1.0, 0.0, 0.0, 0.0));

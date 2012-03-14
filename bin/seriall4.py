@@ -24,18 +24,6 @@ ser.write("sett 114500000"+"\r\n")
 ser.write("ags +000005000 10 1 0"+"\r\n")
 print ser.portstr 
 
-##Commands in scene
-
-MoveFW='{"op": "action", "exectype": 1, "scene": null, "entity": "FreeLookCamera", "action": "Move", "params": ["forward"]}'
-MoveBW='{"op": "action", "exectype": 1, "scene": null, "entity": "FreeLookCamera", "action": "Move", "params": ["back"]}'
-MoveL='{"op": "action", "exectype": 1, "scene": null, "entity": "FreeLookCamera", "action": "Move", "params": ["left"]}'
-MoveR='{"op": "action", "exectype": 1, "scene": null, "entity": "FreeLookCamera", "action": "Move", "params": ["right"]}'
-#MoveFW='{"op": "action", "exectype": 2, "scene": null, "entity": "FreeLookCamera", "action": "Move", "params": [forward]}'
-ToggleFly='{"op": "action", "exectype": 1, "scene": null, "entity": "FreeLookCamera", "action": "Togglefly", "params": []}'
-#Stop='{"op": "action", "exectype": 2, "scene": null, "entity": "FreeLookCamera", "action": "Stop", "params": [',direction,']}'
-
-
-
 counter=0
 
 def pitch(x,y,z,):
@@ -83,12 +71,14 @@ def turn():
                 if result[0] == 'Shake':
                     print "******RELEASE******"
                     sg = '{"op": "action", "exectype": 1, "scene": null, "entity": "FreeLookCamera", "action": "ReleaseGesture", "params": []}'
-                    #s.sendall(sg +'\r\n')
+                    s.sendall(sg +'\r\n')
                 if result[0] == 'Init':
                     init = True
-                    #print init    
+                    print init    
                 if result[0] != 'Init' and init == True:                
                     print "******THROW******"
+                    ms = '{"op": "action", "exectype": 1, "scene": null, "entity": "FreeLookCamera", "action": "ThrowGesture", "params": []}'
+                    s.sendall(sg +'\r\n')
                     init = False
                         #throw.gesture3d()
 		pt = pitch(x,y,z)
@@ -96,7 +86,7 @@ def turn():
 		#print 'Pitch: ',np.degrees(pt)*-1, ' Roll: ',np.degrees(rl)*-1
 		msg='{"op": "action", "exectype": 1, "scene": null, "entity": "FreeLookCamera", "action": "PitchAndRoll", "params": [%g,%g]}' %(np.degrees(pt)*-1,np.degrees(rl)*-1)
 		#print msg	
-		#s.sendall(msg +'\r\n')
+		s.sendall(msg +'\r\n')
 		#print ' Roll: ',rl
 	    #sleep(0.5)
 	    #print 'not blocked'

@@ -5,7 +5,7 @@ from time import sleep
 
 #dataset=csv.reader(open('data.csv'), delimiter=',')
 
-output = csv.writer(open('switch.csv', 'a'), delimiter=',')
+output = csv.writer(open('switch2.csv', 'a'), delimiter=',')
 #dataset= csv.reader(open('data.csv'), delimiter=',')
 port = "/dev/rfcomm1"
 ser = serial.Serial(port, baudrate=9600, timeout=10)
@@ -82,6 +82,7 @@ while True:
     print "Type 1 for: Up"
     print "Type 2 for: Shake"
     print "Type 3 for: Still (20 seconds)"
+    print "Type 4 for: Init"
     print "Type 0 to exit"
     #dump = ser.readline()
     #print dump
@@ -97,6 +98,8 @@ while True:
             sleep(1)
             print "GO!!!"
 	    buffer = ser.read(ser.inWaiting())
+            ser.flushOutput()
+            ser.flushInput()
 	    for r in range(5):
 		    vector=[]
 		    data = ser.readline()
@@ -104,7 +107,7 @@ while True:
 		    for i in data:
 		    	i=i.rstrip("\r\n")
 			vector.append(i)
-		    if len(vector) > 3:
+		    if len(vector) > 6:
 			line = vector[-6:]
 			iline = [int(n) for n in line]
 			iline.append('Up')
@@ -124,6 +127,8 @@ while True:
             sleep(1)
             print "GO!!!"
 	    buffer = ser.read(ser.inWaiting())
+            ser.flushOutput()
+            ser.flushInput()
 	    for r in range(200):
 		    vector=[]
 		    data = ser.readline()
@@ -131,7 +136,7 @@ while True:
 		    for i in data:
 		    	i=i.rstrip("\r\n")
 			vector.append(i)
-		    if len(vector) > 3:
+		    if len(vector) > 6:
 			line = vector[-6:]
 			iline = [int(n) for n in line]
 			iline.append('Still')
@@ -150,6 +155,8 @@ while True:
             sleep(1)
             print "GO!!!"
 	    buffer = ser.read(ser.inWaiting())
+            ser.flushOutput()
+            ser.flushInput()
 	    for r in range(100):
 		    vector=[]
 		    data = ser.readline()
@@ -157,7 +164,7 @@ while True:
 		    for i in data:
 		    	i=i.rstrip("\r\n")
 			vector.append(i)
-		    if len(vector) > 3:
+		    if len(vector) > 6:
 			line = vector[-6:]
 			iline = [int(n) for n in line]
 			iline.append('Shake')
@@ -167,6 +174,33 @@ while True:
 		   	#result=knntest2.knnestimate(knntest2.data,iline)
 			#print result
 
+    elif selection == '4':
+            print "Get ready for 'Init' in 3..."
+	    sleep(1)
+	    print "2..."
+	    sleep(1)
+	    print "1..."
+            sleep(1)
+            print "GO!!!"
+	    buffer = ser.read(ser.inWaiting())
+            ser.flushOutput()
+            ser.flushInput()
+	    for r in range(10):
+		    vector=[]
+		    data = ser.readline()
+		    data = data.split(",")
+		    for i in data:
+		    	i=i.rstrip("\r\n")
+			vector.append(i)
+		    if len(vector) > 6:
+			line = vector[-6:]
+			iline = [int(n) for n in line]
+			iline.append('Init')
+			output.writerow(iline)
+			#wholedata=vectorcreate()
+			print iline
+		   	#result=knntest2.knnestimate(knntest2.data,iline)
+			#print result
 
 
     elif selection == '0':

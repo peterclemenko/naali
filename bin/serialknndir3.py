@@ -14,7 +14,7 @@ ser.write("echo on"+"\r\n")      # write a string
 #ser.write("echo on"+"\r\n")      # write a string
 ser.write("hello"+"\r\n")
 ser.write("sett 114500000"+"\r\n")
-ser.write("ags +000005000 100 1 0"+"\r\n")
+ser.write("ags +000005000 10 1 0"+"\r\n")
 print ser.portstr 
 
 while True:
@@ -32,7 +32,8 @@ while True:
         #print vector[-6:]
 	#output.writerow(line)
    	result=knndir3.knnestimate(knndir3.data,iline)
-	print result
+        if 'Still' not in result:
+	    print result
     #sleep(0.5)
     #print 'not blocked'
 

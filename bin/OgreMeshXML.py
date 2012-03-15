@@ -494,7 +494,7 @@ class OgreXMLImport():
             self.__outputXML("</faces>")
 
         def startGeometry(self, vertices):
-            self.__outputXML("<geometry count=\""+str(vertices)+"\">")
+            self.__outputXML("<geometry vertexcount=\""+str(vertices)+"\">")
             self.__increaseIndent()
 
         def endGeometry(self):

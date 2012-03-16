@@ -59,11 +59,14 @@ public:
         LoggedIn
     };
 
+    /// @todo Expose to QtScript.
+    typedef std::map<QString, QString> LoginPropertyMap;
+
     /// Returns connection/login state
     ClientLoginState LoginState() const { return loginstate_; }
 
     /// Returns client connection ID (from loginreply message), or zero if not connected.
-    int ConnectionId() const { return client_id_; }
+    int ConnectionId() const { return client_id_list_.empty() ? client_id_ : client_id_list_[activescenename_]; }
 
     /// Returns the underlying kNet MessageConnection object that represents this connection.
     /// This function may return null in the case the connection is not active.
@@ -98,9 +101,6 @@ public slots:
     /** Delays the logout by one frame, so it is safe to call from scripts. */
     void Logout(const QString& name="\0");
 
-    /// Returns client connection ID (from loginreply message). Is zero if not connected
-    int GetConnectionID() const { return client_id_list_.empty() ? client_id_ : client_id_list_[activescenename_]; }
-
     /// See if connected & authenticated
     bool IsConnected(const QString& , unsigned short , const QString &);
     bool IsConnected();
@@ -112,16 +112,15 @@ public slots:
     void SetLoginProperty(QString key, QString value);
 
     /// Returns the login property value of the given name.
-    /** @return value of the key, or an empty string if the key was not found.
-        @todo Rename to LoginProperty */
-    QString GetLoginProperty(QString key) const;
+    /** @return value of the key, or an empty string if the key was not found. */
+    QString LoginProperty(QString key) const;
+
+    /// Returns all the login properties that will be used to login to the server.
+    /// @todo QtScript doens't understand references.
+    LoginPropertyMap &LoginProperties() { return properties; }
 
     /// Returns all the currently set login properties as an XML text.
     QString LoginPropertiesAsXml() const;
-
-    /// Returns all the login properties that will be used to login to the server.
-    /// @todo Rename to LoginProperties
-    std::map<QString, QString> &GetAllLoginProperties() { return properties; }
 
     /// Deletes all set login properties.
     void ClearLoginProperties() { properties.clear(); }
@@ -137,6 +136,8 @@ public slots:
 
     /// Set active scenename for multiconnection
     void setActiveScenename(const QString &name) { activescenename_ = name; }
+    QString GetLoginProperty(QString key) const { return LoginProperty(key); } ///< @deprecated Use LoginProperty. @todo Add warning print
+    int GetConnectionID() const { return ConnectionId(); } ///< @deprecated Use ConnectionId. @todo Add warning print.
 
 signals:
     /// This signal is emitted right before this client is starting to connect to a Tundra server.
@@ -190,7 +191,7 @@ private:
     void HandleClientLeft(kNet::MessageConnection* source, const MsgClientLeft& msg);
 
     ClientLoginState loginstate_; ///< Client's connection/login state
-    std::map<QString, QString> properties; ///< Specifies all the login properties.
+    LoginPropertyMap properties; ///< Specifies all the login properties.
     bool reconnect_; ///< Whether the connect attempt is a reconnect because of dropped connection
     u8 client_id_; ///< User ID, once known
     TundraLogicModule* owner_; ///< Owning module

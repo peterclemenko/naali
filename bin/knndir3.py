@@ -2,7 +2,7 @@ import math
 import csv
 from collections import Counter 
 
-dataset=csv.reader(open('switch.csv'), delimiter=',')
+dataset=csv.reader(open('switch2.csv'), delimiter=',')
 
 #for row in dataset: print row
 

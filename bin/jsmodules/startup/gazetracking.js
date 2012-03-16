@@ -6,7 +6,6 @@ if (framework.IsHeadless())
 framework.Scene().SceneAdded.connect(OnSceneAdded);
 ui.MainWindow().WindowResizeEvent.connect(MainWindowResized);
 
-
 if (!framework.IsHeadless())
 {
     engine.ImportExtension("qt.core");
@@ -81,6 +80,9 @@ var gaze_points_x = [];
 var gaze_points_y = [];
 var index = 0;
 var gaze_window_open = false;
+var can_throw = false;
+var use_statusbutton = true;
+var statusbutton = null;
 
 var qmlmodule = 0;
 
@@ -170,6 +172,9 @@ function OnSceneAdded(scenename)
     if (framework.IsHeadless())
         return;
 
+    if (scenename == "TundraServer")
+        return;
+
     screen_width = ui.GraphicsView().viewport().size.width();
     screen_height = ui.GraphicsView().viewport().size.height();
     scene = framework.Scene().GetScene(scenename);
@@ -180,6 +185,15 @@ function OnSceneAdded(scenename)
 
     border_x = parseInt(center_size * screen_width);
     border_y = parseInt(center_size * screen_height);
+
+    if (use_statusbutton) 
+    {
+	print("adding statusbutton");
+	engine.IncludeFile("lib/overlaybutton.js");
+	
+	statusbutton = MakeOverlayButton(220, 20);
+	statusbutton.text = "No object selected";
+    }
 }
 
 function MainWindowResized(width, height)
@@ -201,6 +215,7 @@ function AddActionToFreeLookCamera()
     cameraEnt.Action("ReleaseGesture").Triggered.connect(ReleaseGesture);
     cameraEnt.Action("PitchAndRoll").Triggered.connect(PitchAndRoll);
     cameraEnt.Action("SwitchGesture").Triggered.connect(SwitchGesture);
+    cameraEnt.Action("ThrowGesture").Triggered.connect(ThrowGesture);
     action_added = true;
     print("Actions added to FreeLookCamera");
 }
@@ -517,6 +532,8 @@ function EntitySelection()
             var placeable = last_raycast_entity.placeable;
             placeable.drawDebug = true;
             last_raycast_entity.placeable = placeable;
+            if (use_statusbutton)
+		        statusbutton.text = "Gazing at: " + last_raycast_entity.Name();
         }
 
     }
@@ -544,6 +561,9 @@ function GraspGesture()
         label.setStyleSheet("QLabel#GazeAverageLabel { padding: 0px; background-color: rgba(230,230,230,0); border: 2px solid green; font-size: 16px; }");
         selected_entity = last_raycast_entity;
 
+	    if (use_statusbutton)
+	        statusbutton.text = "Grasped: " + last_raycast_entity.Name();
+
         var cameraEnt = scene.GetEntityByName("FreeLookCamera");
         if (!cameraEnt)
             return;
@@ -561,8 +581,27 @@ function ReleaseGesture()
         print("Entity Released.");
         entity_selected = false;
         label.setStyleSheet("QLabel#GazeAverageLabel { padding: 0px; background-color: rgba(230,230,230,0); border: 2px solid red; font-size: 16px; }");
+        if (use_statusbutton)
+	            statusbutton.text = "No object selected";
         selected_entity = null;
         movement_mode = false;
+    }
+}
+
+function ThrowGesture()
+{
+    if (selected_entity && selected_entity.Name() == "Fish")
+    {
+        scene.GetEntityByName("Throwing").Exec(1, "ThrowObject", "Fish", "asdf");
+	if (use_statusbutton) {
+	    statusbutton.text = "Throwing entity: " + selected_entity.Name();
+	    frame.DelayedExecute(2.0).Triggered.connect(function(t) { statusbutton.text = ""; });
+	}
+        print("Throwing fish...");
+    }
+    else 
+    {
+        print("Fish not selected.");
     }
 }
 

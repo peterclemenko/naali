@@ -203,9 +203,9 @@ class OgreXMLImport():
         if len(self.meshcontainer.submeshes) > 0:
             mesh.startSubmeshes()
             for m in self.meshcontainer.submeshes:
-                longIndices = False
-                if len(m.vertexBuffer.vertices) > 32765: longIndices = True
-                mesh.startSubmesh("testmesh", False, longIndices, "triangle_list")
+                longIndices = "false"
+                if len(m.vertexBuffer.vertices) > 32765: longIndices = "true"
+                mesh.startSubmesh("CapturedObject", "false", longIndices, "triangle_list")
 
                 mesh.startFaces(len(m.faces)/3)
                 for i in [m.faces[x:x+3] for x in xrange(0, len(m.faces), 3)]:

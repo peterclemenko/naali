@@ -48,6 +48,7 @@ public:
 
     /// Returns syncmanager
     SyncManager* GetSyncManager() const;
+    //const boost::shared_ptr<SyncManager>& GetSyncManager() const { return syncManager_; }
 
     /// Returns client
     const boost::shared_ptr<Client>& GetClient() const { return client_; }

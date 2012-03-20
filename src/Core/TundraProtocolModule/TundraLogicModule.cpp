@@ -154,7 +154,7 @@ void TundraLogicModule::Load()
 
 void TundraLogicModule::Initialize()
 {
-    syncManager_ = boost::make_shared<SyncManager>(this);
+    //syncManager_ = boost::make_shared<SyncManager>(this);
     client_ = boost::make_shared<Client>(this);
     server_ = boost::make_shared<Server>(this);
     

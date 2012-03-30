@@ -18,6 +18,7 @@
 #include "Application.h"
 #include "IAssetStorage.h"
 #include "LoggingFunctions.h"
+#include "Profiler.h"
 
 #include <QDir>
 #include <QFile>
@@ -74,8 +75,87 @@ JavascriptInstance::~JavascriptInstance()
     DeleteEngine();
 }
 
+QMap<QString, uint> JavascriptInstance::DumpEngineInformation()
+{
+    if (!engine_)
+        return QMap<QString, uint>();
+    
+    QSet<qint64> ids;
+    uint valueCount = 0;
+    uint objectCount = 0;
+    uint nullCount = 0;
+    uint numberCount = 0;
+    uint boolCount = 0;
+    uint stringCount = 0;
+    uint arrayCount = 0;
+    uint funcCount = 0;
+    uint qobjCount = 0;
+    uint qobjMethodCount = 0;   
+
+    GetObjectInformation(engine_->globalObject(), ids, valueCount, objectCount, nullCount, numberCount, boolCount, stringCount, arrayCount, funcCount, qobjCount, qobjMethodCount);
+
+    QMap<QString, uint> dump;
+    dump["QScriptValues"] = valueCount;
+    dump["Objects"] = objectCount;
+    dump["Functions"] = funcCount;
+    dump["QObjects"] = qobjCount;
+    dump["QObject methods"] = qobjMethodCount;
+    dump["Numbers"] = numberCount;
+    dump["Booleans"] = boolCount;
+    dump["Strings"] = stringCount;
+    dump["Arrays"] = arrayCount;
+    dump["Is null"] = nullCount;
+    return dump;
+}   
+
+void JavascriptInstance::GetObjectInformation(const QScriptValue &object, QSet<qint64> &ids, uint &valueCount, uint &objectCount, uint &nullCount, uint &numberCount, 
+    uint &boolCount, uint &stringCount, uint &arrayCount, uint &funcCount, uint &qobjCount, uint &qobjMethodCount)
+{
+    if (!ids.contains(object.objectId()))       
+        ids << object.objectId();
+    
+    QScriptValueIterator iter(object);
+    while(iter.hasNext()) 
+    {
+        iter.next();
+        QScriptValue v = iter.value();
+
+        if (ids.contains(v.objectId()))
+            continue;
+        ids << v.objectId();
+        
+        valueCount++;
+        if (v.isNull())
+            nullCount++;
+
+        if (v.isNumber())
+            numberCount++;
+        else if (v.isBool())
+            boolCount++;
+        else if (v.isString())
+            stringCount++;
+        else if (v.isArray())
+            arrayCount++;
+        else if (v.isFunction())
+            funcCount++;
+        else if (v.isQObject())
+            qobjCount++;
+        
+        if (v.isObject())
+            objectCount++;
+
+        if (v.isQMetaObject())
+            qobjMethodCount += v.toQMetaObject()->methodCount();
+        
+        // Recurse
+        if ((v.isObject() || v.isArray()) && !v.isFunction() && !v.isString() && !v.isNumber() && !v.isBool() && !v.isQObject() && !v.isQMetaObject())
+            GetObjectInformation(v, ids, valueCount, objectCount, nullCount, numberCount, boolCount, stringCount, arrayCount, funcCount, qobjCount, qobjMethodCount);
+    }
+}
+
 void JavascriptInstance::Load()
 {
+    PROFILE(JSInstance_Load);
     if (!engine_)
         CreateEngine();
 
@@ -129,6 +209,7 @@ void JavascriptInstance::Load()
 
 QString JavascriptInstance::LoadScript(const QString &fileName)
 {
+    PROFILE(JSInstance_LoadScript);
     QString filename = fileName.trimmed();
 
     // First check if the include was supposed to go through the Asset API.
@@ -183,6 +264,7 @@ void JavascriptInstance::Unload()
 
 void JavascriptInstance::Run()
 {
+    PROFILE(JSInstance_Run);
     // Need to have either absolute file path source or an Asset API source.
     if (scriptRefs_.empty() && program_.isEmpty())
     {
@@ -218,6 +300,7 @@ void JavascriptInstance::Run()
     
     for (unsigned i = 0; i < numScripts; ++i)
     {
+        PROFILE(JSInstance_Evaluate);
         QString scriptSourceFilename = (useAssets ? scriptRefs_[i]->Name() : sourceFile);
         QString &scriptContent = (useAssets ? scriptRefs_[i]->scriptContent : program_);
 

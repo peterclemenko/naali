@@ -4,23 +4,21 @@
 # WINDOWS: Uses some more custom logic on windows to find things correct either from Tunda deps, Ogre SDK or Ogre source repo clone.
 
 if (NOT WIN32 AND NOT APPLE)
-# TODO Remove the use of Sagase for Linux and Mac Ogre lookup.
 # TODO: Remove configure_ogre and replace it with a use_package_ogre() and link_package_ogre()
 macro(configure_ogre)
-    # Mac
-    if (APPLE)
-        FIND_LIBRARY(OGRE_LIBRARY NAMES Ogre)
-        set(OGRE_INCLUDE_DIRS ${OGRE_LIBRARY}/Headers)
-        set(OGRE_LIBRARIES ${OGRE_LIBRARY})
-    # Linux
-    else()
-        sagase_configure_package (OGRE 
-            NAMES Ogre OgreSDK ogre OGRE
-            COMPONENTS Ogre ogre OGRE OgreMain 
-            PREFIXES ${ENV_OGRE_HOME} ${ENV_NAALI_DEP_PATH})
-    endif ()
+  find_path(OGRE_LIBRARY_DIR NAMES lib/libOgreMain.so
+    HINTS ${ENV_OGRE_HOME} ${ENV_NAALI_DEP_PATH})
 
-    sagase_configure_report(OGRE)
+  find_path(OGRE_INCLUDE_DIR Ogre.h
+    HINTS ${ENV_OGRE_HOME}/include ${ENV_NAALI_DEP_PATH}/include
+    PATH_SUFFIXES OGRE)
+
+  find_library(OGRE_LIBRARY OgreMain
+    HINTS ${ENV_OGRE_HOME}/lib ${ENV_NAALI_DEP_PATH}/lib)
+
+  include_directories(${OGRE_INCLUDE_DIR})
+  link_directories(${OGRE_LIBRARY_DIR})
+
 endmacro()
     
 else() # Windows Ogre lookup.
@@ -84,7 +82,8 @@ macro(configure_ogre)
         endif()
         link_directories(${OGRE_DIR}/lib)
         message(STATUS "Using Ogre from Mercurial trunk directory " ${OGRE_DIR})
-    elseif (IS_DIRECTORY ${OGRE_DIR}/include/OGRE) # If include/OGRE exists, then OGRE_DIR points to the SDK (#2 above)    
+    elseif (IS_DIRECTORY ${OGRE_DIR}/include/OGRE) # If include/OGRE exists, then OGRE_DIR points to the SDK (#2 above)
+        include_directories(${OGRE_DIR}/include)
         include_directories(${OGRE_DIR}/include/OGRE)
         link_directories(${OGRE_DIR}/lib)
         if (WIN32)
@@ -103,10 +102,7 @@ macro(link_ogre)
     if (WIN32)
         target_link_libraries(${TARGET_NAME} debug OgreMain_d debug RenderSystem_Direct3D9_d)
         target_link_libraries(${TARGET_NAME} optimized OgreMain optimized RenderSystem_Direct3D9)
-    elseif (APPLE)
-        target_link_libraries(${TARGET_NAME} ${OGRE_LIBRARY})
     else()
-        use_package(OGRE)
-        link_package(OGRE)
+        target_link_libraries(${TARGET_NAME} ${OGRE_LIBRARY})
     endif()
 endmacro()

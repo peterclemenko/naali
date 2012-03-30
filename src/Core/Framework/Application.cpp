@@ -52,7 +52,7 @@
 /// @note Modify these values when you are making a custom Tundra build. Also the version needs to be changed here on releases.
 const char *Application::organizationName = "realXtend";
 const char *Application::applicationName = "Tundra";
-const char *Application::version = "2.3.0";
+const char *Application::version = "2.3.1";
 
 Application::Application(Framework *owner, int &argc, char **argv) :
     QApplication(argc, argv),
@@ -315,8 +315,8 @@ QString Application::InstallationDirectory()
     return qstr.left(trailingSlash+1); // +1 so that we return the trailing slash as well.
 #else
     ///\todo Implement.
-    LogWarning("Application::InstallationDirectory not implemented for this platform.");
-    return ".";
+    LogDebug("Application::InstallationDirectory not implemented for this platform. Returning './'");
+    return "./";
 #endif
 }
 

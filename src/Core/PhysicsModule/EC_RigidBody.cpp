@@ -654,6 +654,8 @@ void EC_RigidBody::PlaceableUpdated(IAttribute* attribute)
 
 void EC_RigidBody::OnAboutToUpdate()
 {
+    PROFILE(EC_RigidBody_OnAboutToUpdate);
+    
     // If the placeable is parented, we forcibly update world transform from it before each simulation step
     // However, we do not update scale, as that is expensive
     EC_Placeable* placeable = placeable_.lock().get();
@@ -957,6 +959,8 @@ void EC_RigidBody::GetProperties(btVector3& localInertia, float& m, int& collisi
 
 void EC_RigidBody::UpdatePosRotFromPlaceable()
 {
+    PROFILE(EC_RigidBody_UpdatePosRotFromPlaceable);
+    
     EC_Placeable* placeable = placeable_.lock().get();
     if (!placeable || !body_)
         return;

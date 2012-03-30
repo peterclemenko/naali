@@ -9,6 +9,9 @@
 #include "DebugOperatorNew.h"
 
 #include "EC_Hydrax.h"
+#ifdef SKYX_ENABLED
+#include "EC_SkyX.h"
+#endif
 
 #include "Scene.h"
 #include "Framework.h"
@@ -16,17 +19,13 @@
 #include "AssetAPI.h"
 #include "IAssetTransfer.h"
 #include "IAsset.h"
-
 #include "OgreWorld.h"
 #include "Renderer.h"
 #include "EC_Camera.h"
 #include "Entity.h"
 #include "Profiler.h"
-
 #include "AttributeMetadata.h"
-#ifdef SKYX_ENABLED
-#include "EC_SkyX.h"
-#endif
+#include "LoggingFunctions.h"
 
 #include <Hydrax.h>
 #include <Noise/Perlin/Perlin.h>
@@ -35,11 +34,11 @@
 #include <Modules/RadialGrid/RadialGrid.h>
 #include <Modules/SimpleGrid/SimpleGrid.h>
 
-#include "LoggingFunctions.h"
 #include "MemoryLeakCheck.h"
 
-/// @cond PRIVATE
-struct EC_HydraxImpl
+static const char *cDefaultConfig = "Ogre Media:HydraxDefault.hdx";
+
+struct EC_Hydrax::EC_HydraxImpl
 {
     EC_HydraxImpl() : hydrax(0), module(0) {}
     ~EC_HydraxImpl()
@@ -56,11 +55,10 @@ struct EC_HydraxImpl
     boost::weak_ptr<EC_SkyX> skyX;
 #endif
 };
-/// @endcond PRIVATE
 
 EC_Hydrax::EC_Hydrax(Scene* scene) :
     IComponent(scene),
-    configRef(this, "Config ref", AssetReference("HydraxDefault.hdx")),
+    configRef(this, "Config ref", AssetReference(cDefaultConfig)),
     visible(this, "Visible", true),
     position(this, "Position", float3(0.0, 0.0, 0.0)),
 //    noiseModule(this, "Noise module", 0),
@@ -104,6 +102,16 @@ EC_Hydrax::EC_Hydrax(Scene* scene) :
 EC_Hydrax::~EC_Hydrax()
 {
     SAFE_DELETE(impl);
+}
+
+float EC_Hydrax::HeightAt(const float3 &worldPos) const
+{
+    return impl && impl->hydrax ? impl->hydrax->getHeigth(worldPos) : -1.f;
+}
+
+float EC_Hydrax::HeightAt(float x, float z) const
+{
+    return HeightAt(float3(x, 0.f, z));
 }
 
 void EC_Hydrax::Create()
@@ -194,7 +202,7 @@ void EC_Hydrax::RequestConfigAsset()
     PROFILE(EC_Hydrax_RequestConfigAsset);
     QString ref = configRef.Get().ref.trimmed();
     if (ref.isEmpty())
-        ref = "HydraxDefault.hdx";
+        ref = cDefaultConfig;
     configRefListener.HandleAssetRefChange(framework->Asset(), ref, "Binary");
 }
 
@@ -209,11 +217,10 @@ void EC_Hydrax::UpdateAttribute(IAttribute *attr)
 
     if (attr == &visible)
     {
-        bool isVisible = getvisible();
-        float3 pos = getposition();
-        impl->hydrax->setVisible(isVisible);
-        if (isVisible && impl->hydrax->getPosition() != pos)
-            impl->hydrax->setPosition(pos); 
+        const float3 &pos = position.Get();
+        impl->hydrax->setVisible(visible.Get());
+        if (visible.Get() && impl->hydrax->getPosition() != pos)
+            impl->hydrax->setPosition(pos);
     }
     else if (attr == &position && visible.Get())
         impl->hydrax->setPosition(position.Get());
@@ -348,12 +355,20 @@ void EC_Hydrax::ConfigLoadSucceeded(AssetPtr asset)
         else
         {
             LogError("EC_Hydrax: Unknown noise param in loaded config, acceptable = FFT/Perlin.");
+            SAFE_DELETE(impl);
             return;
         }
 
         // Load config from the asset data string.
         impl->hydrax->remove();
         impl->hydrax->loadCfgString(configData.toStdString());
+        
+        // Override the shader mode specified in the config - OpenGL should always use GLSL, D3D HLSL.
+        // (Cg is never used, for compatibility, since it requires an extra install and some Linux systems don't always have it enabled)
+        if (QString(Ogre::Root::getSingleton().getRenderSystem()->getName().c_str()).contains("OpenGL"))
+            impl->hydrax->setShaderMode(Hydrax::MaterialManager::SM_GLSL);
+        else
+            impl->hydrax->setShaderMode(Hydrax::MaterialManager::SM_HLSL);
         impl->hydrax->create();
 
         // The position attribute is always authoritative from the component attribute.
@@ -363,5 +378,8 @@ void EC_Hydrax::ConfigLoadSucceeded(AssetPtr asset)
     catch (Ogre::Exception &e)
     {
         LogError(std::string("EC_Hydrax: Ogre threw exception while loading new config: ") + e.what());
+        if (impl && impl->hydrax)
+            impl->hydrax->remove();
+        SAFE_DELETE(impl);
     }
 }

@@ -206,7 +206,7 @@ void Scene::RemoveAllEntities(bool signal, AttributeChange::Type change)
 	} else
 	{
 	    // If entity somehow manages to live, at least it doesn't belong to the scene anymore
-	    if (send_events)
+	    if (signal)
 	    {
 		EmitEntityRemoved(it->second.get(), change);
 	    }

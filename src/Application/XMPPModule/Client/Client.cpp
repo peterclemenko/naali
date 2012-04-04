@@ -140,7 +140,6 @@ namespace XMPP
           if(extensions_[i]->Name() == extensionName)
                 return dynamic_cast<QObject*>(extensions_[i]);
         }
-        LogError("XMPPModule: No initialized extension found with name \"" + extensionName.toStdString() + "\"");
         return 0;
     }
 

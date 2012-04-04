@@ -58,9 +58,9 @@ def on_sceneadded(scenename):
     throw_ent.SetTemporary(True);
     throw_ent.Action("CatchObject").connect("Triggered(QString, QString, QString, QStringList)", on_catch)
     throw_ent.Action("ThrowObject").connect("Triggered(QString, QString, QString, QStringList)", on_throw)
-    if tundra.IsServer():
-        tundra.Frame().DelayedExecute(.5).connect(
-            'Triggered(float)', lambda t: throw_ent.Exec(1, "ThrowObject", "Fish", scenename))
+    # if tundra.IsServer():
+    #     tundra.Frame().DelayedExecute(.5).connect(
+    #         'Triggered(float)', lambda t: throw_ent.Exec(1, "ThrowObject", "Fish", scenename))
 
 def register_to_context(cxname, data, callback):
     h, p = cxserver_hostname, cxserver_port
@@ -140,8 +140,10 @@ def on_catch(caught_name, mesh_url, transform_str):
     caught_ent.mesh.SetMaterial(0, mesh_url.replace('.mesh', '.material'))
     t = map(float, transform_str.split(', '))
     caught_ent.placeable.SetPosition(*t[:3])
-    caught_ent.placeable.SetScale(*t[3:6])
-    # caught_ent.position.Orientation().FromEulerXYZ(*t[6:9])
+    scale = caught_ent.placeable.SetScale(*t[3:6])
+    o = caught_ent.position.Orientation()
+    o.FromEulerXYZ(*t[6:9])
+    caught_ent.position.SetOrientation(o)
 
 from PythonQt.QtNetwork import QNetworkRequest, QNetworkAccessManager
 from PythonQt.QtCore import QUrl

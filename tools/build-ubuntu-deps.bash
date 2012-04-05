@@ -143,7 +143,9 @@ if [ x$private_ogre = xtrue ]; then
 fi
 
 if [ x$private_ogre = xtrue ]; then
-    sudo apt-get build-dep libogre-dev
+    if tty >/dev/null; then
+	sudo apt-get build-dep libogre-dev
+    fi
     what=ogre
     if test -f $tags/$what-done; then
         echo $what is done

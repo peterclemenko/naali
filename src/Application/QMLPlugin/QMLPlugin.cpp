@@ -79,6 +79,17 @@ void QMLPlugin::GazeWindowDestroyed()
     emit GazeWindowReject();
 }
 
+void QMLPlugin::MoveEntity(EC_Placeable *camera, EC_Placeable *entity, float delta_x, float delta_y)
+{
+    Transform new_transform = entity->gettransform();
+    float3 newpos = camera->Orientation() * float3(delta_x, 0, delta_y);
+    new_transform.pos += newpos;
+    entity->settransform(new_transform);
+
+    //entityPos.position += camera_->GetOrientation() * Vector3df(amountx, -1 * amounty, 0);
+    //placeable->settransform(entityPos);
+}
+
 extern "C"
 {
     DLLEXPORT void TundraPluginMain(Framework *fw)

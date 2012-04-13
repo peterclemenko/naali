@@ -10,6 +10,8 @@
 #include "kNetFwd.h"
 #include "kNet/Types.h"
 
+#include "InterestManager.h"
+
 #include <QObject>
 
 class Framework;
@@ -159,6 +161,9 @@ private:
     float updatePeriod_;
     /// Time accumulator for update
     float updateAcc_;
+
+    /// The Interest Manager which filters network traffic
+    InterestManager* im;
     
     /// Server sync state (client only)
     SceneSyncState server_syncstate_;

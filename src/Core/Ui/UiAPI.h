@@ -4,11 +4,26 @@
 
 #include <QObject>
 #include <QPointer>
+#include <QWidget>
 
 #include "UiFwd.h"
 #include "UiApiExport.h"
 
 class QMenu;
+
+/// Used as a viewport for the main QGraphicsView.
+/** Its purpose is to disable all automatic drawing of the QGraphicsView to screen so that
+ we can composite an Ogre 3D render with the Qt widgets added to a QGraphicsScene. */
+class SuppressedPaintWidget : public QWidget
+{
+public:
+    SuppressedPaintWidget(QWidget *parent = 0, Qt::WindowFlags f = 0);
+    virtual ~SuppressedPaintWidget() {}
+    
+protected:
+    virtual bool event(QEvent *event);
+    virtual void paintEvent(QPaintEvent *event);
+};
 
 /// Provides functions for managing the currently opened windows in the application main window.
 /** @todo More detailed description.
@@ -71,8 +86,7 @@ public slots:
     /// Removes widget's proxy widget from the scene.
     /** @param widget Widget. */
     void RemoveWidgetFromScene(QWidget *widget);
-
-    /// This is an overloaded function.
+    /// @overload
     /** Removes proxy widget from the scene.
         @param widget Proxy widget. */
     void RemoveWidgetFromScene(QGraphicsProxyWidget *widget);
@@ -93,8 +107,7 @@ public slots:
     /// Brings the widget's proxy widget to front in the graphics scene and sets focus to it.
     /** @param widget Widget. */
     void BringWidgetToFront(QWidget *widget) const;
-
-    /// This is an overloaded function.
+    /// @overload
     /** Brings the widget's proxy widget to front in the graphics scene and sets focus to it.
         @param widget Proxy widget. */
     void BringWidgetToFront(QGraphicsProxyWidget *widget) const { return BringProxyWidgetToFront(widget); }

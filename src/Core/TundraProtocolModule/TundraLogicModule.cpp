@@ -115,9 +115,6 @@ void TundraLogicModule::Load()
     framework_->Scene()->RegisterComponentFactory(ComponentFactoryPtr(new GenericComponentFactory<EC_Sound>));
     framework_->Scene()->RegisterComponentFactory(ComponentFactoryPtr(new GenericComponentFactory<EC_SoundListener>));
 #endif
-#ifdef EC_Gizmo_ENABLED
-    framework_->Scene()->RegisterComponentFactory(ComponentFactoryPtr(new GenericComponentFactory<EC_Gizmo>));
-#endif
 #ifdef EC_PlanarMirror_ENABLED
     framework_->Scene()->RegisterComponentFactory(ComponentFactoryPtr(new GenericComponentFactory<EC_PlanarMirror>));
 #endif
@@ -479,7 +476,7 @@ bool TundraLogicModule::ImportScene(QString filename, bool clearScene, bool repl
         return false;
     }
 
-    LogInfo("Import Ogre .scene " + filename + " ...");
+    LogInfo("Importing Ogre .scene " + filename + " ...");
 
     kNet::PolledTimer timer;
     SceneImporter importer(scene->shared_from_this());
@@ -505,7 +502,7 @@ bool TundraLogicModule::ImportMesh(QString filename, const float3 &pos, const fl
         return false;
     }
 
-    LogInfo("Import Ogre .mesh " + filename + " ...");
+    LogInfo("Importing Ogre .mesh " + filename + " ...");
 
     SceneImporter importer(scene->shared_from_this());
     EntityPtr entity = importer.ImportMesh(filename, QFileInfo(filename).dir().path(), Transform(pos, rot, scale),

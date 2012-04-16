@@ -10,6 +10,7 @@
 #include "IModule.h"
 #include "InputAPI.h"
 #include "GazeDialog.h"
+#include "EC_Placeable.h"
 
 class QMLPlugin : public IModule
 {
@@ -39,6 +40,7 @@ public slots:
     void SetGazeParameters(float center_size, int points, int rect_size, bool delta_mode, bool debug_mode, bool mouse);
     void GazeParametersAccepted(float center_size, int points, int rect_size, bool delta_mode, bool debug_mode, bool mouse);
     void GazeWindowDestroyed();
+    void MoveEntity(EC_Placeable *camera, EC_Placeable *entity, float delta_x, float delta_y);
 
 private:
     InputContextPtr input_;

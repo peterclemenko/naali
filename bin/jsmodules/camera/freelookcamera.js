@@ -131,6 +131,22 @@ function HandleMove(param)
         _g.move.amount.y = -1;
 }
 
+function HandleMoveWithSpeed(param1, param2)
+{
+    if (param1 == "forward")
+        motion_z = param2;
+    if (param1 == "back")
+        motion_z = param2;
+    if (param1 == "right")
+        motion_x = param2;
+    if (param1 == "left")
+        motion_x = param2;
+    if (param1 == "up")
+        motion_y = param2;
+    if (param1 == "down")
+        motion_y = param2;
+}
+
 function HandleStop(param)
 {
     if (!IsCameraActive())
@@ -148,6 +164,13 @@ function HandleStop(param)
         _g.move.amount.y = 0;
     else if ((param == "down") && (_g.move.amount.y == -1))
         _g.move.amount.y = 0;
+}
+
+function HandleStopAll()
+{
+    motion_z = 0;
+    motion_x = 0;
+    motion_y = 0;
 }
 
 function HandleMouseLookX(param)

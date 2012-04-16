@@ -25,6 +25,7 @@
 #include "SceneAPI.h"
 
 #include <kNet.h>
+#include "EuclideanDistanceFilter.h"
 
 #include <cstring>
 
@@ -86,8 +87,12 @@ SyncManager::SyncManager(TundraLogicModule* owner) :
     framework_(owner->GetFramework()),
     updatePeriod_(1.0f / 20.0f),
     updateAcc_(0.0),
+    im(im->getInstance()),
     sceneUUID("")
 {
+    im->LoadFilter(new EuclideanDistanceFilter());
+    std::cout << "Status of the Interest Manager: " << im->getStatus() << std::endl;
+
     KristalliProtocolModule *kristalli = framework_->GetModule<KristalliProtocolModule>();
     connect(kristalli, SIGNAL(NetworkMessageReceived(kNet::MessageConnection *, kNet::packet_id_t, kNet::message_id_t, const char *, size_t)), 
         this, SLOT(HandleKristalliMessage(kNet::MessageConnection*, kNet::packet_id_t, kNet::message_id_t, const char*, size_t)));
@@ -95,6 +100,7 @@ SyncManager::SyncManager(TundraLogicModule* owner) :
 
 SyncManager::~SyncManager()
 {
+    im->dropInstance(); //Destroy the IM Object
 }
 
 void SyncManager::SetUpdatePeriod(float period)

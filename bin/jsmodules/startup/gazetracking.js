@@ -83,6 +83,14 @@ var gaze_window_open = false;
 var can_throw = false;
 var use_statusbutton = true;
 var statusbutton = null;
+var last_mouse_x = 0;
+var last_mouse_y = 0;
+var delta_mouse_x = 0;
+var delta_mouse_y = 0;
+var camera_speed = 0;
+var sweep_x_recognized = false;
+var sweep_y_recognized = false;
+var camera_moving = false;
 
 var qmlmodule = 0;
 
@@ -127,6 +135,14 @@ if (!framework.IsHeadless())
     }
 
     var inputContext = input.RegisterInputContextRaw("GazeTrackingInput", 102);
+
+    // Connect gestures
+    if (inputContext.GestureStarted && inputContext.GestureUpdated)
+    {
+	    inputContext.GestureStarted.connect(GestureStarted);
+	    inputContext.GestureUpdated.connect(GestureUpdated);
+    }
+    
 }
 
 function SendGazeParameters()
@@ -157,11 +173,15 @@ function SetGazeParameters(c_size, points, r_size, del_mode, deb_mode, mouse)
     {
         inputContext.SetTakeMouseEventsOverQt(true);
         inputContext.MouseMove.connect(HandleMouseMove);
+        inputContext.MouseEventReceived.connect(HandleMouseEvent);
+        amount_of_points = 1;
     }
     else
     {
         inputContext.SetTakeMouseEventsOverQt(false);
         inputContext.MouseMove.disconnect(HandleMouseMove);
+        inputContext.MouseEventReceived.disconnect(HandleMouseEvent);
+        amount_of_points = 30;
     }
 } 
 
@@ -188,11 +208,11 @@ function OnSceneAdded(scenename)
 
     if (use_statusbutton) 
     {
-	print("adding statusbutton");
-	engine.IncludeFile("lib/overlaybutton.js");
+	    print("adding statusbutton");
+	    engine.IncludeFile("lib/overlaybutton.js");
 	
-	statusbutton = MakeOverlayButton(220, 20);
-	statusbutton.text = "No object selected";
+	    statusbutton = MakeOverlayButton(220, 20);
+	    statusbutton.text = "No object selected";
     }
 }
 
@@ -232,9 +252,15 @@ function Update()
         return;
 
     if (entity_selected && !movement_mode)
+    {
         HandleEntityRotation();
+        LookAtSelectedEntity();
+    }
     if (entity_selected && movement_mode)
+    {
         HandleEntityMovement();
+        HandleCameraRotation();
+    }
 
     if (!entity_selected)
     {
@@ -325,6 +351,42 @@ function HandleCameraMovement()
     if (entity_selected)
         return;
 
+    if (use_mouse)
+    {
+        if (sweep_y_recognized)
+        {
+            var cameraEnt = scene.GetEntityByName("FreeLookCamera");
+            if (!cameraEnt)
+                return;
+            if (camera_speed < 0)
+            {
+                cameraEnt.Exec(1, "MoveWithSpeed", "forward", 0.5);
+            }
+            else if (camera_speed > 0)
+            {
+                cameraEnt.Exec(1, "MoveWithSpeed", "forward", -0.5);
+            }
+            sweep_y_recognized = false;
+        }
+   
+        if (sweep_x_recognized)
+        {
+            var cameraEnt = scene.GetEntityByName("FreeLookCamera");
+            if (!cameraEnt)
+                return;
+            if (camera_speed < 0)
+            {
+                cameraEnt.Exec(1, "MoveWithSpeed", "left", -0.5);
+            }
+            else if (camera_speed > 0)
+            {
+                cameraEnt.Exec(1, "MoveWithSpeed", "right", 0.5);
+            }
+            sweep_x_recognized = false;
+        }
+        return;
+    }
+
     if (pitch_angle >= rotate_threshold_1)
     {
         var cameraEnt = scene.GetEntityByName("FreeLookCamera");
@@ -376,6 +438,17 @@ function HandleEntityMovement()
 {
     if (!selected_entity)
         return;
+
+    if (use_mouse)
+    {
+        var cameraEnt = scene.GetEntityByName("FreeLookCamera");
+        if (!cameraEnt)
+            return;
+        qmlmodule.MoveEntity(cameraEnt.placeable, selected_entity.placeable, delta_mouse_x / 20, delta_mouse_y / 20);
+        delta_mouse_y = 0;
+        delta_mouse_x = 0;
+        return;
+    }
 
     if (pitch_angle >= rotate_threshold_1)
     {
@@ -451,6 +524,10 @@ function HandleMouseMove(mouse)
 
     proxy2.x = gaze_points_x[0] - 10;
     proxy2.y = gaze_points_y[0] - 10;
+    delta_mouse_x = mouse.x - last_mouse_x;
+    delta_mouse_y = mouse.y - last_mouse_y;
+    last_mouse_x = mouse.x;
+    last_mouse_y = mouse.y;
 }
 
 function GazeCoordinates(x, y)
@@ -622,8 +699,20 @@ function HandleEntityRotation()
     if (delta_mode)
     {
         var transform = selected_entity.placeable.transform;
-        transform.rot.x += delta_pitch;
-        transform.rot.y += delta_roll;
+        if (use_mouse)
+        {
+            if ((Math.abs(parseInt(delta_mouse_x)) > 50) || (Math.abs(parseInt(delta_mouse_y)) > 50))
+                return;
+            transform.rot.x -= delta_mouse_y;
+            transform.rot.y += delta_mouse_x;
+            delta_mouse_y = 0;
+            delta_mouse_x = 0;
+        }
+        else
+        {
+            transform.rot.x += delta_pitch;
+            transform.rot.y += delta_roll;    
+        }
         selected_entity.placeable.transform = transform;
         return;
     }
@@ -701,4 +790,107 @@ function HandleEntityRotation()
         transform.rot.y -= rotate_speed_3;
         selected_entity.placeable.transform = transform;
     }
+}
+
+function GestureStarted(gestureEvent)
+{
+    if (!use_mouse)
+        return;
+    if (gestureEvent.GestureType() == Qt.TapAndHoldGesture)
+    {
+        if (!entity_selected)
+            GraspGesture();
+        else
+            ReleaseGesture();
+        gestureEvent.Accept();
+    }
+    else if (gestureEvent.GestureType() == Qt.PanGesture)
+    {
+        var offset = gestureEvent.Gesture().offset.toPoint();
+        //HandleMouseLookX(offset.x());
+        //HandleMouseLookY(offset.y());
+        gestureEvent.Accept();
+    }
+
+}
+
+function GestureUpdated(gestureEvent)
+{
+    print(gestureEvent.GestureType());
+    if (!use_mouse)
+        return;
+    if (gestureEvent.GestureType() == Qt.PanGesture)
+    {
+        
+        var delta = gestureEvent.Gesture().delta.toPoint();
+        delta_roll = delta.x();
+        delta_pitch = delta.y();
+        print("Pan gesture: " + delta_roll + ", " + delta_pitch);
+        //HandleMouseLookX(delta.x());
+        //HandleMouseLookY(delta.y());
+        gestureEvent.Accept();
+    }
+}
+
+function HandleMouseEvent(mouseEvent)
+{
+    if (mouseEvent.GetEventType() == 4) //Released
+    {
+        if (delta_mouse_x > 5)
+        {
+            sweep_x_recognized = true;
+            camera_speed = 1;
+            delta_mouse_x = 0;
+            delta_mouse_y = 0;    
+            return;
+        }
+        else if (delta_mouse_x < -5)
+        {
+            sweep_x_recognized = true;
+            camera_speed = -1;
+            delta_mouse_x = 0;
+            delta_mouse_y = 0;
+            return;
+        }
+        
+        if (delta_mouse_y > 5)
+        {
+            sweep_y_recognized = true;
+            camera_speed = 1;
+            delta_mouse_x = 0;
+            delta_mouse_y = 0;
+            return;
+        }
+        else if (delta_mouse_y < -5)
+        {
+            sweep_y_recognized = true;
+            camera_speed = -1;
+            delta_mouse_x = 0;
+            delta_mouse_y = 0;
+            return;
+        }
+        var cameraEnt = scene.GetEntityByName("FreeLookCamera");
+        if (!cameraEnt)
+            return;
+ 
+        cameraEnt.Exec(1, "StopAll");
+
+        
+        
+    }
+    else if (mouseEvent.GetEventType() == 5) //Doubleclick
+    {
+         SwitchGesture();
+    }
+}
+
+function LookAtSelectedEntity()
+{
+    var cameraEnt = scene.GetEntityByName("FreeLookCamera");
+    if (!cameraEnt)
+        return;
+    
+    var transform = selected_entity.placeable.transform;
+    var camera = cameraEnt.camera;
+    //camera.lookAt(transform.pos);    
 }

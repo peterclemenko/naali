@@ -104,23 +104,23 @@ mkdir -p $viewer/bin/qtplugins/script
 cp -lf $build/$what/plugins/script/* $viewer/bin/qtplugins/script/
 
 
-#what=kNet
-#if test -f $tags/$what-done; then 
-#   echo $what is done
-#else
-#    cd $build
-#    rm -rf kNet
-#    git clone https://github.com/juj/kNet
-#    cd kNet
-#    git checkout stable
-#    sed -e "s/USE_TINYXML TRUE/USE_TINYXML FALSE/" -e "s/kNet STATIC/kNet SHARED/" < CMakeLists.txt > x
-#    mv x CMakeLists.txt
-#    cmake . -DCMAKE_BUILD_TYPE=Debug
-#    make -j $nprocs
-#    cp lib/libkNet.so $prefix/lib/
-#    rsync -r include/* $prefix/include/
-#    touch $tags/$what-done
-#fi
+what=kNet
+if test -f $tags/$what-done; then 
+   echo $what is done
+else
+    cd $build
+    rm -rf kNet
+    git clone https://github.com/juj/kNet
+    cd kNet
+    git checkout stable
+    sed -e "s/USE_TINYXML TRUE/USE_TINYXML FALSE/" -e "s/kNet STATIC/kNet SHARED/" < CMakeLists.txt > x
+    mv x CMakeLists.txt
+    cmake . -DCMAKE_BUILD_TYPE=Debug
+    make -j $nprocs
+    cp lib/libkNet.so $prefix/lib/
+    rsync -r include/* $prefix/include/
+    touch $tags/$what-done
+fi
 
 if [ x$private_ogre = xtrue ]; then
     sudo apt-get build-dep libogre-dev

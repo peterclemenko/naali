@@ -1,4 +1,4 @@
-// For conditions of distribution and use, see copyright notice in LICENSE
+// For condit   ions of distribution and use, see copyright notice in LICENSE
 
 #include "StableHeaders.h"
 #include "DebugOperatorNew.h"
@@ -90,6 +90,10 @@ bool Server::Start(unsigned short port, QString protocol)
         transportLayer = kNet::SocketOverTCP;
     else if (protocol.compare("udp", Qt::CaseInsensitive) == 0)
         transportLayer = kNet::SocketOverUDP;
+#ifdef KNET_HAS_SCTP
+    else if (protocol.compare("sctp", Qt::CaseInsensitive) == 0)
+        transportLayer = kNet::SocketOverSCTP;
+#endif
     else
         ::LogError("Invalid server protocol '" + protocol + "' specified! Using UDP protocol as default.");
 
@@ -102,7 +106,7 @@ bool Server::Start(unsigned short port, QString protocol)
 
     // Store current port and protocol
     current_port_ = (int)port;
-    current_protocol_ = (transportLayer == kNet::SocketOverUDP) ? "udp" : "tcp";
+    current_protocol_ = (transportLayer == kNet::SocketOverUDP) ? "udp" : (transportLayer == kNet::SocketOverTCP) ? "tcp" : "sctp";
 
     // Create the default server scene
     /// \todo Should be not hard coded like this. Give some unique id (uuid perhaps) that could be returned to the client to make the corresponding named scene in client?

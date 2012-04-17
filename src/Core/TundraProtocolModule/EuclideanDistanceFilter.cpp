@@ -6,18 +6,20 @@
 */
 
 #include "EuclideanDistanceFilter.h"
+#include "LoggingFunctions.h"
 
-EuclideanDistanceFilter::EuclideanDistanceFilter() { std::cout << "Euclidean Distance Filter Created" << std::endl; }
+EuclideanDistanceFilter::EuclideanDistanceFilter() { LogInfo("Euclidean Distance Filter Created"); }
 
-EuclideanDistanceFilter::~EuclideanDistanceFilter() { std::cout << "Euclidean Distance Filter Destroyed" << std::endl; }
+EuclideanDistanceFilter::~EuclideanDistanceFilter() {  LogInfo("Euclidean Distance Filter Destroyed"); }
 
 void EuclideanDistanceFilter::filter()
 {
-    std::cout << "Filtering Messages" << std::endl;
+     LogInfo("EC: Filtering Messages");
 }
 
 std::string EuclideanDistanceFilter::toString()
 {
-    return "Euclidean Distance Filter";
+    return "Euclidean Distance";
 }
+
 

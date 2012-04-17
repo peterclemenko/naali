@@ -19,7 +19,7 @@ InterestManager::InterestManager(IMStatus s) : status(s) {}
 
 InterestManager* InterestManager::getInstance() 
 {
-    std::cout << "Creating Interest Manager" << std::endl;
+    LogInfo("Creating Interest Manager");
 
     if (!instanceFlag)
     {
@@ -35,10 +35,16 @@ InterestManager* InterestManager::getInstance()
 
 void InterestManager::dropInstance()
 {
-    std::cout << "Destroying Interest Manager" << std::endl;
+    std::vector<MessageFilter*>::iterator it;
+
+    LogInfo("Destroying Interest Manager");
 
     if (instanceFlag)
     {
+        foreach (MessageFilter *m, messageFilters)
+            delete m;
+
+        messageFilters.clear();
         instanceFlag = false;
         delete thisPointer;
     }
@@ -48,36 +54,62 @@ void InterestManager::dropInstance()
     }
 }
 
-void InterestManager::Start()                       { status = RUNNING; }
+void InterestManager::Start() { status = RUNNING; }
 
-void InterestManager::Stop()                        { status = STOPPED; }
+void InterestManager::Stop() { status = STOPPED; }
 
-IMStatus InterestManager::getStatus()               { return status; }
+IMStatus InterestManager::getStatus() { return status; }
 
 void InterestManager::LoadFilter(MessageFilter* m)
 {
     messageFilters.push_back(m);
-    std::cout << "Loaded " << m->toString() << " filter succesfully." << std::endl;
+    LogInfo("Loaded " + m->toString() + " filter succesfully");
 }
 
 void InterestManager::UnloadFilter(int id)
 {
     messageFilters.erase(messageFilters.begin() + id);
-    std::cout << "Unloaded filter succesfully." << std::endl;
+    LogInfo("Unloaded filter succesfully");
 }
 
 void InterestManager::ListFilters()
 {
     std::vector<MessageFilter*>::iterator it;
+    int i = 0;
 
     for(it = messageFilters.begin(); it != messageFilters.end(); it++)
     {
-        (*it)->toString();
+        LogInfo(i + ": " + (*it)->toString());
+        i++;
     }
-
 }
 
 void InterestManager::filterMessages(QList<Entity*> users, QList<Entity*> messages)
 {
+    std::vector<MessageFilter*>::iterator it;
+
+    switch(status)
+    {
+        case ERROR:
+            LogInfo("Interest Manager encountered an error");
+            return;
+        break;
+
+        case STOPPED:
+            LogInfo("Interest Manager is stopped");
+            return;
+        break;
+
+        default:
+            LogInfo("Filtering...");
+
+            for(it = messageFilters.begin(); it != messageFilters.end(); it++)
+            {
+                (*it)->filter();
+            }
+
+            LogInfo("OK");
+        break;
+    }
 
 }

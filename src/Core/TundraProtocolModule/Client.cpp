@@ -120,6 +120,10 @@ void Client::Login(const QString& address, unsigned short port, const QString& u
         transportLayer = kNet::SocketOverTCP;
     else if (p.compare("udp", Qt::CaseInsensitive) == 0)
         transportLayer = kNet::SocketOverUDP;
+#ifdef KNET_HAS_SCTP
+    else if (p.compare("sctp", Qt::CaseInsensitive) == 0)
+        transportLayer = kNet::SocketOverSCTP;
+#endif
     else if (!p.trimmed().isEmpty())
     {
         ::LogError("Client::Login: Cannot log to server using unrecognized protocol: " + p);
@@ -148,8 +152,11 @@ void Client::Login(const QString& address, unsigned short port, kNet::SocketTran
         p = "tcp";
     else if (protocol == kNet::SocketOverUDP)
         p = "udp";
-        
-    // Set all login properties we have knowledge of. 
+#ifdef KNET_HAS_SCTP
+    else if (protocol == kNet::SocketOverSCTP)
+        p = "sctp";
+#endif
+    // Set all login properties we have knowledge of.
     // Others may have been added before calling this function.
     SetLoginProperty("protocol", p);
     SetLoginProperty("address", address);

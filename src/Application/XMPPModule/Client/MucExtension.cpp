@@ -56,6 +56,8 @@ void MucExtension::HandleMessageReceived(const QXmppMessage &message)
     LogInfo("XMPPModule: Received message. From: " + message.from().toStdString()
             + " Room: " + room->jid().toStdString()
             + " Body: " + message.body().toStdString());
+
+    emit MessageReceived(room->jid(), message.from(), message.body());
 }
 
 void MucExtension::HandleInvitationReceived(const QString &room, const QString &inviter, const QString &reason)
@@ -90,6 +92,9 @@ void MucExtension::HandleParticipantJoined(const QString &jid)
     if(!room)
         return;
 
+    LogDebug(extension_name_.toStdString() + ": User joined. Room: " + room->jid().toStdString()
+                        + " User: " + jid.toStdString());
+
     emit UserJoinedRoom(room->jid(), jid);
 }
 
@@ -99,6 +104,9 @@ void MucExtension::HandleParticipantLeft(const QString &jid)
     if(!room)
         return;
 
+    LogDebug(extension_name_.toStdString() + ": User left. Room: " + room->jid().toStdString()
+                        + " User: " + jid.toStdString());
+
     emit UserLeftRoom(room->jid(), jid);
 }
 
@@ -107,6 +115,17 @@ void MucExtension::HandleRoomJoined()
     QXmppMucRoom *room = qobject_cast<QXmppMucRoom*>(sender());
     if(!room)
         return;
+
+    bool check = connect(room, SIGNAL(messageReceived(QXmppMessage)), this, SLOT(HandleMessageReceived(QXmppMessage)));
+    Q_ASSERT(check);
+
+    bool check = connect(room, SIGNAL(participantAdded(QString)), this, SLOT(HandleParticipantJoined(QString)));
+    Q_ASSERT(check);
+
+    bool check = connect(room, SIGNAL(participantRemoved(QString)), this, SLOT(HandleParticipantLeft(QString)));
+    Q_ASSERT(check);
+
+    /// \todo Presence changes inside the room should also be handled
 
     rooms_.append(room);
     emit RoomAdded(room->jid(), room->nickName());

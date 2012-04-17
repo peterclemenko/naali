@@ -119,10 +119,10 @@ void MucExtension::HandleRoomJoined()
     bool check = connect(room, SIGNAL(messageReceived(QXmppMessage)), this, SLOT(HandleMessageReceived(QXmppMessage)));
     Q_ASSERT(check);
 
-    bool check = connect(room, SIGNAL(participantAdded(QString)), this, SLOT(HandleParticipantJoined(QString)));
+    check = connect(room, SIGNAL(participantAdded(QString)), this, SLOT(HandleParticipantJoined(QString)));
     Q_ASSERT(check);
 
-    bool check = connect(room, SIGNAL(participantRemoved(QString)), this, SLOT(HandleParticipantLeft(QString)));
+    check = connect(room, SIGNAL(participantRemoved(QString)), this, SLOT(HandleParticipantLeft(QString)));
     Q_ASSERT(check);
 
     /// \todo Presence changes inside the room should also be handled

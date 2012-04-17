@@ -11,6 +11,7 @@
 
 #include "MessageFilter.h"
 #include <string>
+#include <iostream>
 
 class EuclideanDistanceFilter : public MessageFilter
 {

@@ -11,6 +11,7 @@
 
 #include "Entity.h"
 #include <string>
+#include <iostream>
 
 class MessageFilter
 {

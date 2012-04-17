@@ -10,6 +10,7 @@
 #pragma once
 
 #include <vector>
+#include <iostream>
 #include "Entity.h"
 #include "MessageFilter.h"
 

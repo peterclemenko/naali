@@ -11,6 +11,8 @@
 
 #include "Entity.h"
 #include <string>
+#include <iostream>
+#include "LoggingFunctions.h"
 
 class MessageFilter
 {
@@ -18,7 +20,7 @@ class MessageFilter
 public:
 
     /// Virtual destructor for proper derived/base chain dismantling.
-    virtual ~MessageFilter() { std::cout << "MessageFilter destruction!" << "\n"; }
+    virtual ~MessageFilter() {  LogInfo("MessageFilter destruction."); }
 
     /// Pure virtual method filter which is implemented in MessageFilters child classes
     virtual void filter() = 0;

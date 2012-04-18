@@ -131,6 +131,12 @@ void KristalliProtocolModule::Initialize()
     QStringList cmdLineParams = framework_->CommandLineParameters("--protocol");
     if (cmdLineParams.size() > 0 && cmdLineParams.first().trimmed().toLower() == "tcp")
         defaultTransport = kNet::SocketOverTCP;
+#ifdef KNET_HAS_SCTP
+    if (cmdLineParams.size() > 0 && cmdLineParams.first().trimmed().toLower() == "sctp")
+        defaultTransport = kNet::SocketOverSCTP;
+#else
+    defaultTransport = kNet::SocketOverTCP;
+#endif
 
 #ifdef KNET_USE_QT
     framework_->Console()->RegisterCommand("kNet", "Shows the kNet statistics window.", this, SLOT(OpenKNetLogWindow()));
@@ -369,7 +375,7 @@ bool KristalliProtocolModule::StartServer(unsigned short port, SocketTransportLa
     
     ::LogInfo("Server started");
     ::LogInfo(QString("* Port     : ") + QString::number(port));
-    ::LogInfo(QString("* Protocol : ") + (transport == kNet::SocketOverUDP ? "UDP" : "TCP"));
+    ::LogInfo(QString("* Protocol : ") + (transport == kNet::SocketOverUDP ? "UDP" : (transport == kNet::SocketOverTCP) ? "TCP" : "SCTP"));
     ::LogInfo(QString("* Headless : ") + BoolToString(framework_->IsHeadless()));
     return true;
 }

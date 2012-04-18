@@ -92,6 +92,7 @@ SyncManager::SyncManager(TundraLogicModule* owner) :
 {
     im->LoadFilter(new EuclideanDistanceFilter());
     std::cout << "Status of the Interest Manager: " << im->getStatus() << std::endl;
+    im->ListFilters();
 
     KristalliProtocolModule *kristalli = framework_->GetModule<KristalliProtocolModule>();
     connect(kristalli, SIGNAL(NetworkMessageReceived(kNet::MessageConnection *, kNet::packet_id_t, kNet::message_id_t, const char *, size_t)), 

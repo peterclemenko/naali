@@ -56,6 +56,11 @@ public slots:
     //! \return bool true for succesfully sent message
     bool SendMessage(QString roomJid, QString message);
 
+    //! Get current subject for a room
+    //! \param room Full JabberID for the room (room@conference.host.com)
+    //! \return QString room subject
+    QString GetRoomSubject(QString roomJid);
+
     //! Get list of currently active rooms
     //! \return QStringList containing full JabberIDs of the rooms
     QStringList GetRooms() const;
@@ -77,6 +82,7 @@ private slots:
     void HandleInvitationReceived(const QString &room, const QString &inviter, const QString &reason);
     void HandleParticipantJoined(const QString &jid);
     void HandleParticipantLeft(const QString &jid);
+    void HandleRoomSubjectChanged(const QString &subject);
     void HandleRoomJoined();
 
 private:
@@ -95,6 +101,7 @@ signals:
     void InvitationReceived(QString room, QString from, QString reason);
     void RoomAdded(QString room, QString nickname);
     void RoomRemoved(QString room, QString reason);
+    void RoomSubjectChanged(QString room, QString subject);
     void UserJoinedRoom(QString room, QString user);
     void UserLeftRoom(QString room, QString user);
 };

@@ -678,7 +678,7 @@ var BrowserManager = Class.extend
                  p_.connected[index] = false;
                  client.Logout(this.clientTabOrderList[index]);
              }
-             /7print("Connected[]: " + this.connected + ", Removing index: " + index);
+             //print("Connected[]: " + this.connected + ", Removing index: " + index);
              p_.connected.splice(index,1);
              //print("tabOrder[]: " + this.clientTabOrderList + ", Removing index: " + index);
              p_.clientTabOrderList.splice(index,1);

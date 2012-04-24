@@ -36,7 +36,8 @@
   <jsplugin path="cameraapplication.js" />
   <jsplugin path="FirstPersonMouseLook.js" />
   <jsplugin path="MenuBar.js" />
-  <jsplugin path="RendererSettings.js" />
+  <jsplugin path="MenuBar.js" />
+  <jsplugin path="multiconnection.js" />
   <jsplugin path="SoundSettings.js" />
   <jsplugin path="browserui/LoginBrowser.js" />
 

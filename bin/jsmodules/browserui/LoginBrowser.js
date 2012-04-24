@@ -378,15 +378,14 @@ var BrowserManager = Class.extend
          this.classiclogin.onConnected();
          this.refreshSqueezer(newIndex);
 
-
          this.onTabIndexChanged(this.tabs.currentIndex);
      },
 
      onDisconnected: function()
      {
          //this.onTabCloseRequest(p_.tabs.currentIndex);
-         this.refreshSqueezer();
-         this.onTabIndexChanged(0);
+         this.refreshSqueezer(this.tabs.currentIndex);
+         this.onTabIndexChanged(this.tabs.currentIndex);
          if (this.tabs.currentIndex != 0)
          {
              this.tabs.setTabToolTip(0, "Login");
@@ -685,10 +684,6 @@ var BrowserManager = Class.extend
              p_.tabs.removeTab(index);
              return;
          }
-         p_.tabs.widget(index).stop();
-         p_.tabs.widget(index).close();
-         p_.tabs.widget(index).deleteLater();
-         p_.tabs.removeTab(index);
      },
 
      onBack: function()
@@ -1711,7 +1706,7 @@ var ClassicLogin = Class.extend
          browserplugin.UpdateProgressScreenRequest.connect(this, this.updateLoadingScreen);
          browserplugin.UpdateProgressImageRequest.connect(this, this.updateLoadinScreenImage);
 
-         client.AboutToConnect.connect(this, this.onAboutToConnect);
+         //client.AboutToConnect.connect(this, this.onAboutToConnect);
 
          this.loadingHideTimer = new QTimer();
          this.loadingHideTimer.singleShot = true;
@@ -1913,7 +1908,7 @@ var ClassicLogin = Class.extend
              this.loadingHideTimer.stop();
 
          if (p_ != null)
-             p_.refreshSqueezer(this.tabs.currentIndex);
+             p_.refreshSqueezer(p_.tabs.currentIndex);
      },
 
      showLoginScreen: function()

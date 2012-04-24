@@ -125,10 +125,20 @@ void MucExtension::HandleRoomJoined()
     check = connect(room, SIGNAL(participantRemoved(QString)), this, SLOT(HandleParticipantLeft(QString)));
     Q_ASSERT(check);
 
-    /// \todo Presence changes inside the room should also be handled
+    check = connect(room, SIGNAL(kicked(QString,QString)), this, SIGNAL(RoomRemoved(QString,QString)));
+    Q_ASSERT(check);
 
     rooms_.append(room);
     emit RoomAdded(room->jid(), room->nickName());
+}
+
+void MucExtension::HandleRoomSubjectChanged(const QString &subject)
+{
+    QXmppMucRoom *room = qobject_cast<QXmppMucRoom*>(sender());
+    if(!room)
+        return;
+
+    emit RoomSubjectChanged(room->jid(), subject);
 }
 
 bool MucExtension::JoinRoom(QString roomJid, QString nickname, QString password)
@@ -159,6 +169,15 @@ bool MucExtension::SendMessage(QString roomJid, QString message)
         return false;
 
     return room->sendMessage(message);
+}
+
+QString MucExtension::GetRoomSubject(QString roomJid)
+{
+    QXmppMucRoom *room = GetRoom(roomJid);
+    if(!room)
+        return QString("unknown");
+
+    return room->subject();
 }
 
 bool MucExtension::Invite(QString roomJid, QString peerJid, QString reason)

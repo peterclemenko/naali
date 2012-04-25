@@ -128,14 +128,17 @@ public slots:
     void printSceneNames();
 
     /// Signal to javascript to switch main camera scene
-    void emitSceneSwitch(const QString name);
+    void emitSceneSwitch(QString name);
 
     /// Get connected scene names
     QStringList getSceneNames();
 
     /// Set active scenename for multiconnection
     void setActiveScenename(const QString &name) { activescenename_ = name; }
-    QString GetLoginProperty(QString key) const { return LoginProperty(key); } ///< @deprecated Use LoginProperty. @todo Add warning print
+    /// Get active scenename for multiconnection
+    QString getActiveScenename() { return activescenename_; }    
+
+QString GetLoginProperty(QString key);
     int GetConnectionID() const { return ConnectionId(); } ///< @deprecated Use ConnectionId. @todo Add warning print.
 
 signals:

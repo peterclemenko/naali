@@ -198,7 +198,8 @@ void Client::DoLogout(bool fail)
     if (!keys.contains(discScene))
     {
         discScene = "\0";
-        printSceneNames();
+        if (keys.length() > 0)
+            printSceneNames();
         return;
     }
 
@@ -472,6 +473,21 @@ void Client::HandleClientLeft(MessageConnection* /*source*/, const MsgClientLeft
 {
 }
 
+QString Client::GetLoginProperty(QString key)
+{
+    key = key.trimmed();
+    if (properties_list_.contains(activescenename_))
+        properties = properties_list_[activescenename_];
+    else
+        properties = properties_list_["NEW"];
+    std::map<QString, QString>::const_iterator i = properties.find(key);
+    if (i != properties.end())
+        return i->second;
+    else
+        return "";
+}
+
+
 void Client::saveProperties(const QString name)
 {
     // Login happened and replace NEW-marked properties with scenename.
@@ -560,9 +576,12 @@ void Client::removeProperties(const QString &name)
     properties_list_.remove(discScene);
 }
 
-void Client::emitSceneSwitch(const QString name) {
+void Client::emitSceneSwitch(QString name)
+{
     if (!loginstate_list_.contains(name))
+    {
         printSceneNames();
+    }
     else
     {
         setActiveScenename(name);

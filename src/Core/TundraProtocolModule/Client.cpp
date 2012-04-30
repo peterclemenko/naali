@@ -183,7 +183,11 @@ void Client::Logout(const QString &name)
     if (name != "\0")
         discScene = name;
     else
-        discScene = framework_->Scene()->MainCameraScene()->Name();
+    {
+        discScene = "NEW";
+        //discScene = framework_->Scene()->MainCameraScene()->Name();
+    }
+
     QTimer::singleShot(1, this, SLOT(DelayedLogout()));
 }
 

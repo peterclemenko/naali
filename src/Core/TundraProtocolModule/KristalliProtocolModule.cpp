@@ -202,7 +202,10 @@ void KristalliProtocolModule::Update(f64 /*frametime*/)
             // That is, at the moment the server write-closes the connection, we also write-close the connection.
             // Check here if the server has write-closed, and also write-close our end if so.
             if (serverConnectionIter_.value() && !serverConnectionIter_.value()->IsReadOpen() && serverConnectionIter_.value()->IsWriteOpen())
+            {
+                ::LogInfo("Disconnecting serverconnection!");
                 serverConnectionIter_.value()->Disconnect(0);
+            }
 
             // ::LogInfo("serverConnection: " + ToString(!!serverConnection));
             // if (serverConnection)
@@ -231,7 +234,7 @@ void KristalliProtocolModule::Update(f64 /*frametime*/)
             }
 
             // If connection was made, enable a larger number of reconnection attempts in case it gets lost
-            if (serverConnectionIter_.value() && serverConnectionIter_.value()->GetConnectionState() == ConnectionOK)
+            if (key != "NEW" && serverConnectionIter_.value() && serverConnectionIter_.value()->GetConnectionState() == ConnectionOK)
                 reconnectAttemptsIter_.value() = cReconnectAttempts;
         }
     }

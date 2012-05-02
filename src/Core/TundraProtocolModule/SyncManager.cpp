@@ -87,7 +87,6 @@ SyncManager::SyncManager(TundraLogicModule* owner) :
     framework_(owner->GetFramework()),
     updatePeriod_(1.0f / 20.0f),
     updateAcc_(0.0),
-    im(im->getInstance()),
     sceneUUID("")
 {
     if(owner_->IsServer())

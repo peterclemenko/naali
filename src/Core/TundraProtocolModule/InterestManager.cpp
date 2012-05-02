@@ -41,6 +41,7 @@ void InterestManager::dropInstance()
 
     if (instanceFlag)
     {
+        /// CRASH here if connection/disconnection done multiple times.
         foreach (MessageFilter *m, messageFilters)
             delete m;
 

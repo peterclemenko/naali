@@ -634,7 +634,6 @@ var BrowserManager = Class.extend
             p_.actionAddFavorite.enabled = true;
             p_.tabs.setTabToolTip(index, "Connected to a Tundra server");
             var scenename = this.clientTabOrderList[index];
-            print("sceneName: " + scenename);
             if (scenename != client.getActiveScenename())
                 client.emitSceneSwitch(scenename);
             var loginPropAddress = client.GetLoginProperty("address");

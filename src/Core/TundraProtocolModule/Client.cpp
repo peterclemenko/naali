@@ -183,7 +183,11 @@ void Client::Logout(const QString &name)
     if (name != "\0")
         discScene = name;
     else
-        discScene = framework_->Scene()->MainCameraScene()->Name();
+    {
+        discScene = "NEW";
+        //discScene = framework_->Scene()->MainCameraScene()->Name();
+    }
+
     QTimer::singleShot(1, this, SLOT(DelayedLogout()));
 }
 
@@ -493,7 +497,6 @@ void Client::saveProperties(const QString name)
     // Login happened and replace NEW-marked properties with scenename.
     if (name != "NEW" && loginstate_list_.contains(name))
     {
-        ::LogInfo("Reconnection saving properties " + name + "\n");
         // Container for all the connections loginstates
         loginstate_list_.insert(name, loginstate_);
         // Container for all the connections reconnect bool value
@@ -506,7 +509,6 @@ void Client::saveProperties(const QString name)
     }
     else if (name != "NEW" && !loginstate_list_.contains(name))
     {
-        ::LogInfo("NEW connection ready. Switching identifier to " + name + ".\n");
         // Container for all the connections loginstates
         loginstate_list_.insert(name, loginstate_);
         // Container for all the connections reconnect bool value
@@ -531,7 +533,6 @@ void Client::saveProperties(const QString name)
     {
         // Initial connection attempt.
 
-        ::LogInfo("New connection saving properties NEW.\n");
         // Container for all the connections loginstates
         loginstate_list_.insert(name, loginstate_);
         loginstate_ = NotConnected;

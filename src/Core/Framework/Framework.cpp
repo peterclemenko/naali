@@ -148,7 +148,7 @@ Framework::Framework(int argc_, char** argv_) :
     cmdLineDescs.commands["--disablerunonload"] = "Prevents script applications (EC_Script's with applicationName defined) staring automatically."; //JavascriptModule
     cmdLineDescs.commands["--server"] = "Starts Tundra as server."; // TundraLogicModule
     cmdLineDescs.commands["--port"] = "Specifies the Tundra server port."; // TundraLogicModule
-    cmdLineDescs.commands["--protocol"] = "Specifies the Tundra server protocol. Options: '--protocol tcp' and '--protocol udp'. Defaults to udp if no protocol is spesified."; // KristalliProtocolModule
+    cmdLineDescs.commands["--protocol"] = "Specifies the Tundra server protocol. Options: '--protocol tcp', '--protocol sctp' and '--protocol udp'. Defaults to udp if no protocol is spesified."; // KristalliProtocolModule
     cmdLineDescs.commands["--fpslimit"] = "Specifies the FPS cap to use in rendering. Default: 60. Pass in 0 to disable."; // Framework
     cmdLineDescs.commands["--run"] = "Runs script on startup"; // JavaScriptModule
     cmdLineDescs.commands["--file"] = "Specifies a startup scene file. Multiple files supported. Accepts absolute and relative paths, local:// and http:// are accepted and fetched via the AssetAPI."; // TundraLogicModule & AssetModule

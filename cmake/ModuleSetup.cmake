@@ -242,7 +242,7 @@ macro(link_entity_components)
             # 1. Its either a folder name under src/EntityComponents/componentName
             # 2. Its a relative path from project binary dir <clone>/path/componentPath
             set (foundComponents ${foundComponents} ${componentName})
-            add_definitions(-D${componentName}_ENABLED)
+            add_definitions(-D${_compNameInternal}_ENABLED)
         endif()
     endforeach ()
     # Include the ones that were found on this build

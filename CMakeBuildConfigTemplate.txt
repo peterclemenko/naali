@@ -184,6 +184,10 @@ if (EXISTS "./src/ChiruAddons")
     AddProject(src/ChiruAddons/ObjectCaptureModule)
     Addproject(src/ChiruAddons/XMPPModule)
     AddProject(src/ChiruAddons/QMLPlugin)
+    
+    AddProject(Application CanvasPlugin)
+    AddProject(src/ChiruAddons/RdfModule)
+    AddProject(src/ChiruAddons/3dUiModule)
 
 else ()
 

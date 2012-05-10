@@ -157,7 +157,8 @@ else
     cd $what
     hg checkout v1-8 # Make sure we are in the right branch
     mkdir -p $what-build
-    cd $what-build  
+    cd $what-build
+    sudo aptitude -y build-dep libogre-dev # Install ogre build dependencies
     cmake .. -DCMAKE_INSTALL_PREFIX=$prefix
     make -j $nprocs VERBOSE=1
     make install
@@ -288,6 +289,22 @@ else
     cp lib/libqxmpp.a $prefix/lib/
     touch $tags/$what-done
 fi
+
+echo "Setting up Chiru specific dependencies"
+cd $viewer
+if [ ! -e "./src/ChiruAddons" ]; then
+    echo "./src/ChiruAddons does not exist. Cloning a new copy..."
+    git clone git://github.com/Chiru/ChiruAddons.git src/ChiruAddons
+fi
+cd ./src/ChiruAddons
+git pull origin master
+cd $viewer
+if test ! -f $tags/pcl-done; then # doing PCL repo addition only once
+    sudo add-apt-repository ppa:v-launchpad-jochen-sprickerhof-de/pcl
+    sudo apt-get update
+    touch $tags/pcl-done
+fi
+sudo aptitude install -y qtmobility-dev libpcl-all
 
 if test "$1" = "--depsonly"; then
     exit 0

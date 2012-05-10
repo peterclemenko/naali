@@ -87,7 +87,7 @@ else ()
 
     message("ChiruAddons project folder does not exist")
     message("Did you forget to:")
-    message(" git clone git://github.com/Chiru/ChiruAddons.git src/ChiruAddons")
+    message(FATAL_ERROR " git clone git://github.com/Chiru/ChiruAddons.git src/ChiruAddons")
 
 endif ()
 
@@ -193,7 +193,7 @@ else ()
 
     message("ChiruAddons project folder does not exist")
     message("Did you forget to:")
-    message(" git clone git://github.com/Chiru/ChiruAddons.git src/ChiruAddons")
+    message(FATAL_ERROR " git clone git://github.com/Chiru/ChiruAddons.git src/ChiruAddons")
 
 endif ()
 

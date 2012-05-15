@@ -704,6 +704,8 @@ void SyncManager::Update(f64 frametime)
 
 void SyncManager::ReplicateRigidBodyChanges(kNet::MessageConnection* destination, SceneSyncState* state)
 {
+    PROFILE(SyncManager_ReplicateRigidBodyChanges);
+    
     ScenePtr scene = scene_.lock();
     if (!scene)
         return;
@@ -792,7 +794,7 @@ void SyncManager::ReplicateRigidBodyChanges(kNet::MessageConnection* destination
         float timeSinceLastSend = kNet::Clock::SecondsSinceF(ess.lastNetworkSendTime);
         const float3 predictedClientSidePosition = ess.transform.pos + timeSinceLastSend * ess.linearVelocity;
         float error = t.pos.DistanceSq(predictedClientSidePosition);
-
+        UNREFERENCED_PARAM(error)
         // TEST: To have the server estimate how far the client has simulated, use this.
 //        bool posChanged = transformDirty && (timeSinceLastSend > 0.2f || t.pos.DistanceSq(/*ess.transform.pos*/ predictedClientSidePosition) > 5e-5f);
         bool posChanged = transformDirty && t.pos.DistanceSq(ess.transform.pos) > 1e-3f;
@@ -844,6 +846,7 @@ void SyncManager::ReplicateRigidBodyChanges(kNet::MessageConnection* destination
             continue;
 
         int bitIdx = ds.BitsFilled();
+        UNREFERENCED_PARAM(bitIdx)
         ds.AddVLE<kNet::VLE8_16_32>(ess.id); // Sends max. 32 bits.
 
         ds.AddArithmeticEncoded(8, posSendType, 3, rotSendType, 4, scaleSendType, 3, velSendType, 3, angVelSendType, 2); // Sends fixed 8 bits.
@@ -942,6 +945,7 @@ void SyncManager::ReplicateRigidBodyChanges(kNet::MessageConnection* destination
 //        std::cout << "pos: " << posSendType << ", rot: " << rotSendType << ", scale: " << scaleSendType << ", vel: " << velSendType << ", angvel: " << angVelSendType << std::endl;
 
         int bitsEnd = ds.BitsFilled();
+        UNREFERENCED_PARAM(bitsEnd)
         ess.lastNetworkSendTime = kNet::Clock::Tick();
     }
     if (ds.BytesFilled() > 0)
@@ -1137,6 +1141,7 @@ void SyncManager::ProcessSyncState(kNet::MessageConnection* destination, SceneSy
     const std::string sceneId = sceneUUID;
     int numMessagesSent = 0;
     bool isServer = owner_->IsServer();
+    UNREFERENCED_PARAM(isServer)
     
     // Process the state's dirty entity queue.
     /// \todo Limit and prioritize the data sent. For now the whole queue is processed, regardless of whether the connection is being saturated.
@@ -1590,7 +1595,7 @@ void SyncManager::HandleCreateEntity(kNet::MessageConnection* source, const char
                 newAttr->FromBinary(attrDs, AttributeChange::Disconnected);
             }
         }
-    } catch(kNet::NetException &e)
+    } catch(kNet::NetException &/*e*/)
     {
         LogError("Failed to deserialize the creation of a new entity from the peer. Deleting the partially crafted entity!");
         scene->RemoveEntity(entity->Id(), AttributeChange::Disconnected);
@@ -1726,7 +1731,7 @@ void SyncManager::HandleCreateComponents(kNet::MessageConnection* source, const 
                 newAttr->FromBinary(attrDs, AttributeChange::Disconnected);
             }
         }
-    } catch(kNet::NetException &e)
+    } catch(kNet::NetException &/*e*/)
     {
         LogError("Failed to deserialize the creation of new component(s) from the peer. Deleting the partially crafted components!");
         for(size_t i = 0; i < addedComponents.size(); ++i)
@@ -1771,8 +1776,8 @@ void SyncManager::HandleRemoveEntity(kNet::MessageConnection* source, const char
     AttributeChange::Type change = isServer ? AttributeChange::Replicate : AttributeChange::LocalOnly;
     
     kNet::DataDeserializer ds(data, numBytes);
-    if (ds.ReadString() != sceneUUID)
-        return; // message from unidentified server.
+    unsigned sceneID = ds.ReadVLE<kNet::VLE8_16_32>(); ///\todo Dummy ID. Lookup scene once multiscene is properly supported
+    UNREFERENCED_PARAM(sceneID)
     entity_id_t entityID = ds.ReadVLE<kNet::VLE8_16_32>();
     
     if (!ValidateAction(source, cRemoveEntityMessage, entityID))
@@ -1813,8 +1818,8 @@ void SyncManager::HandleRemoveComponents(kNet::MessageConnection* source, const 
     AttributeChange::Type change = isServer ? AttributeChange::Replicate : AttributeChange::LocalOnly;
     
     kNet::DataDeserializer ds(data, numBytes);
-    if (ds.ReadString() != sceneUUID)
-        return; // message from unidentified server.
+    unsigned sceneID = ds.ReadVLE<kNet::VLE8_16_32>(); ///\todo Dummy ID. Lookup scene once multiscene is properly supported
+    UNREFERENCED_PARAM(sceneID)
     entity_id_t entityID = ds.ReadVLE<kNet::VLE8_16_32>();
     
     if (!ValidateAction(source, cRemoveComponentsMessage, entityID))
@@ -1868,8 +1873,8 @@ void SyncManager::HandleCreateAttributes(kNet::MessageConnection* source, const 
     AttributeChange::Type change = isServer ? AttributeChange::Replicate : AttributeChange::LocalOnly;
     
     kNet::DataDeserializer ds(data, numBytes);
-    if (ds.ReadString() != sceneUUID)
-        return; // message from unidentified server.
+    unsigned sceneID = ds.ReadVLE<kNet::VLE8_16_32>(); ///\todo Dummy ID. Lookup scene once multiscene is properly supported
+    UNREFERENCED_PARAM(sceneID)
     entity_id_t entityID = ds.ReadVLE<kNet::VLE8_16_32>();
     
     if (!ValidateAction(source, cCreateAttributesMessage, entityID))
@@ -1923,7 +1928,7 @@ void SyncManager::HandleCreateAttributes(kNet::MessageConnection* source, const 
         try
         {
             attr->FromBinary(ds, AttributeChange::Disconnected);
-        } catch (kNet::NetException &e)
+        } catch (kNet::NetException &/*e*/)
         {
             LogError("Failed to deserialize the creation of a new attribute from the peer!");
             comp->RemoveAttribute(attrIndex, AttributeChange::Disconnected);
@@ -1962,8 +1967,8 @@ void SyncManager::HandleRemoveAttributes(kNet::MessageConnection* source, const 
     AttributeChange::Type change = isServer ? AttributeChange::Replicate : AttributeChange::LocalOnly;
     
     kNet::DataDeserializer ds(data, numBytes);
-    if (ds.ReadString() != sceneUUID)
-        return; // message from unidentified server.
+    unsigned sceneID = ds.ReadVLE<kNet::VLE8_16_32>(); ///\todo Dummy ID. Lookup scene once multiscene is properly supported
+    UNREFERENCED_PARAM(sceneID)
     entity_id_t entityID = ds.ReadVLE<kNet::VLE8_16_32>();
     
     if (!ValidateAction(source, cRemoveAttributesMessage, entityID))
@@ -2016,8 +2021,8 @@ void SyncManager::HandleEditAttributes(kNet::MessageConnection* source, const ch
     AttributeChange::Type change = isServer ? AttributeChange::Replicate : AttributeChange::LocalOnly;
     
     kNet::DataDeserializer ds(data, numBytes);
-    if (ds.ReadString() != sceneUUID)
-        return; // message from unidentified server.
+    unsigned sceneID = ds.ReadVLE<kNet::VLE8_16_32>(); ///\todo Dummy ID. Lookup scene once multiscene is properly supported
+    UNREFERENCED_PARAM(sceneID)
     entity_id_t entityID = ds.ReadVLE<kNet::VLE8_16_32>();
     
     if (!ValidateAction(source, cRemoveAttributesMessage, entityID))
@@ -2158,8 +2163,8 @@ void SyncManager::HandleCreateEntityReply(kNet::MessageConnection* source, const
     }
     
     kNet::DataDeserializer ds(data, numBytes);
-    if (ds.ReadString() != sceneUUID)
-        return; // message from unidentified server.
+    unsigned sceneID = ds.ReadVLE<kNet::VLE8_16_32>(); ///\todo Dummy ID. Lookup scene once multiscene is properly supported
+    UNREFERENCED_PARAM(sceneID)
     entity_id_t senderEntityID = ds.ReadVLE<kNet::VLE8_16_32>() | UniqueIdGenerator::FIRST_UNACKED_ID;
     entity_id_t entityID = ds.ReadVLE<kNet::VLE8_16_32>();
     scene->ChangeEntityId(senderEntityID, entityID);
@@ -2226,8 +2231,8 @@ void SyncManager::HandleCreateComponentsReply(kNet::MessageConnection* source, c
     }
     
     kNet::DataDeserializer ds(data, numBytes);
-    if (ds.ReadString() != sceneUUID)
-        return; // message from unidentified server.
+    unsigned sceneID = ds.ReadVLE<kNet::VLE8_16_32>(); ///\todo Dummy ID. Lookup scene once multiscene is properly supported
+    UNREFERENCED_PARAM(sceneID)
     entity_id_t entityID = ds.ReadVLE<kNet::VLE8_16_32>();
     state->RemoveFromQueue(entityID); // Make sure we don't have stale pointers in the dirty queue
     EntitySyncState& entityState = state->entities[entityID];

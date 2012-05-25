@@ -21,12 +21,9 @@ function ObjectCapture()
     module.previewFrameUpdated.connect(updateScreen);
     module.objectCaptured.connect(displayObject);
 
-    var or = new Quat(1,0,0,0);
-    or.Normalize();
-    var po = new float3(0,0,0);
-    var scale = new float3(10,10,10);
-
-    module.setLiveCloudPosition(or, po, scale);
+    module.setLiveCloudPosition(Quat(1,0,0,0), float3(0,10,0), float3(10,10,10));
+    module.setGlobalModelPosition(Quat(1,0,0,0), float3(40,10,0), float3(10,10,10));
+    module.setFinalMeshPosition(Quat(1,0,0,0), float3(80,10,0), float3(10,10,10));
     
     var me = scene.GetEntityByName("ObjectCaptureApplication");
     var inputmapper = me.GetOrCreateComponent("EC_InputMapper", 2, false);

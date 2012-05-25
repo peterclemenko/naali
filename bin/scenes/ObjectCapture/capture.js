@@ -1,8 +1,6 @@
 engine.ImportExtension("qt.core");
 engine.ImportExtension("qt.gui");
 
-var objectFinished = false;
-
 if(!server.IsRunning()) {
     ObjectCapture();
 }
@@ -12,18 +10,10 @@ function ObjectCapture()
     print("\nStarting object capture script");
     var module = framework.GetModuleByName("ObjectCapture");
     module.startCapturing();
-    
-    var screenEntity = scene.GetEntityByName("screen");
-    var component = screenEntity.GetComponent("EC_WidgetCanvas");
-    component.SetSubmesh(1);
-    component.SetRefreshRate(30);
-    
-    module.previewFrameUpdated.connect(updateScreen);
-    module.objectCaptured.connect(displayObject);
 
-    module.setLiveCloudPosition(Quat(1,0,0,0), float3(0,10,0), float3(10,10,10));
-    module.setGlobalModelPosition(Quat(1,0,0,0), float3(40,10,0), float3(10,10,10));
-    module.setFinalMeshPosition(Quat(1,0,0,0), float3(80,10,0), float3(10,10,10));
+    module.setLiveCloudPosition(Quat(1,0,0,0), float3(0,0,-30), float3(10,10,10));
+    module.setGlobalModelPosition(Quat(1,0,0,0), float3(20,0,-30), float3(10,10,10));
+    module.setFinalMeshPosition(Quat(1,0,0,0), float3(-20,0,-30), float3(10,10,10));
     
     var me = scene.GetEntityByName("ObjectCaptureApplication");
     var inputmapper = me.GetOrCreateComponent("EC_InputMapper", 2, false);
@@ -74,14 +64,6 @@ function ObjectCapture()
     me.Action("stopCapturing").Triggered.connect(stopCapturing);
 }
 
-function updateScreen(image)
-{   
-    var screenEntity = scene.GetEntityByName("screen");
-    var component = screenEntity.GetComponent("EC_WidgetCanvas");
-    
-    component.Update(image);
-}
-
 function startCapturing()
 {
     print("Starting capture interface.");
@@ -108,9 +90,4 @@ function finalizeCloud()
     print("Finalizing cloud.");
     var module = framework.GetModuleByName("ObjectCapture");
     module.finalizeCapturing();
-}
-
-function displayObject()
-{
-    objectFinished = true;
 }

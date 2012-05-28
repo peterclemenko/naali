@@ -11,6 +11,7 @@ function ObjectCapture()
     var module = framework.GetModuleByName("ObjectCapture");
     module.startCapturing();
 
+    //Set default positions
     module.setLiveCloudPosition(Quat(1,0,0,0), float3(0,0,-30), float3(10,10,10));
     module.setGlobalModelPosition(Quat(1,0,0,0), float3(20,0,-30), float3(10,10,10));
     module.setFinalMeshPosition(Quat(1,0,0,0), float3(-20,0,-30), float3(10,10,10));
@@ -26,6 +27,7 @@ function ObjectCapture()
     inputmapper.executionType = 1;
 
     inputmapper.RegisterMapping("Y", "Capture", 1); // 1 = keypress
+    inputmapper.RegisterMapping("T", "rewindCloud", 1);
     inputmapper.RegisterMapping("U", "Finalize", 1);
     inputmapper.RegisterMapping("I", "startCapturing", 1);
     inputmapper.RegisterMapping("O", "stopCapturing", 1);
@@ -36,11 +38,13 @@ function ObjectCapture()
     var layout = new QHBoxLayout(dialog);
 
     var buttonCapture = new QPushButton("Capture");
+    var buttonRewind = new QPushButton("Rewind");
     var buttonFinalize = new QPushButton("Finalize");
     var buttonStart = new QPushButton("Start Capturing");
     var buttonStop = new QPushButton("Stop Capturing");
 
     layout.addWidget(buttonCapture, 0, Qt.AlignLeft);
+    layout.addWidget(buttonRewind, 0, Qt.AlignLeft);
     layout.addWidget(buttonFinalize, 0, Qt.AlignLeft);
     layout.addWidget(buttonStart, 0, Qt.AlignLeft);
     layout.addWidget(buttonStop, 0, Qt.AlignLeft);
@@ -54,6 +58,7 @@ function ObjectCapture()
     proxy.visible = true;
 
     buttonCapture.clicked.connect(captureCloud);
+    buttonRewind.clicked.connect(rewindCloud);
     buttonFinalize.clicked.connect(finalizeCloud);
     buttonStart.clicked.connect(startCapturing);
     buttonStop.clicked.connect(stopCapturing);
@@ -83,6 +88,13 @@ function captureCloud()
     print("Captured cloud.");
     var module = framework.GetModuleByName("ObjectCapture");
     module.captureCloud();
+}
+
+function rewindCloud()
+{
+    print("Cloud rewinded.");
+    var module = framework.GetModuleByName("ObjectCapture");
+    module.rewindCloud();
 }
 
 function finalizeCloud()

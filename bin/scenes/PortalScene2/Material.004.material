@@ -29,7 +29,7 @@ material Material.004
             transparent_sorting on
             texture_unit 
             {
-                texture normal_brick_wall_bump_texture_map.jpg
+                texture brick.jpg
                 tex_address_mode wrap
                 scale 1.0 1.0
                 colour_op modulate

@@ -29,7 +29,7 @@ material Material.001
             transparent_sorting on
             texture_unit 
             {
-                texture tileable_wood_texture_by_ftIsis_Stock.jpg
+                texture wood.jpg
                 tex_address_mode wrap
                 scale 1.0 1.0
                 colour_op modulate

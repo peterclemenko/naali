@@ -1776,8 +1776,10 @@ void SyncManager::HandleRemoveEntity(kNet::MessageConnection* source, const char
     AttributeChange::Type change = isServer ? AttributeChange::Replicate : AttributeChange::LocalOnly;
     
     kNet::DataDeserializer ds(data, numBytes);
-    unsigned sceneID = ds.ReadVLE<kNet::VLE8_16_32>(); ///\todo Dummy ID. Lookup scene once multiscene is properly supported
-    UNREFERENCED_PARAM(sceneID)
+    if (ds.ReadString() != sceneUUID)
+        return; // message from unidentified server.
+    //unsigned sceneID = ds.ReadVLE<kNet::VLE8_16_32>(); ///\todo Dummy ID. Lookup scene once multiscene is properly supported
+    //UNREFERENCED_PARAM(sceneID)
     entity_id_t entityID = ds.ReadVLE<kNet::VLE8_16_32>();
     
     if (!ValidateAction(source, cRemoveEntityMessage, entityID))
@@ -1818,8 +1820,10 @@ void SyncManager::HandleRemoveComponents(kNet::MessageConnection* source, const 
     AttributeChange::Type change = isServer ? AttributeChange::Replicate : AttributeChange::LocalOnly;
     
     kNet::DataDeserializer ds(data, numBytes);
-    unsigned sceneID = ds.ReadVLE<kNet::VLE8_16_32>(); ///\todo Dummy ID. Lookup scene once multiscene is properly supported
-    UNREFERENCED_PARAM(sceneID)
+    if (ds.ReadString() != sceneUUID)
+        return; // message from unidentified server.
+//    unsigned sceneID = ds.ReadVLE<kNet::VLE8_16_32>(); ///\todo Dummy ID. Lookup scene once multiscene is properly supported
+//    UNREFERENCED_PARAM(sceneID)
     entity_id_t entityID = ds.ReadVLE<kNet::VLE8_16_32>();
     
     if (!ValidateAction(source, cRemoveComponentsMessage, entityID))
@@ -1873,8 +1877,10 @@ void SyncManager::HandleCreateAttributes(kNet::MessageConnection* source, const 
     AttributeChange::Type change = isServer ? AttributeChange::Replicate : AttributeChange::LocalOnly;
     
     kNet::DataDeserializer ds(data, numBytes);
-    unsigned sceneID = ds.ReadVLE<kNet::VLE8_16_32>(); ///\todo Dummy ID. Lookup scene once multiscene is properly supported
-    UNREFERENCED_PARAM(sceneID)
+    if (ds.ReadString() != sceneUUID)
+        return; // message from unidentified server.
+//    unsigned sceneID = ds.ReadVLE<kNet::VLE8_16_32>(); ///\todo Dummy ID. Lookup scene once multiscene is properly supported
+//    UNREFERENCED_PARAM(sceneID)
     entity_id_t entityID = ds.ReadVLE<kNet::VLE8_16_32>();
     
     if (!ValidateAction(source, cCreateAttributesMessage, entityID))
@@ -1967,8 +1973,10 @@ void SyncManager::HandleRemoveAttributes(kNet::MessageConnection* source, const 
     AttributeChange::Type change = isServer ? AttributeChange::Replicate : AttributeChange::LocalOnly;
     
     kNet::DataDeserializer ds(data, numBytes);
-    unsigned sceneID = ds.ReadVLE<kNet::VLE8_16_32>(); ///\todo Dummy ID. Lookup scene once multiscene is properly supported
-    UNREFERENCED_PARAM(sceneID)
+    if (ds.ReadString() != sceneUUID)
+        return; // message from unidentified server.
+//    unsigned sceneID = ds.ReadVLE<kNet::VLE8_16_32>(); ///\todo Dummy ID. Lookup scene once multiscene is properly supported
+//    UNREFERENCED_PARAM(sceneID)
     entity_id_t entityID = ds.ReadVLE<kNet::VLE8_16_32>();
     
     if (!ValidateAction(source, cRemoveAttributesMessage, entityID))
@@ -2021,8 +2029,10 @@ void SyncManager::HandleEditAttributes(kNet::MessageConnection* source, const ch
     AttributeChange::Type change = isServer ? AttributeChange::Replicate : AttributeChange::LocalOnly;
     
     kNet::DataDeserializer ds(data, numBytes);
-    unsigned sceneID = ds.ReadVLE<kNet::VLE8_16_32>(); ///\todo Dummy ID. Lookup scene once multiscene is properly supported
-    UNREFERENCED_PARAM(sceneID)
+    if (ds.ReadString() != sceneUUID)
+        return; // message from unidentified server.
+//    unsigned sceneID = ds.ReadVLE<kNet::VLE8_16_32>(); ///\todo Dummy ID. Lookup scene once multiscene is properly supported
+//    UNREFERENCED_PARAM(sceneID)
     entity_id_t entityID = ds.ReadVLE<kNet::VLE8_16_32>();
     
     if (!ValidateAction(source, cRemoveAttributesMessage, entityID))
@@ -2163,8 +2173,10 @@ void SyncManager::HandleCreateEntityReply(kNet::MessageConnection* source, const
     }
     
     kNet::DataDeserializer ds(data, numBytes);
-    unsigned sceneID = ds.ReadVLE<kNet::VLE8_16_32>(); ///\todo Dummy ID. Lookup scene once multiscene is properly supported
-    UNREFERENCED_PARAM(sceneID)
+    if (ds.ReadString() != sceneUUID)
+        return; // message from unidentified server.
+//    unsigned sceneID = ds.ReadVLE<kNet::VLE8_16_32>(); ///\todo Dummy ID. Lookup scene once multiscene is properly supported
+//    UNREFERENCED_PARAM(sceneID)
     entity_id_t senderEntityID = ds.ReadVLE<kNet::VLE8_16_32>() | UniqueIdGenerator::FIRST_UNACKED_ID;
     entity_id_t entityID = ds.ReadVLE<kNet::VLE8_16_32>();
     scene->ChangeEntityId(senderEntityID, entityID);
@@ -2231,8 +2243,10 @@ void SyncManager::HandleCreateComponentsReply(kNet::MessageConnection* source, c
     }
     
     kNet::DataDeserializer ds(data, numBytes);
-    unsigned sceneID = ds.ReadVLE<kNet::VLE8_16_32>(); ///\todo Dummy ID. Lookup scene once multiscene is properly supported
-    UNREFERENCED_PARAM(sceneID)
+    if (ds.ReadString() != sceneUUID)
+        return; // message from unidentified server.
+//    unsigned sceneID = ds.ReadVLE<kNet::VLE8_16_32>(); ///\todo Dummy ID. Lookup scene once multiscene is properly supported
+//    UNREFERENCED_PARAM(sceneID)
     entity_id_t entityID = ds.ReadVLE<kNet::VLE8_16_32>();
     state->RemoveFromQueue(entityID); // Make sure we don't have stale pointers in the dirty queue
     EntitySyncState& entityState = state->entities[entityID];

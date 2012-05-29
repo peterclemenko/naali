@@ -5510,7 +5510,7 @@
                 <face v1="1013" v2="1015" v3="1016"/>
             </faces>
         </submesh>
-        <submesh usesharedvertices="true" material="Ovi" use32bitindexes="False">
+        <submesh usesharedvertices="true" material="Ovi2" use32bitindexes="False">
             <faces count="112">
                 <face v1="48" v2="49" v3="50"/>
                 <face v1="48" v2="50" v3="51"/>
@@ -5632,7 +5632,7 @@
         </submesh>
         <submesh index="1" name="RipaSarana">
         </submesh>
-        <submesh index="2" name="Ovi">
+        <submesh index="2" name="Ovi2">
         </submesh>
     </submeshnames>
 </mesh>

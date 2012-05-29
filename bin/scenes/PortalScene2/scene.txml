@@ -1,20 +1,20 @@
 <!DOCTYPE Scene>
 <scene>
- <entity id="1" sync="1">
-  <component type="EC_Name" sync="true">
-   <attribute value="FreeLookCameraSpawnPos" name="name"/>
-   <attribute value="" name="description"/>
-  </component>
-  <component type="EC_Placeable" sync="true">
-   <attribute value="-0.430000,13.950000,-17.389999,-37.599998,180.899994,0.000000,1.000000,1.000000,1.000000" name="Transform"/>
-   <attribute value="false" name="Show bounding box"/>
-   <attribute value="true" name="Visible"/>
-   <attribute value="1" name="Selection layer"/>
-   <attribute value="" name="Parent entity ref"/>
-   <attribute value="" name="Parent bone name"/>
-  </component>
+ <entity id="114" sync="1">
+ <component type="EC_Name" sync="1">
+  <attribute value="FreeLookCameraSpawnPos" name="name"/>
+  <attribute value="" name="description"/>
+ </component>
+ <component type="EC_Placeable" sync="1">
+  <attribute value="1" name="Selection layer"/>
+  <attribute value="" name="Parent bone name"/>
+  <attribute value="0,9.59,-19.06,-22.80,-178.80,0,1,1,1" name="Transform"/>
+  <attribute value="false" name="Show bounding box"/>
+  <attribute value="true" name="Visible"/>
+  <attribute value="" name="Parent entity ref"/>
+ </component>
  </entity>
- <entity id="2" sync="1">
+ <entity id="1" sync="1">
   <component type="EC_Script" sync="true">
    <attribute value="avatarmenu.js" name="Script ref"/>
    <attribute value="true" name="Run on load"/>
@@ -27,7 +27,7 @@
    <attribute value="" name="description"/>
   </component>
  </entity>
- <entity id="3" sync="1">
+ <entity id="2" sync="1">
   <component type="EC_Script" sync="true">
    <attribute value="avatarapplication.js;simpleavatar.js;exampleavataraddon.js" name="Script ref"/>
    <attribute value="true" name="Run on load"/>
@@ -52,7 +52,7 @@
    <attribute value="false" name="Suppress used mouse events"/>
   </component>
  </entity>
- <entity id="4" sync="1">
+ <entity id="3" sync="1">
   <component type="EC_Name" sync="true">
    <attribute value="Wall2" name="name"/>
    <attribute value="" name="description"/>
@@ -94,7 +94,7 @@
    <attribute value="-1" name="Collision Mask"/>
   </component>
  </entity>
- <entity id="5" sync="1">
+ <entity id="4" sync="1">
   <component type="EC_Name" sync="true">
    <attribute value="Wall3" name="name"/>
    <attribute value="" name="description"/>
@@ -136,7 +136,7 @@
    <attribute value="-1" name="Collision Mask"/>
   </component>
  </entity>
- <entity id="6" sync="1">
+ <entity id="5" sync="1">
   <component type="EC_Name" sync="true">
    <attribute value="Wall1" name="name"/>
    <attribute value="" name="description"/>
@@ -178,6 +178,33 @@
    <attribute value="-1" name="Collision Mask"/>
   </component>
  </entity>
+ <entity id="6" sync="1">
+  <component type="EC_Name" sync="true">
+   <attribute value="Lamp" name="name"/>
+   <attribute value="" name="description"/>
+  </component>
+  <component type="EC_Placeable" sync="true">
+   <attribute value="2.234855,26.809216,-1.005454,127.261047,106.936317,-3.163707,1.000000,1.000000,1.000000" name="Transform"/>
+   <attribute value="true" name="Show bounding box"/>
+   <attribute value="true" name="Visible"/>
+   <attribute value="1" name="Selection layer"/>
+   <attribute value="" name="Parent entity ref"/>
+   <attribute value="" name="Parent bone name"/>
+  </component>
+  <component type="EC_Light" sync="true">
+   <attribute value="0" name="light type"/>
+   <attribute value="1.000000 1.000000 1.000000 1.000000" name="diffuse color"/>
+   <attribute value="1.000000 1.000000 1.000000 1.000000" name="specular color"/>
+   <attribute value="false" name="cast shadows"/>
+   <attribute value="59.9999657" name="light range"/>
+   <attribute value="1" name="brightness"/>
+   <attribute value="0" name="constant atten"/>
+   <attribute value="0.25" name="linear atten"/>
+   <attribute value="0" name="quadratic atten"/>
+   <attribute value="30" name="light inner angle"/>
+   <attribute value="40" name="light outer angle"/>
+  </component>
+ </entity>
  <entity id="7" sync="1">
   <component type="EC_Name" sync="true">
    <attribute value="Plane" name="name"/>
@@ -202,7 +229,7 @@
   <component type="EC_RigidBody" sync="true">
    <attribute value="0" name="Mass"/>
    <attribute value="0" name="Shape type"/>
-   <attribute value="2.100000 0.000000 2.100000" name="Size"/>
+   <attribute value="2.000000 0.000000 2.000000" name="Size"/>
    <attribute value="" name="Collision mesh ref"/>
    <attribute value="0.5" name="Friction"/>
    <attribute value="0" name="Restitution"/>
@@ -226,7 +253,7 @@
    <attribute value="" name="description"/>
   </component>
   <component type="EC_Placeable" sync="true">
-   <attribute value="-6.067636,0.000000,6.890000,0.000000,0.000000,0.000000,0.507640,1.534940,0.076747" name="Transform"/>
+   <attribute value="-6.067636,0.000000,6.860000,0.000000,0.000000,0.000000,0.507640,1.534940,0.076747" name="Transform"/>
    <attribute value="false" name="Show bounding box"/>
    <attribute value="true" name="Visible"/>
    <attribute value="1" name="Selection layer"/>
@@ -237,29 +264,14 @@
    <attribute value="0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,1.000000,1.000000,1.000000" name="Transform"/>
    <attribute value="local://Cube.007.mesh" name="Mesh ref"/>
    <attribute value="" name="Skeleton ref"/>
-   <attribute value="local://KarmiMateriaali.material;local://RipaSarana.material;local://Ovi.material" name="Mesh materials"/>
+   <attribute value="local://KarmiMateriaali.material;local://RipaSarana.material;local://Ovi6.material" name="Mesh materials"/>
    <attribute value="0" name="Draw distance"/>
    <attribute value="false" name="Cast shadows"/>
   </component>
-  <component type="EC_RigidBody" sync="true">
-   <attribute value="0" name="Mass"/>
-   <attribute value="6" name="Shape type"/>
-   <attribute value="1.000000 1.000000 1.000000" name="Size"/>
-   <attribute value="" name="Collision mesh ref"/>
-   <attribute value="0.5" name="Friction"/>
-   <attribute value="0" name="Restitution"/>
-   <attribute value="0" name="Linear damping"/>
-   <attribute value="0" name="Angular damping"/>
-   <attribute value="1.000000 1.000000 1.000000" name="Linear factor"/>
-   <attribute value="1.000000 1.000000 1.000000" name="Angular factor"/>
-   <attribute value="true" name="Gravity enabled"/>
-   <attribute value="false" name="Kinematic"/>
-   <attribute value="false" name="Phantom"/>
-   <attribute value="false" name="Draw Debug"/>
-   <attribute value="0.000000 0.000000 0.000000" name="Linear velocity"/>
-   <attribute value="0.000000 0.000000 0.000000" name="Angular velocity"/>
-   <attribute value="-1" name="Collision Layer"/>
-   <attribute value="-1" name="Collision Mask"/>
+  <component type="EC_Portal" sync="true">
+   <attribute value="localhost" name="Address:"/>
+   <attribute value="2348" name="Port:"/>
+   <attribute value="udp" name="Protocol:"/>
   </component>
  </entity>
  <entity id="9" sync="1">
@@ -268,7 +280,7 @@
    <attribute value="" name="description"/>
   </component>
   <component type="EC_Placeable" sync="true">
-   <attribute value="-3.636688,0.000000,6.890000,0.000000,0.000000,0.000000,0.507640,1.534940,0.076747" name="Transform"/>
+   <attribute value="-3.636688,0.000000,6.860000,0.000000,0.000000,0.000000,0.507640,1.534940,0.076747" name="Transform"/>
    <attribute value="false" name="Show bounding box"/>
    <attribute value="true" name="Visible"/>
    <attribute value="1" name="Selection layer"/>
@@ -279,29 +291,14 @@
    <attribute value="0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,1.000000,1.000000,1.000000" name="Transform"/>
    <attribute value="local://Cube.006.mesh" name="Mesh ref"/>
    <attribute value="" name="Skeleton ref"/>
-   <attribute value="local://KarmiMateriaali.material;local://RipaSarana.material;local://Ovi.material" name="Mesh materials"/>
+   <attribute value="local://KarmiMateriaali.material;local://RipaSarana.material;local://Ovi5.material" name="Mesh materials"/>
    <attribute value="0" name="Draw distance"/>
    <attribute value="false" name="Cast shadows"/>
   </component>
-  <component type="EC_RigidBody" sync="true">
-   <attribute value="0" name="Mass"/>
-   <attribute value="6" name="Shape type"/>
-   <attribute value="1.000000 1.000000 1.000000" name="Size"/>
-   <attribute value="" name="Collision mesh ref"/>
-   <attribute value="0.5" name="Friction"/>
-   <attribute value="0" name="Restitution"/>
-   <attribute value="0" name="Linear damping"/>
-   <attribute value="0" name="Angular damping"/>
-   <attribute value="1.000000 1.000000 1.000000" name="Linear factor"/>
-   <attribute value="1.000000 1.000000 1.000000" name="Angular factor"/>
-   <attribute value="true" name="Gravity enabled"/>
-   <attribute value="false" name="Kinematic"/>
-   <attribute value="false" name="Phantom"/>
-   <attribute value="false" name="Draw Debug"/>
-   <attribute value="0.000000 0.000000 0.000000" name="Linear velocity"/>
-   <attribute value="0.000000 0.000000 0.000000" name="Angular velocity"/>
-   <attribute value="-1" name="Collision Layer"/>
-   <attribute value="-1" name="Collision Mask"/>
+  <component type="EC_Portal" sync="true">
+   <attribute value="localhost" name="Address:"/>
+   <attribute value="2347" name="Port:"/>
+   <attribute value="udp" name="Protocol:"/>
   </component>
  </entity>
  <entity id="10" sync="1">
@@ -310,7 +307,7 @@
    <attribute value="" name="description"/>
   </component>
   <component type="EC_Placeable" sync="true">
-   <attribute value="5.952147,0.000000,6.888469,0.000000,0.000000,0.000000,0.507640,1.534940,0.076747" name="Transform"/>
+   <attribute value="5.952147,0.000000,6.860000,0.000000,0.000000,0.000000,0.507640,1.534940,0.076747" name="Transform"/>
    <attribute value="false" name="Show bounding box"/>
    <attribute value="true" name="Visible"/>
    <attribute value="1" name="Selection layer"/>
@@ -321,33 +318,13 @@
    <attribute value="0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,1.000000,1.000000,1.000000" name="Transform"/>
    <attribute value="local://Cube.002.mesh" name="Mesh ref"/>
    <attribute value="" name="Skeleton ref"/>
-   <attribute value="local://KarmiMateriaali.material;local://RipaSarana.material;local://Ovi.material" name="Mesh materials"/>
+   <attribute value="local://KarmiMateriaali.material;local://RipaSarana.material;local://Ovi1.material" name="Mesh materials"/>
    <attribute value="0" name="Draw distance"/>
    <attribute value="false" name="Cast shadows"/>
   </component>
-  <component type="EC_RigidBody" sync="true">
-   <attribute value="0" name="Mass"/>
-   <attribute value="6" name="Shape type"/>
-   <attribute value="1.000000 1.000000 1.000000" name="Size"/>
-   <attribute value="" name="Collision mesh ref"/>
-   <attribute value="0.5" name="Friction"/>
-   <attribute value="0" name="Restitution"/>
-   <attribute value="0" name="Linear damping"/>
-   <attribute value="0" name="Angular damping"/>
-   <attribute value="1.000000 1.000000 1.000000" name="Linear factor"/>
-   <attribute value="1.000000 1.000000 1.000000" name="Angular factor"/>
-   <attribute value="true" name="Gravity enabled"/>
-   <attribute value="false" name="Kinematic"/>
-   <attribute value="false" name="Phantom"/>
-   <attribute value="false" name="Draw Debug"/>
-   <attribute value="0.000000 0.000000 0.000000" name="Linear velocity"/>
-   <attribute value="0.000000 0.000000 0.000000" name="Angular velocity"/>
-   <attribute value="-1" name="Collision Layer"/>
-   <attribute value="-1" name="Collision Mask"/>
-  </component>
   <component type="EC_Portal" sync="true">
-   <attribute value="localhost" name="Address:"/>
-   <attribute value="1234" name="Port:"/>
+   <attribute value="chiru.cie.fi" name="Address:"/>
+   <attribute value="3456" name="Port:"/>
    <attribute value="udp" name="Protocol:"/>
   </component>
  </entity>
@@ -357,7 +334,7 @@
    <attribute value="" name="description"/>
   </component>
   <component type="EC_Placeable" sync="true">
-   <attribute value="3.547812,0.000000,6.890000,0.000000,0.000000,0.000000,0.507640,1.534940,0.076747" name="Transform"/>
+   <attribute value="3.547812,0.000000,6.860000,0.000000,0.000000,0.000000,0.507640,1.534940,0.076747" name="Transform"/>
    <attribute value="false" name="Show bounding box"/>
    <attribute value="true" name="Visible"/>
    <attribute value="1" name="Selection layer"/>
@@ -368,29 +345,14 @@
    <attribute value="0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,1.000000,1.000000,1.000000" name="Transform"/>
    <attribute value="local://Cube.mesh" name="Mesh ref"/>
    <attribute value="" name="Skeleton ref"/>
-   <attribute value="local://KarmiMateriaali.material;local://RipaSarana.material;local://Ovi.material" name="Mesh materials"/>
+   <attribute value="local://KarmiMateriaali.material;local://RipaSarana.material;local://Ovi2.material" name="Mesh materials"/>
    <attribute value="0" name="Draw distance"/>
    <attribute value="false" name="Cast shadows"/>
   </component>
-  <component type="EC_RigidBody" sync="true">
-   <attribute value="0" name="Mass"/>
-   <attribute value="6" name="Shape type"/>
-   <attribute value="1.000000 1.000000 1.000000" name="Size"/>
-   <attribute value="" name="Collision mesh ref"/>
-   <attribute value="0.5" name="Friction"/>
-   <attribute value="0" name="Restitution"/>
-   <attribute value="0" name="Linear damping"/>
-   <attribute value="0" name="Angular damping"/>
-   <attribute value="1.000000 1.000000 1.000000" name="Linear factor"/>
-   <attribute value="1.000000 1.000000 1.000000" name="Angular factor"/>
-   <attribute value="true" name="Gravity enabled"/>
-   <attribute value="false" name="Kinematic"/>
-   <attribute value="false" name="Phantom"/>
-   <attribute value="false" name="Draw Debug"/>
-   <attribute value="0.000000 0.000000 0.000000" name="Linear velocity"/>
-   <attribute value="0.000000 0.000000 0.000000" name="Angular velocity"/>
-   <attribute value="-1" name="Collision Layer"/>
-   <attribute value="-1" name="Collision Mask"/>
+  <component type="EC_Portal" sync="true">
+   <attribute value="chiru.cie.fi" name="Address:"/>
+   <attribute value="3457" name="Port:"/>
+   <attribute value="udp" name="Protocol:"/>
   </component>
  </entity>
  <entity id="12" sync="1">
@@ -399,7 +361,7 @@
    <attribute value="" name="description"/>
   </component>
   <component type="EC_Placeable" sync="true">
-   <attribute value="1.079696,0.000000,6.890000,0.000000,0.000000,0.000000,0.507640,1.534940,0.076747" name="Transform"/>
+   <attribute value="1.079696,0.000000,6.860000,0.000000,0.000000,0.000000,0.507640,1.534940,0.076747" name="Transform"/>
    <attribute value="false" name="Show bounding box"/>
    <attribute value="true" name="Visible"/>
    <attribute value="1" name="Selection layer"/>
@@ -410,29 +372,14 @@
    <attribute value="0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,1.000000,1.000000,1.000000" name="Transform"/>
    <attribute value="local://Cube.001.mesh" name="Mesh ref"/>
    <attribute value="" name="Skeleton ref"/>
-   <attribute value="local://KarmiMateriaali.material;local://RipaSarana.material;local://Ovi.material" name="Mesh materials"/>
+   <attribute value="local://KarmiMateriaali.material;local://RipaSarana.material;local://Ovi3.material" name="Mesh materials"/>
    <attribute value="0" name="Draw distance"/>
    <attribute value="false" name="Cast shadows"/>
   </component>
-  <component type="EC_RigidBody" sync="true">
-   <attribute value="0" name="Mass"/>
-   <attribute value="6" name="Shape type"/>
-   <attribute value="1.000000 1.000000 1.000000" name="Size"/>
-   <attribute value="" name="Collision mesh ref"/>
-   <attribute value="0.5" name="Friction"/>
-   <attribute value="0" name="Restitution"/>
-   <attribute value="0" name="Linear damping"/>
-   <attribute value="0" name="Angular damping"/>
-   <attribute value="1.000000 1.000000 1.000000" name="Linear factor"/>
-   <attribute value="1.000000 1.000000 1.000000" name="Angular factor"/>
-   <attribute value="true" name="Gravity enabled"/>
-   <attribute value="false" name="Kinematic"/>
-   <attribute value="false" name="Phantom"/>
-   <attribute value="false" name="Draw Debug"/>
-   <attribute value="0.000000 0.000000 0.000000" name="Linear velocity"/>
-   <attribute value="0.000000 0.000000 0.000000" name="Angular velocity"/>
-   <attribute value="-1" name="Collision Layer"/>
-   <attribute value="-1" name="Collision Mask"/>
+  <component type="EC_Portal" sync="true">
+   <attribute value="chiru.cie.fi" name="Address:"/>
+   <attribute value="3458" name="Port:"/>
+   <attribute value="udp" name="Protocol:"/>
   </component>
  </entity>
  <entity id="13" sync="1">
@@ -441,7 +388,7 @@
    <attribute value="" name="description"/>
   </component>
   <component type="EC_Placeable" sync="true">
-   <attribute value="-1.351253,0.000000,6.890000,0.000000,0.000000,0.000000,0.507640,1.534940,0.076747" name="Transform"/>
+   <attribute value="-1.351253,0.000000,6.860000,0.000000,0.000000,0.000000,0.507640,1.534940,0.076747" name="Transform"/>
    <attribute value="false" name="Show bounding box"/>
    <attribute value="true" name="Visible"/>
    <attribute value="1" name="Selection layer"/>
@@ -452,33 +399,13 @@
    <attribute value="0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,1.000000,1.000000,1.000000" name="Transform"/>
    <attribute value="local://Cube.003.mesh" name="Mesh ref"/>
    <attribute value="" name="Skeleton ref"/>
-   <attribute value="local://KarmiMateriaali.material;local://RipaSarana.material;local://Ovi.material" name="Mesh materials"/>
+   <attribute value="local://KarmiMateriaali.material;local://RipaSarana.material;local://Ovi4.material" name="Mesh materials"/>
    <attribute value="0" name="Draw distance"/>
    <attribute value="false" name="Cast shadows"/>
   </component>
-  <component type="EC_RigidBody" sync="true">
-   <attribute value="0" name="Mass"/>
-   <attribute value="6" name="Shape type"/>
-   <attribute value="1.000000 1.000000 1.000000" name="Size"/>
-   <attribute value="" name="Collision mesh ref"/>
-   <attribute value="0.5" name="Friction"/>
-   <attribute value="0" name="Restitution"/>
-   <attribute value="0" name="Linear damping"/>
-   <attribute value="0" name="Angular damping"/>
-   <attribute value="1.000000 1.000000 1.000000" name="Linear factor"/>
-   <attribute value="1.000000 1.000000 1.000000" name="Angular factor"/>
-   <attribute value="true" name="Gravity enabled"/>
-   <attribute value="false" name="Kinematic"/>
-   <attribute value="false" name="Phantom"/>
-   <attribute value="false" name="Draw Debug"/>
-   <attribute value="0.000000 0.000000 0.000000" name="Linear velocity"/>
-   <attribute value="0.000000 0.000000 0.000000" name="Angular velocity"/>
-   <attribute value="-1" name="Collision Layer"/>
-   <attribute value="-1" name="Collision Mask"/>
-  </component>
   <component type="EC_Portal" sync="true">
-   <attribute value="chiru.cie.fi" name="Address:"/>
-   <attribute value="3456" name="Port:"/>
+   <attribute value="localhost" name="Address:"/>
+   <attribute value="2346" name="Port:"/>
    <attribute value="udp" name="Protocol:"/>
   </component>
  </entity>
@@ -488,7 +415,7 @@
    <attribute value="" name="description"/>
   </component>
   <component type="EC_Placeable" sync="true">
-   <attribute value="-6.502732,0.709144,2.794091,-90.000061,-84.082977,-0.000017,0.709144,0.709144,0.709144" name="Transform"/>
+   <attribute value="0.405085,0.659273,-10.437769,-0.101535,53.138710,-0.123146,0.709144,0.709144,0.709144" name="Transform"/>
    <attribute value="false" name="Show bounding box"/>
    <attribute value="true" name="Visible"/>
    <attribute value="1" name="Selection layer"/>
@@ -518,8 +445,8 @@
    <attribute value="false" name="Kinematic"/>
    <attribute value="false" name="Phantom"/>
    <attribute value="false" name="Draw Debug"/>
-   <attribute value="-0.000000 0.000002 0.000056" name="Linear velocity"/>
-   <attribute value="0.000092 -0.000037 0.000076" name="Angular velocity"/>
+   <attribute value="-0.009028 -0.009964 -0.014803" name="Linear velocity"/>
+   <attribute value="-1.776309 3.263180 -3.580796" name="Angular velocity"/>
    <attribute value="-1" name="Collision Layer"/>
    <attribute value="-1" name="Collision Mask"/>
   </component>
@@ -530,7 +457,7 @@
    <attribute value="" name="description"/>
   </component>
   <component type="EC_Placeable" sync="true">
-   <attribute value="3.645510,0.502960,-5.646724,-0.000010,30.347691,-0.000025,0.502960,0.502960,0.502960" name="Transform"/>
+   <attribute value="5.916702,0.502960,-1.420918,0.000020,-38.758854,0.000035,0.502960,0.502960,0.502960" name="Transform"/>
    <attribute value="false" name="Show bounding box"/>
    <attribute value="true" name="Visible"/>
    <attribute value="1" name="Selection layer"/>
@@ -560,8 +487,8 @@
    <attribute value="false" name="Kinematic"/>
    <attribute value="false" name="Phantom"/>
    <attribute value="false" name="Draw Debug"/>
-   <attribute value="-0.000002 0.000001 -0.000109" name="Linear velocity"/>
-   <attribute value="0.000058 -0.000022 0.000234" name="Angular velocity"/>
+   <attribute value="-0.000003 -0.000001 0.000000" name="Linear velocity"/>
+   <attribute value="0.000709 -0.000834 0.002000" name="Angular velocity"/>
    <attribute value="-1" name="Collision Layer"/>
    <attribute value="-1" name="Collision Mask"/>
   </component>
@@ -572,7 +499,7 @@
    <attribute value="" name="description"/>
   </component>
   <component type="EC_Placeable" sync="true">
-   <attribute value="5.214644,0.611913,1.268900,90.000008,11.868989,0.000066,0.611914,0.611861,0.611914" name="Transform"/>
+   <attribute value="-6.662901,0.611861,1.364268,-0.000012,-29.690916,0.000005,0.611914,0.611861,0.611914" name="Transform"/>
    <attribute value="false" name="Show bounding box"/>
    <attribute value="true" name="Visible"/>
    <attribute value="1" name="Selection layer"/>
@@ -602,73 +529,25 @@
    <attribute value="false" name="Kinematic"/>
    <attribute value="false" name="Phantom"/>
    <attribute value="false" name="Draw Debug"/>
-   <attribute value="0.000018 -0.000001 0.000000" name="Linear velocity"/>
-   <attribute value="0.000036 0.000002 -0.001692" name="Angular velocity"/>
+   <attribute value="-0.000009 0.000000 0.000000" name="Linear velocity"/>
+   <attribute value="-0.000486 -0.000128 -0.001017" name="Angular velocity"/>
    <attribute value="-1" name="Collision Layer"/>
    <attribute value="-1" name="Collision Mask"/>
   </component>
  </entity>
  <entity id="17" sync="1">
   <component type="EC_Name" sync="true">
-   <attribute value="Sky" name="name"/>
-   <attribute value="" name="description"/>
-  </component>
-  <component type="EC_Sky" sync="true">
-   <attribute value="RexSkyBox" name="Material"/>
-   <attribute value="local://rex_sky_front.dds;local://rex_sky_back.dds;local://rex_sky_left.dds;local://rex_sky_right.dds;local://rex_sky_top.dds;local://rex_sky_bot.dds" name="Texture"/>
-   <attribute value="50" name="Distance"/>
-   <attribute value="0.000000 0.000000 0.000000 1.000000" name="Orientation"/>
-   <attribute value="true" name="Draw first"/>
-  </component>
- </entity>
- <entity id="18" sync="1">
-  <component type="EC_Name" sync="true">
-   <attribute value="Light" name="name"/>
-   <attribute value="" name="description"/>
-  </component>
-  <component type="EC_Placeable" sync="true">
-   <attribute value="1.000000,27.473221,-3.008598,0.000000,0.000000,0.000000,1.000000,1.000000,1.000000" name="Transform"/>
-   <attribute value="false" name="Show bounding box"/>
-   <attribute value="true" name="Visible"/>
-   <attribute value="1" name="Selection layer"/>
-   <attribute value="" name="Parent entity ref"/>
-   <attribute value="" name="Parent bone name"/>
-  </component>
-  <component type="EC_Light" sync="true">
-   <attribute value="0" name="light type"/>
-   <attribute value="1.000000 1.000000 1.000000 1.000000" name="diffuse color"/>
-   <attribute value="0.000000 0.000000 0.000000 1.000000" name="specular color"/>
-   <attribute value="true" name="cast shadows"/>
-   <attribute value="25" name="light range"/>
-   <attribute value="4" name="brightness"/>
-   <attribute value="0" name="constant atten"/>
-   <attribute value="0.00999999978" name="linear atten"/>
-   <attribute value="0.00999999978" name="quadratic atten"/>
-   <attribute value="30" name="light inner angle"/>
-   <attribute value="40" name="light outer angle"/>
-  </component>
- </entity>
- <entity id="19" sync="1">
-  <component type="EC_Name" sync="true">
    <attribute value="Terrain" name="name"/>
    <attribute value="" name="description"/>
   </component>
   <component type="EC_Terrain" sync="true">
-   <attribute value="0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,4.000000,4.000000,4.000000" name="Transform"/>
+   <attribute value="-77.000000,19.950001,-56.000000,0.000000,0.000000,0.000000,4.000000,4.000000,4.000000" name="Transform"/>
    <attribute value="2" name="Grid Width"/>
    <attribute value="2" name="Grid Height"/>
    <attribute value="0.129999995" name="Tex. U scale"/>
    <attribute value="0.129999995" name="Tex. V scale"/>
    <attribute value="Ogre Media:RexTerrainPCF.material" name="Material"/>
    <attribute value="local://terrain4.ntf" name="Heightmap"/>
-  </component>
-  <component type="EC_Placeable" sync="true">
-   <attribute value="64.000000,19.990000,-71.000000,0.000000,-90.000000,0.000000,1.000000,1.000000,1.000000" name="Transform"/>
-   <attribute value="true" name="Show bounding box"/>
-   <attribute value="true" name="Visible"/>
-   <attribute value="1" name="Selection layer"/>
-   <attribute value="" name="Parent entity ref"/>
-   <attribute value="" name="Parent bone name"/>
   </component>
   <component type="EC_RigidBody" sync="true">
    <attribute value="0" name="Mass"/>
@@ -691,16 +570,29 @@
    <attribute value="-1" name="Collision Mask"/>
   </component>
  </entity>
- <entity id="20" sync="1">
+ <entity id="18" sync="1">
   <component type="EC_Name" sync="true">
-   <attribute value="Light2" name="name"/>
+   <attribute value="Sky" name="name"/>
+   <attribute value="" name="description"/>
+  </component>
+  <component type="EC_Sky" sync="true">
+   <attribute value="RexSkyBox" name="Material"/>
+   <attribute value="local://rex_sky_front.dds;local://rex_sky_back.dds;local://rex_sky_left.dds;local://rex_sky_right.dds;local://rex_sky_top.dds;local://rex_sky_bot.dds" name="Texture"/>
+   <attribute value="50" name="Distance"/>
+   <attribute value="0.000000 0.000000 0.000000 1.000000" name="Orientation"/>
+   <attribute value="true" name="Draw first"/>
+  </component>
+ </entity>
+ <entity id="19" sync="1">
+  <component type="EC_Name" sync="true">
+   <attribute value="Room light" name="name"/>
    <attribute value="" name="description"/>
   </component>
   <component type="EC_Light" sync="true">
    <attribute value="0" name="light type"/>
    <attribute value="1.000000 1.000000 1.000000 1.000000" name="diffuse color"/>
    <attribute value="0.000000 0.000000 0.000000 1.000000" name="specular color"/>
-   <attribute value="true" name="cast shadows"/>
+   <attribute value="false" name="cast shadows"/>
    <attribute value="12" name="light range"/>
    <attribute value="1" name="brightness"/>
    <attribute value="0" name="constant atten"/>
@@ -710,7 +602,7 @@
    <attribute value="40" name="light outer angle"/>
   </component>
   <component type="EC_Placeable" sync="true">
-   <attribute value="0.000000,5.897141,-4.504084,0.000000,0.000000,0.000000,1.000000,1.000000,1.000000" name="Transform"/>
+   <attribute value="0.000000,6.898244,-2.320281,0.000000,0.000000,0.000000,1.000000,1.000000,1.000000" name="Transform"/>
    <attribute value="false" name="Show bounding box"/>
    <attribute value="true" name="Visible"/>
    <attribute value="1" name="Selection layer"/>

@@ -1,5 +1,18 @@
 <!DOCTYPE Scene>
 <scene>
+<entity id="75" sync="1">
+  <component type="EC_Script" sync="1">
+   <attribute value="objectgrab.js" name="Script ref"/>
+   <attribute value="true" name="Run on load"/>
+   <attribute value="0" name="Run mode"/>
+   <attribute value="ObjectGrabApp" name="Script application name"/>
+   <attribute value="ObjectGrabApp.ObjectGrab" name="Script class name"/>
+  </component>
+  <component type="EC_Name" sync="1">
+   <attribute value="ObjectGrabApp" name="name"/>
+   <attribute value="" name="description"/>
+  </component>
+ </entity>
  <entity id="114" sync="1">
  <component type="EC_Name" sync="1">
   <attribute value="FreeLookCameraSpawnPos" name="name"/>

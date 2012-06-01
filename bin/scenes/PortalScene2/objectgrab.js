@@ -4,6 +4,10 @@ if (!server.IsRunning() && !framework.IsHeadless())
     engine.ImportExtension("qt.gui");
 }
 
+var last_mouse_abs_X = 0;
+var last_mouse_abs_Y = 0;
+var drag_started = false;
+
 function ObjectGrab(entity, comp)
 {
     this.me = entity;
@@ -118,8 +122,9 @@ ObjectGrab.prototype.UpdateSelectionAnimation = function()
 // Should be connected to selected input method
 // Tested to work with mouse, should work with touch but might not work with
 // freehand gestures.
-ObjectGrab.prototype.MoveSelectedObject = function(deltaX, deltaY)
+ObjectGrab.prototype.MoveSelectedObject = function(X, Y)
 {
+    print("X: " + X + ", Y: " + Y);
     var cameraId = GetActiveCameraId();
     if(cameraId == -1)
         return;
@@ -132,8 +137,11 @@ ObjectGrab.prototype.MoveSelectedObject = function(deltaX, deltaY)
     var windowWidth = mainWindow.width;
     var windowHeight = mainWindow.height;
     
-    var movedX = deltaX * (1 / windowWidth);
-    var movedY = deltaY * (1 / windowHeight);
+    var mouse_abs_X = X * (1 / windowWidth);
+    var mouse_abs_Y = Y * (1 / windowHeight);
+
+    var movedX = mouse_abs_X - last_mouse_abs_X;
+    var movedY = mouse_abs_Y - last_mouse_abs_Y;
     
     var fov = cameraEntity.camera.verticalFov;
     var cameraPosition = cameraEntity.placeable.transform.pos;
@@ -143,24 +151,39 @@ ObjectGrab.prototype.MoveSelectedObject = function(deltaX, deltaY)
     
     var width = (Math.tan(fov/2) * distance) * 2;
     var height = (windowHeight*width) / windowWidth;
-    
+
     var moveFactor = windowWidth / windowHeight;
-    
+
     var amountX = width * movedX * moveFactor;
     var amountY = height * movedY * moveFactor;
-    
+
     var newPosition = selectedPosition.Add(cameraEntity.placeable.WorldOrientation().Mul(new float3(amountX, -amountY, 0)));
     
     var oldTransform = selectedEntity.placeable.transform;
     oldTransform.pos = newPosition;
     selectedEntity.placeable.transform = oldTransform;
+
+    last_mouse_abs_X = mouse_abs_X;
+    last_mouse_abs_Y = mouse_abs_Y;
 }
 
 // <MOUSE HANDLERS>
 ObjectGrab.prototype.HandleMouseMove = function(event)
 {
     if (event.IsLeftButtonDown())
-        this.MoveSelectedObject(event.relativeX, event.relativeY);
+    {
+        if (!drag_started)
+        {
+            var mainWindow = ui.MainWindow();
+            var windowWidth = mainWindow.width;
+            var windowHeight = mainWindow.height;
+            last_mouse_abs_X = event.x * (1 / windowWidth);
+            last_mouse_abs_Y = event.y * (1 / windowHeight);
+            drag_started = true;
+        }
+
+        this.MoveSelectedObject(event.x, event.y);
+    }
 }
 
 ObjectGrab.prototype.HandleMouseLeftPressed = function(event)
@@ -185,6 +208,7 @@ ObjectGrab.prototype.HandleMouseLeftPressed = function(event)
 ObjectGrab.prototype.HandleMouseLeftReleased = function(event)
 {
     this.ReleaseSelection(this.entityId);
+    drag_started = false;
 }
 // </MOUSE HANDLERS>
 

@@ -89,14 +89,6 @@ SyncManager::SyncManager(TundraLogicModule* owner) :
     updateAcc_(0.0),
     sceneUUID("")
 {
-    if(owner_->IsServer())
-    {
-        im = im->getInstance();
-        im->LoadFilter(new EuclideanDistanceFilter());
-        im->ListFilters();
-        im->Start();
-    }
-
     KristalliProtocolModule *kristalli = framework_->GetModule<KristalliProtocolModule>();
     connect(kristalli, SIGNAL(NetworkMessageReceived(kNet::MessageConnection *, kNet::packet_id_t, kNet::message_id_t, const char *, size_t)), 
         this, SLOT(HandleKristalliMessage(kNet::MessageConnection*, kNet::packet_id_t, kNet::message_id_t, const char*, size_t)));
@@ -104,10 +96,7 @@ SyncManager::SyncManager(TundraLogicModule* owner) :
 
 SyncManager::~SyncManager()
 {
-    if(owner_->IsServer())
-    {
-        im->dropInstance(); //Destroy the IM Object
-    }
+
 }
 
 void SyncManager::SetUpdatePeriod(float period)

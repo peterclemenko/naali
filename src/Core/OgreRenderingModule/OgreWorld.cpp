@@ -124,6 +124,14 @@ void OgreWorld::SetDefaultSceneFog()
     }
 }
 
+float3 OgreWorld::RaycastGetPoint(float dist)
+{
+    if (!rayQuery_)
+        return float3();
+    Ogre::Ray ray = rayQuery_->getRay();
+    return ray.getPoint(dist);
+}
+
 RaycastResult* OgreWorld::Raycast(int x, int y)
 {
     return Raycast(x, y, 0xffffffff);
@@ -166,7 +174,7 @@ RaycastResult* OgreWorld::RaycastInternal(unsigned layerMask)
     result_.component = 0;
     
     Ray ray = rayQuery_->getRay();
-    
+
     Ogre::RaySceneQueryResult &results = rayQuery_->execute();
     float closestDistance = -1.0f;
     

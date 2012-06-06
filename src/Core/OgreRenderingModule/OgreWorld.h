@@ -52,6 +52,10 @@ public:
     void SetDefaultSceneFog();
 
 public slots:
+    /// Does raycast into the world from current viewport coordinates to specific distance in 3D space.
+    /** @param dist Distance from camera where raycast is cast.
+        @return Float3 World coordinates from raycast using distance specified.*/
+    float3 RaycastGetPoint(float dist);
     /// Does raycast into the world from viewport coordinates, using specific selection layer(s)
     /** The coordinates are a position in the render window, not scaled to [0,1].
         @param x Horizontal position for the origin of the ray

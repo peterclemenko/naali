@@ -4,9 +4,9 @@ if (!server.IsRunning() && !framework.IsHeadless())
     engine.ImportExtension("qt.gui");
 }
 
-var last_mouse_abs_X = 0;
-var last_mouse_abs_Y = 0;
-var drag_started = false;
+var lastX = 0;
+var lastY = 0;
+var distance = 0;
 
 function ObjectGrab(entity, comp)
 {
@@ -40,6 +40,7 @@ ObjectGrab.prototype.CreateInput = function()
     var inputContext = inputmapper.GetInputContext();
     //inputContext.GestureStarted.connect(this, this.GestureStarted);
     //inputContext.GestureUpdated.connect(this, this.GestureUpdated);
+    inputContext.MouseScroll.connect(this, this.HandleMouseScroll);
     inputContext.MouseMove.connect(this, this.HandleMouseMove);
     inputContext.MouseLeftPressed.connect(this, this.HandleMouseLeftPressed);
     inputContext.MouseLeftReleased.connect(this, this.HandleMouseLeftReleased);
@@ -52,8 +53,6 @@ ObjectGrab.prototype.GetTargetedEntity = function(x, y)
 {
     var raycastResult = scene.ogre.Raycast(x, y, 0xffffffff);
     if(raycastResult.entity != null) {
-        //        print("--raycastResult.entity.id: " + raycastResult.entity.id);
-        //        print("--raycastResult.entity.name: " + raycastResult.entity.name);
         return raycastResult.entity.id;
     }
     return -1;
@@ -73,11 +72,6 @@ ObjectGrab.prototype.SelectEntity = function(entityId)
     {
         // Release previous selection in case it was left selected
         this.ReleaseSelection();
-        
-        // Save the original orientation of the entity
-        //this.originalOrientation = entity.placeable.WorldOrientation();
-        //this.originalPosition = entity.placeable.transform.pos;
-        this.originalTransform = entity.placeable.transform;
         this.selectedId = entityId;
     }
 }
@@ -89,10 +83,6 @@ ObjectGrab.prototype.ReleaseSelection = function()
     if(this.selectedId != -1)
     {
         var entity = scene.GetEntity(this.selectedId);
-        //var transform = entity.placeable.transform;
-        //transform.pos = this.originalPosition;
-        //entity.placeable.SetOrientation(this.originalOrientation);
-        //entity.placeable.transform = this.originalTransform;
         if (entity.GetComponent("EC_RigidBody"))
         {
             entity.rigidbody.mass = this.originalMass;
@@ -124,66 +114,38 @@ ObjectGrab.prototype.UpdateSelectionAnimation = function()
 // freehand gestures.
 ObjectGrab.prototype.MoveSelectedObject = function(X, Y)
 {
-    print("X: " + X + ", Y: " + Y);
-    var cameraId = GetActiveCameraId();
-    if(cameraId == -1)
-        return;
-
-    var cameraEntity = scene.GetEntity(cameraId);
     var selectedEntity = scene.GetEntity(this.selectedId);
-    if(cameraEntity == null || selectedEntity == null)
+    if(selectedEntity == null)
         return;
-    var mainWindow = ui.MainWindow();
-    var windowWidth = mainWindow.width;
-    var windowHeight = mainWindow.height;
-    
-    var mouse_abs_X = X * (1 / windowWidth);
-    var mouse_abs_Y = Y * (1 / windowHeight);
 
-    var movedX = mouse_abs_X - last_mouse_abs_X;
-    var movedY = mouse_abs_Y - last_mouse_abs_Y;
-    
-    var fov = cameraEntity.camera.verticalFov;
-    var cameraPosition = cameraEntity.placeable.transform.pos;
-    var selectedPosition = selectedEntity.placeable.transform.pos;
-
-    var distance = cameraPosition.Distance(selectedPosition);
-    
-    var width = (Math.tan(fov/2) * distance) * 2;
-    var height = (windowHeight*width) / windowWidth;
-
-    var moveFactor = windowWidth / windowHeight;
-
-    var amountX = width * movedX * moveFactor;
-    var amountY = height * movedY * moveFactor;
-
-    var newPosition = selectedPosition.Add(cameraEntity.placeable.WorldOrientation().Mul(new float3(amountX, -amountY, 0)));
-    
     var oldTransform = selectedEntity.placeable.transform;
-    oldTransform.pos = newPosition;
+    oldTransform.pos = scene.ogre.RaycastGetPoint(distance);
     selectedEntity.placeable.transform = oldTransform;
-
-    last_mouse_abs_X = mouse_abs_X;
-    last_mouse_abs_Y = mouse_abs_Y;
 }
 
 // <MOUSE HANDLERS>
+ObjectGrab.prototype.HandleMouseScroll = function(event)
+{
+    if (!event.IsLeftButtonDown())
+        return;
+    if (event.relativeZ < 0)
+        distance -= 1;
+    else
+        distance += 1;
+    var selectedEntity = scene.GetEntity(this.selectedId);
+    if(selectedEntity == null)
+        return;
+
+    // Update position for the object.
+    var oldTransform = selectedEntity.placeable.transform;
+    oldTransform.pos = scene.ogre.RaycastGetPoint(distance);
+    selectedEntity.placeable.transform = oldTransform;
+}
+
 ObjectGrab.prototype.HandleMouseMove = function(event)
 {
     if (event.IsLeftButtonDown())
-    {
-        if (!drag_started)
-        {
-            var mainWindow = ui.MainWindow();
-            var windowWidth = mainWindow.width;
-            var windowHeight = mainWindow.height;
-            last_mouse_abs_X = event.x * (1 / windowWidth);
-            last_mouse_abs_Y = event.y * (1 / windowHeight);
-            drag_started = true;
-        }
-
         this.MoveSelectedObject(event.x, event.y);
-    }
 }
 
 ObjectGrab.prototype.HandleMouseLeftPressed = function(event)
@@ -196,7 +158,13 @@ ObjectGrab.prototype.HandleMouseLeftPressed = function(event)
         return;
 
     this.SelectEntity(entityId);
+    var cameraId = GetActiveCameraId();
+    var cameraEntity = scene.GetEntity(cameraId);
     var selectedEntity = scene.GetEntity(this.selectedId);
+    var cameraPosition = cameraEntity.placeable.transform.pos;
+    var selectedPosition = selectedEntity.placeable.transform.pos;
+
+    distance = cameraPosition.Distance(selectedPosition);
     // Set mass to 0 before moving so gravity wont hinder movement.
     if (selectedEntity.GetComponent("EC_RigidBody"))
     {
@@ -208,7 +176,6 @@ ObjectGrab.prototype.HandleMouseLeftPressed = function(event)
 ObjectGrab.prototype.HandleMouseLeftReleased = function(event)
 {
     this.ReleaseSelection(this.entityId);
-    drag_started = false;
 }
 // </MOUSE HANDLERS>
 

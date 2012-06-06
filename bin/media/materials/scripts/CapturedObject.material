@@ -9,6 +9,8 @@ material CapturedObject
 		diffuse vertexcolour
 		specular vertexcolour
 		emissive 0.1 0.1 0.1
+		point_size 3
+		lighting off
         }
     }
 }

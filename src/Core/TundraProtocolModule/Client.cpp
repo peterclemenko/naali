@@ -216,10 +216,8 @@ void Client::DoLogout(bool fail)
             ::LogInfo("Disconnected");
         }
         
-        loginstate_ = NotConnected;
-        client_id_ = 0;
-        
-        framework_->Scene()->RemoveScene("TundraClient");
+        framework_->Scene()->RemoveScene(discScene);
+        removeProperties(discScene);
         framework_->Asset()->ForgetAllAssets();
         
         emit Disconnected();

@@ -25,7 +25,6 @@
 #include "SceneAPI.h"
 
 #include <kNet.h>
-#include "EuclideanDistanceFilter.h"
 
 #include <cstring>
 

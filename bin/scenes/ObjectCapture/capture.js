@@ -67,6 +67,16 @@ function ObjectCapture()
     me.Action("Finalize").Triggered.connect(finalizeCloud);
     me.Action("startCapturing").Triggered.connect(startCapturing);
     me.Action("stopCapturing").Triggered.connect(stopCapturing);
+
+    var timer = new QTimer();
+    timer.timeout.connect(this, updatePointSize);
+    timer.start(500);
+}
+
+function updatePointSize()
+{
+    var module = framework.GetModuleByName("ObjectCapture");
+    module.updatePointSize();
 }
 
 function startCapturing()

@@ -1,5 +1,6 @@
 material CapturedObject
 {
+    receive_shadows off
     technique
     {
         pass
@@ -9,7 +10,6 @@ material CapturedObject
 		diffuse vertexcolour
 		specular vertexcolour
 		emissive 0.1 0.1 0.1
-		point_size 3
 		lighting off
         }
     }

@@ -195,6 +195,30 @@ QScriptValue findChild(QScriptContext *ctx, QScriptEngine *eng)
     return QScriptValue();
 }
 
+QScriptValue findChildren(QScriptContext *ctx, QScriptEngine *eng)
+{
+    if(ctx->argumentCount() == 2)
+    {
+        QObject *object = qscriptvalue_cast<QObject*>(ctx->argument(0));
+        QRegExp regExp(qscriptvalue_cast<QString>(ctx->argument(1)));
+        if(object)
+        {
+            QList<QObject*> objs = object->findChildren<QObject*>(regExp);
+            if(!objs.isEmpty())
+            {
+                QScriptValue v = eng->newArray(objs.size());
+                for(int i = 0; i < objs.size(); ++i)
+                {
+                    QScriptValue elem = eng->newQObject(objs.at(i));
+                    v.setProperty(i, elem);
+                }
+                return v;
+            }
+        }
+    }
+    return QScriptValue();
+}
+
 QScriptValue addApplicationFont(QScriptContext *ctx, QScriptEngine *eng)
 {
     if(ctx->argumentCount() == 1)
@@ -228,6 +252,7 @@ void ExposeQtMetaTypes(QScriptEngine *engine)
         return;
 
     engine->globalObject().setProperty("findChild", engine->newFunction(findChild));
+    engine->globalObject().setProperty("findChildren", engine->newFunction(findChildren));
     engine->globalObject().setProperty("setPixmapToLabel", engine->newFunction(setPixmapToLabel));
     engine->globalObject().setProperty("addApplicationFont", engine->newFunction(addApplicationFont));
 }

@@ -39,7 +39,7 @@ function ObjectCapture()
 
     var timer = new QTimer();
     timer.timeout.connect(this, updatePointSize);
-    timer.start(500);
+    timer.start(250);
     data.timer = timer;
 
     initializeUi();
@@ -54,6 +54,7 @@ function initializeUi()
 
     var buttonCapture = new QPushButton("Capture");
     var buttonRewind = new QPushButton("Undo");
+    var buttonExport = new QPushButton("Export");
     var buttonFinalize = new QPushButton("Finalize");
     if (debugMode == 1)
     {
@@ -63,6 +64,7 @@ function initializeUi()
 
     layout.addWidget(buttonRewind, 0, Qt.AlignLeft);
     layout.addWidget(buttonFinalize, 0, Qt.AlignCenter);
+    layout.addWidget(buttonExport, 0, Qt.AlignCenter);
     layout.addWidget(buttonCapture, 0, Qt.AlignRight);
     if (debugMode == 1)
     {
@@ -79,6 +81,7 @@ function initializeUi()
 
     buttonCapture.clicked.connect(captureCloud);
     buttonRewind.clicked.connect(rewindCloud);
+    buttonExport.clicked.connect(exportMesh);
     buttonFinalize.clicked.connect(finalizeCloud);
     if (debugMode == 1)
     {
@@ -139,6 +142,14 @@ function finalizeCloud()
     print("Finalizing cloud.");
     if (data.module != null)
         data.module.finalizeCapturing();
+}
+
+function exportMesh()
+{
+    print ("Exporting mesh to collada.")
+    if (data.module != null)
+        data.module.exportCollada("CapturedObject.dae"); // todo ask filename from user
+    print ("Export finished!");
 }
 
 function OnScriptDestroyed()

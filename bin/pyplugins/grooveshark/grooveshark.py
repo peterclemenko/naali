@@ -5,8 +5,8 @@
 # Copyright (c) 2012 CIE / University of Oulu, All Rights Reserved
 # For conditions of distribution and use, see copyright notice in license.txt
 
-# \todo Separate ServiceFusion integration from GroovesharkHandler implementation
-# \todo Add Grooveshark stream control messages
+# \todo Allow changing song during PLAYING state
+# \todo Move ServiceFusionPlayer and GStreamPlayer to a separate file
 
 import tundra as tundra
 import hashlib
@@ -19,27 +19,108 @@ import pygst
 pygst.require("0.10")
 import gst
 
+class ServiceFusionPlayer:
+    def __init__(self):
+        tundra.LogInfo("** Starting ServiceFusionPlayer **");
+        self.g_handler = GroovesharkHandler()
+        self.player = GStreamPlayer(self.PlayerCallback)
+
+        self.state = "STOPPED"
+        self.current_stream = {}
+        self.time_played = 0
+
+        assert self.g_handler.IsInitialized()
+        assert tundra.Scene().connect("SceneAdded(QString)", self.SceneAdded)
+        assert tundra.Frame().connect("Updated(float)", self.FrameUpdated)
+
+        # Store previous attribute states becouse there's no way of checking which attribute actually changed
+        self.prev_song_name = ""
+        self.prev_state = ""
+
+    def PlayerCallback(self, message):
+        if(message == "FINISHED"):
+            self.g_handler.MarkStreamFinished(self.current_stream["StreamKey"])
+
+        entity = self.scene.GetEntityByNameRaw("radio_1")
+        component = entity.dynamiccomponent
+
+        if(not component.GetAttribute("state")):
+            component.CreateAttribute("string", "state")
+
+        if(component.GetAttribute("state") != message):
+            component.SetAttribute("state", message)
+        self.state = message
+
+    def SetState(self, state):
+        print("ServiceFusionPlayer: Setting state to: {0}".format(state))
+        if(state == "PLAYING"):
+            self.player.Play()
+        elif(state == "STOPPED"):
+            self.player.Stop()
+        elif(state == "PAUSED"):
+            self.player.Pause()
+
+    def SceneAdded(self, name):
+        self.scene = tundra.Scene().GetSceneRaw(name)
+        assert self.scene.connect("AttributeChanged(IComponent*, IAttribute*, AttributeChange::Type)", self.OnAttributeChanged)
+
+    def FrameUpdated(self, frametime):
+        if(len(self.current_stream) >= 0 and self.state == "PLAYING"):
+            self.g_handler.AddStreamTime(self.current_stream["StreamKey"], frametime)
+
+    def OnAttributeChanged(self, component, attribute, changeType):
+        entity = component.ParentEntity()
+        if(entity.name != "radio_1"):
+            return
+
+        if(component.typeName != "EC_DynamicComponent"):
+            return
+
+        state = component.GetAttribute("state")
+        if(state != self.prev_state):
+            self.prev_state = state
+            if(state and state != "" and state != self.state):
+                self.SetState(state)
+                return
+
+        song_name = component.GetAttribute("song")
+        if(song_name != self.prev_song_name):
+            self.prev_song_name = song_name
+            tundra.LogInfo("ServiceFusionPlayer: Searching for song: {0}".format(song_name))
+
+            song_id = self.g_handler.SearchSong(song_name, 1)[0]["SongID"]
+            if(song_id != 0):
+                print("ServiceFusionPlayer: Song found! Acquiring stream for first result..")
+                self.current_stream = self.g_handler.GetStreamServer(song_id)
+                if(len(self.current_stream["url"]) > 0):
+                    print("ServiceFusionPlayer: ..Success!")
+                    self.player.SetStreamURI(self.current_stream["url"])
+                else:
+                    tundra.LogInfo("ServiceFusionPlayer: Couldn't acquire stream url!")
+            else:
+                tundra.LogInfo("ServiceFusionPlayer: No song found with query \"{0}\"".format(song_name))
+
+# Handles Grooveshark session, searching, stream fetching and stream handling.
 class GroovesharkHandler:
     def __init__(self):
-        tundra.LogInfo("** Starting Tundra Grooveshark handler **");
-
         self.key = ""
         self.secret = ""
 
         self.api_url = "https://api.grooveshark.com/ws3.php?sig="
         self.session_id = ""
+        self.active_streams = {}
 
-        if(self.key == "" or self.secret == ""):
-            print("GroovesharkHandler: Key or Secret missing, halting!")
-            return
-
-        assert tundra.Scene().connect("SceneAdded(QString)", self.SceneAdded)
+        assert self.key != ""
+        assert self.secret != ""
 
         assert self.StartSession()
 
         self.country = self.GetCountry()
 
-        self.player = GStreamPlayer()
+        self.initialized = True
+
+    def IsInitialized(self):
+        return self.initialized
 
     def Signature(self, data):
         sig = hmac.new(self.secret, data)
@@ -77,7 +158,6 @@ class GroovesharkHandler:
 
     def GetCountry(self):
         response = self.Request("getCountry")
-        assert len(response["result"]) >= 0
         return response["result"]
 
     def SearchSong(self, song_name, limit):
@@ -103,49 +183,68 @@ class GroovesharkHandler:
 
         response = self.Request(method, params)
 
-        if(len(response["result"]) > 0):
+        result = response["result"]
+        if(len(result) > 0):
+            self.active_streams[result["StreamKey"]] = {}
+            self.active_streams[result["StreamKey"]]["SongID"] = song_id
+            self.active_streams[result["StreamKey"]]["ServerID"] = result["StreamServerID"]
+            self.active_streams[result["StreamKey"]]["TimeElapsed"] = 0
+            self.active_streams[result["StreamKey"]]["Acked"] = False
             return response["result"]
         else:
             return []
 
-    def SceneAdded(self, name):
-        self.scene = tundra.Scene().GetSceneRaw(name)
-        tundra.LogInfo("Got new scene: {0}".format(name))
-
-        assert self.scene.connect("AttributeChanged(IComponent*, IAttribute*, AttributeChange::Type)", self.OnAttributeChanged)
-
-    def OnAttributeChanged(self, component, attribute, changeType):
-        entity = component.ParentEntity()
-        if(entity.name != "radio_1"):
+    def AddStreamTime(self, stream_key, time_elapsed):
+        if(self.active_streams[stream_key]["Acked"] == True):
             return
 
-        if(component.typeName != "EC_DynamicComponent"):
-            return
+        self.active_streams[stream_key]["TimeElapsed"] = self.active_streams[stream_key]["TimeElapsed"] + time_elapsed
+        if(self.active_streams[stream_key]["TimeElapsed"] / 30 >= 1):
+            self.__MarkStreamOver30s(stream_key, self.active_streams[stream_key])
 
-        song_name = component.GetAttribute("song")
-        if(song_name == ""):
-            return
+    def MarkStreamFinished(self, stream_key):
+        print("GroovesharkHandler: Marking stream finished")
+        method = "markSongComplete"
+        params = {}
+        params["songID"] = self.active_streams["stream_key"]["SongID"]
+        params["streamKey"] = stream_key
+        params["streamServerID"] = self.active_streams["stream_key"]["ServerID"]
 
-        tundra.LogInfo("GroovesharkHandler: Got input song: {0}".format(song_name))
+        response = self.Request(method, params)
 
-        song_id = self.SearchSong(song_name, 1)[0]["SongID"]
-        if(song_id != 0):
-            tundra.LogInfo("Found song with id: {0}".format(song_id))
-            stream_url = self.GetStreamServer(song_id)["url"]
-            if(len(stream_url) > 0):
-                tundra.LogInfo("Got song stream url: {0}".format(stream_url))
-                self.player.SetStreamURI(stream_url)
-                self.player.Play()
-            else:
-                tundra.LogInfo("Couldn't acquire stream url")
-        else:
-            tundra.LogInfo("No song found")
+        del self.active_streams["stream_key"]
+
+    def __MarkStreamOver30s(self, key, stream):
+        print("GroovesharkHandler: Marking stream duration >30s")
+        method = "markStreamKeyOver30Secs"
+        params = {}
+        params["streamKey"] = key
+        params["streamServerID"] = stream["ServerID"]
+
+        response = self.Request(method, params)
+        stream["Acked"] = True
+
 
 # Simple GStreamer player for now
 class GStreamPlayer:
-    def __init__(self):
+    def __init__(self, callback):
+        self.callback = callback
         self.player = gst.element_factory_make("playbin", "player")
         self.uri = ""
+
+        bus = self.player.get_bus()
+        bus.add_signal_watch()
+        bus.connect("message", self.OnMessage)
+
+    def OnMessage(self, bus, message):
+        if(message.type == gst.MESSAGE_EOS):
+            self.player.set_state(gst.STATE_NULL)
+            self.uri = ""
+            self.callback("FINISHED")
+        elif(message.type == gst.MESSAGE_ERROR):
+            self.player_set_state(gst.STATE_NULL)
+            self.uri = ""
+            self.callback("ERROR")
 
     def SetStreamURI(self, uri):
         self.uri = uri
@@ -154,10 +253,19 @@ class GStreamPlayer:
     def Play(self):
         if(self.uri != ""):
             self.player.set_state(gst.STATE_PLAYING)
+            self.callback("PLAYING")
+        else:
+            self.Stop()
+
+    def Pause(self):
+        if(self.uri != ""):
+            self.player.set_state(gst.STATE_PAUSED)
+            self.callback("PAUSED")
 
     def Stop(self):
-        self.player.set_state(gst.STATE_READY)
+        self.player.set_state(gst.STATE_NULL)
         self.uri = ""
+        self.callback("STOPPED")
 
 if __name__ == "__main__":
-    r = GroovesharkHandler()
+    r = ServiceFusionPlayer()

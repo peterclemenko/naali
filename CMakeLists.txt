@@ -341,6 +341,9 @@ add_definitions(-DMATH_QT_INTEROP)
 add_definitions(-DMATH_ENABLE_STL_SUPPORT)
 add_definitions(-DMATH_TUNDRA_INTEROP)
 
+# Defines multiconnection support is used in this build
+add_definitions(-DTUNDRA_MULTICONNECTION)
+
 # Read the set of optional modules from another file
 # that is kept outside the source control. 
 # To configure the set of optional modules to add to the build,

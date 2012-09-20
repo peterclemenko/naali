@@ -67,7 +67,7 @@
  </entity>
  <entity id="3" sync="1">
   <component type="EC_Name" sync="true">
-   <attribute value="Wall2" name="name"/>
+   <attribute value="BackWall" name="name"/>
    <attribute value="" name="description"/>
   </component>
   <component type="EC_Placeable" sync="true">
@@ -109,7 +109,7 @@
  </entity>
  <entity id="4" sync="1">
   <component type="EC_Name" sync="true">
-   <attribute value="Wall3" name="name"/>
+   <attribute value="RightWall" name="name"/>
    <attribute value="" name="description"/>
   </component>
   <component type="EC_Placeable" sync="true">
@@ -151,7 +151,7 @@
  </entity>
  <entity id="5" sync="1">
   <component type="EC_Name" sync="true">
-   <attribute value="Wall1" name="name"/>
+   <attribute value="LeftWall" name="name"/>
    <attribute value="" name="description"/>
   </component>
   <component type="EC_Placeable" sync="true">
@@ -220,7 +220,7 @@
  </entity>
  <entity id="7" sync="1">
   <component type="EC_Name" sync="true">
-   <attribute value="Plane" name="name"/>
+   <attribute value="Floor" name="name"/>
    <attribute value="" name="description"/>
   </component>
   <component type="EC_Placeable" sync="true">
@@ -262,7 +262,7 @@
  </entity>
  <entity id="8" sync="1">
   <component type="EC_Name" sync="true">
-   <attribute value="Door4.001" name="name"/>
+   <attribute value="Door6" name="name"/>
    <attribute value="" name="description"/>
   </component>
   <component type="EC_Placeable" sync="true">
@@ -289,7 +289,7 @@
  </entity>
  <entity id="9" sync="1">
   <component type="EC_Name" sync="true">
-   <attribute value="Door2.001" name="name"/>
+   <attribute value="Door5" name="name"/>
    <attribute value="" name="description"/>
   </component>
   <component type="EC_Placeable" sync="true">
@@ -316,7 +316,7 @@
  </entity>
  <entity id="10" sync="1">
   <component type="EC_Name" sync="true">
-   <attribute value="Door3" name="name"/>
+   <attribute value="Door1" name="name"/>
    <attribute value="" name="description"/>
   </component>
   <component type="EC_Placeable" sync="true">
@@ -343,7 +343,7 @@
  </entity>
  <entity id="11" sync="1">
   <component type="EC_Name" sync="true">
-   <attribute value="Door1" name="name"/>
+   <attribute value="Door2" name="name"/>
    <attribute value="" name="description"/>
   </component>
   <component type="EC_Placeable" sync="true">
@@ -366,11 +366,11 @@
    <attribute value="chiru.cie.fi" name="Address:"/>
    <attribute value="3457" name="Port:"/>
    <attribute value="udp" name="Protocol:"/>
-  </component>
+  </component>d
  </entity>
  <entity id="12" sync="1">
   <component type="EC_Name" sync="true">
-   <attribute value="Door2" name="name"/>
+   <attribute value="Door3" name="name"/>
    <attribute value="" name="description"/>
   </component>
   <component type="EC_Placeable" sync="true">
@@ -424,7 +424,7 @@
  </entity>
  <entity id="14" sync="1">
   <component type="EC_Name" sync="true">
-   <attribute value="Cube.001" name="name"/>
+   <attribute value="BigDice" name="name"/>
    <attribute value="" name="description"/>
   </component>
   <component type="EC_Placeable" sync="true">
@@ -466,7 +466,7 @@
  </entity>
  <entity id="15" sync="1">
   <component type="EC_Name" sync="true">
-   <attribute value="Cube" name="name"/>
+   <attribute value="SmallDice" name="name"/>
    <attribute value="" name="description"/>
   </component>
   <component type="EC_Placeable" sync="true">
@@ -508,7 +508,7 @@
  </entity>
  <entity id="16" sync="1">
   <component type="EC_Name" sync="true">
-   <attribute value="Cube.002" name="name"/>
+   <attribute value="MidDice" name="name"/>
    <attribute value="" name="description"/>
   </component>
   <component type="EC_Placeable" sync="true">

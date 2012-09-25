@@ -23,7 +23,7 @@ Q_DECLARE_METATYPE(EntityPtr)
 Q_DECLARE_METATYPE(ComponentPtr)
 Q_DECLARE_METATYPE(QList<Entity*>)
 Q_DECLARE_METATYPE(QList<QObject*>)
-Q_DECLARE_METATYPE(QList<float3*>)
+Q_DECLARE_METATYPE(QList<float3>)
 Q_DECLARE_METATYPE(Entity*)
 Q_DECLARE_METATYPE(std::string)
 Q_DECLARE_METATYPE(EntityList)
@@ -428,11 +428,11 @@ QScriptValue createAssetReferenceList(QScriptContext *ctx, QScriptEngine *engine
     return engine->toScriptValue(newAssetRefList);
 }
 
-QScriptValue toScriptValuePositionList(QScriptEngine *engine, const QList<float3*> &list)
+QScriptValue toScriptValuePositionList(QScriptEngine *engine, const QList<float3> &list)
 {
 }
 
-void fromScriptValuePositionList(const QScriptValue &obj, QList<float3*> &list)
+void fromScriptValuePositionList(const QScriptValue &obj, QList<float3> &list)
 {
     list.clear();
     QScriptValueIterator it(obj);
@@ -443,10 +443,10 @@ void fromScriptValuePositionList(const QScriptValue &obj, QList<float3*> &list)
                 it.value().property("y").isNumber() &&
                 it.value().property("z").isNumber())
         {
-            float3 *f = new float3();
-            f->x = it.value().property("x").toNumber();
-            f->y = it.value().property("y").toNumber();
-            f->z = it.value().property("z").toNumber();
+            float3 f;
+            f.x = it.value().property("x").toNumber();
+            f.y = it.value().property("y").toNumber();
+            f.z = it.value().property("z").toNumber();
             list.append(f);
         }
     }
@@ -490,7 +490,7 @@ void ExposeCoreTypes(QScriptEngine *engine)
     qScriptRegisterMetaType<Entity::ComponentMap>(engine, toScriptValueComponentMap, fromScriptValueComponentMap);
     qScriptRegisterMetaType<std::string>(engine, toScriptValueStdString, fromScriptValueStdString);
 
-    qScriptRegisterMetaType<QList<float3*> >(engine, toScriptValuePositionList, fromScriptValuePositionList);
+    qScriptRegisterMetaType<QList<float3> >(engine, toScriptValuePositionList, fromScriptValuePositionList);
 
     // Register constructors
     QScriptValue ctorColor = engine->newFunction(createColor);

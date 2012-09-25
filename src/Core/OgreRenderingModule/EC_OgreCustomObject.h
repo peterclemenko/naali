@@ -5,7 +5,6 @@
 #include "IComponent.h"
 #include "OgreModuleApi.h"
 #include "OgreModuleFwd.h"
-#include "OgreRenderOperation.h"
 
 #include "Math/float3.h"
 
@@ -54,8 +53,8 @@ public slots:
     /// @param colors vector having vertex colors in it, it must be with same size than vertices
     /// @param indices if not set, every vertex will be set with unique index
     /// @param RenderOperationType Ogre rendering operation type for this object
-    void CreateManualObject(QList<float3 *> vertices, QList<float3 *> colors = QList<float3*>(), QList<int> indices = QList<int>(),
-                            Ogre::RenderOperation::OperationType RenderOperationType = Ogre::RenderOperation::OT_TRIANGLE_LIST);
+    void CreateManualObject(QList<float3> vertices, QList<float3> colors = QList<float3>(), QList<int> indices = QList<int>(),
+                            uint RenderOperationType = 4);
 
 public:
     /// Do not directly allocate new components using operator new, but use the factory-based SceneAPI::CreateComponent functions instead.

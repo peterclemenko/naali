@@ -23,6 +23,7 @@ Q_DECLARE_METATYPE(EntityPtr)
 Q_DECLARE_METATYPE(ComponentPtr)
 Q_DECLARE_METATYPE(QList<Entity*>)
 Q_DECLARE_METATYPE(QList<QObject*>)
+Q_DECLARE_METATYPE(QList<float3*>)
 Q_DECLARE_METATYPE(Entity*)
 Q_DECLARE_METATYPE(std::string)
 Q_DECLARE_METATYPE(EntityList)
@@ -427,6 +428,30 @@ QScriptValue createAssetReferenceList(QScriptContext *ctx, QScriptEngine *engine
     return engine->toScriptValue(newAssetRefList);
 }
 
+QScriptValue toScriptValuePositionList(QScriptEngine *engine, const QList<float3*> &list)
+{
+}
+
+void fromScriptValuePositionList(const QScriptValue &obj, QList<float3*> &list)
+{
+    list.clear();
+    QScriptValueIterator it(obj);
+    while (it.hasNext())
+    {
+        it.next();
+        if (    it.value().property("x").isNumber() &&
+                it.value().property("y").isNumber() &&
+                it.value().property("z").isNumber())
+        {
+            float3 *f = new float3();
+            f->x = it.value().property("x").toNumber();
+            f->y = it.value().property("y").toNumber();
+            f->z = it.value().property("z").toNumber();
+            list.append(f);
+        }
+    }
+}
+
 void RegisterCoreMetaTypes()
 {
     qRegisterMetaType<ScenePtr>("ScenePtr");
@@ -438,6 +463,7 @@ void RegisterCoreMetaTypes()
     qRegisterMetaType<IAttribute*>("IAttribute*");
     qRegisterMetaType<QList<Entity*> >("QList<Entity*>");
     qRegisterMetaType<QList<QObject*> >("QList<QObject*>");
+    qRegisterMetaType<QList<float3*> >("QList<float3*>");
     qRegisterMetaType<EntityList>("EntityList");
     qRegisterMetaType<Scene::EntityMap>("EntityMap");
     qRegisterMetaType<Entity::ComponentMap>("ComponentMap");
@@ -463,6 +489,8 @@ void ExposeCoreTypes(QScriptEngine *engine)
     qScriptRegisterMetaType<Scene::EntityMap>(engine, toScriptValueEntityMap, fromScriptValueEntityMap);
     qScriptRegisterMetaType<Entity::ComponentMap>(engine, toScriptValueComponentMap, fromScriptValueComponentMap);
     qScriptRegisterMetaType<std::string>(engine, toScriptValueStdString, fromScriptValueStdString);
+
+    qScriptRegisterMetaType<QList<float3*> >(engine, toScriptValuePositionList, fromScriptValuePositionList);
 
     // Register constructors
     QScriptValue ctorColor = engine->newFunction(createColor);

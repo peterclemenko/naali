@@ -11,6 +11,7 @@
 #include "EC_OgreCustomObject.h"
 
 #include <Ogre.h>
+#include "QVector"
 #include "MemoryLeakCheck.h"
 
 using namespace OgreRenderer;
@@ -36,6 +37,56 @@ EC_OgreCustomObject::~EC_OgreCustomObject()
     }
     
     DestroyEntity();
+}
+
+void EC_OgreCustomObject::CreateManualObject(QList<float3*> vertices, QList<float3*> colors, QList<int> indices, Ogre::RenderOperation::OperationType RenderOperationType)
+{
+    OgreWorldPtr world = world_.lock();
+    Ogre::SceneManager* sceneMgr = world->OgreSceneManager();
+
+    std::string objectName = "ManualObject_" + QDateTime::currentDateTime().toString("ddMMyy-hhmmss").toStdString();
+    Ogre::ManualObject *ogreManual = sceneMgr->createManualObject(world->GetUniqueObjectName(objectName));
+
+    ogreManual->clear();
+    if (indices.size() > 0)
+        ogreManual->estimateIndexCount(indices.size());
+    else
+        ogreManual->estimateIndexCount(vertices.size());
+
+    ogreManual->setDynamic(false);
+    ogreManual->begin("CapturedObject", RenderOperationType);
+
+    for (int i = 0; i < vertices.size(); ++i)
+    {
+        ogreManual->position(vertices.at(i)->x, vertices.at(i)->y, vertices.at(i)->z);
+
+        /// \ todo do some sanity checks for the color array
+        Ogre::Real r = (Ogre::Real)colors.at(i)->x;
+        Ogre::Real g = (Ogre::Real)colors.at(i)->y;
+        Ogre::Real b = (Ogre::Real)colors.at(i)->z;
+        ogreManual->colour(r, g, b);
+    }
+
+    //Add indexing data to the manualobject
+    if (indices.size() > 0)
+    {
+        for (int i = 0; i < indices.size(); i++)
+        {
+           ogreManual->index(indices.at(i));
+        }
+    }
+    else
+    {
+        for (int i = 0; i < vertices.size(); i++)
+        {
+           ogreManual->index(i);
+        }
+    }
+
+    ogreManual->end();
+
+    CommitChanges(ogreManual);
+
 }
 
 void EC_OgreCustomObject::SetPlaceable(ComponentPtr placeable)

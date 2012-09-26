@@ -1,14 +1,14 @@
 
-// blender material: Material.004
-material Material.004 
+// blender material: Material.100
+material Material.100
 {
     receive_shadows on
     technique
     {
-        pass Material.004
+        pass Material.100
         {
-            ambient 0.800000011920929 0.800000011920929 0.800000011920929 1.0
-            diffuse 0.6400000190734865 0.6400000190734865 0.6400000190734865 1.0
+            ambient 0.0 0.0 0.0 1.0
+            diffuse 0.0 0.0 0.0 1.0
             specular 0.5 0.5 0.5 1.0 12.5
             emissive 0.0 0.0 0.0 1.0
             alpha_to_coverage off
@@ -29,7 +29,6 @@ material Material.004
             transparent_sorting on
             texture_unit 
             {
-                texture brick.jpg
                 tex_address_mode wrap
                 scale 1.0 1.0
                 colour_op modulate

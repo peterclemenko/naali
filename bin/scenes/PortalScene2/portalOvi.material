@@ -1,15 +1,15 @@
 
-// blender material: Material.003
-material Material.003 
+// blender material: Ovi
+material Ovi 
 {
     receive_shadows on
     technique
     {
-        pass Material.003
+        pass Ovi
         {
-            ambient 0.800000011920929 0.800000011920929 0.800000011920929 1.0
-            diffuse 0.6400000190734865 0.6400000190734865 0.6400000190734865 1.0
-            specular 0.5 0.5 0.5 1.0 12.5
+            ambient 0.9848718047142029 0.9848718047142029 0.9848718047142029 1.0
+            diffuse 0.29885766464809116 0.29885766464809116 0.29885766464809116 1.0
+            specular 0.1344827562570572 0.1344827562570572 0.1344827562570572 1.0 12.5
             emissive 0.0 0.0 0.0 1.0
             alpha_to_coverage off
             colour_write on
@@ -29,7 +29,7 @@ material Material.003
             transparent_sorting on
             texture_unit 
             {
-                texture brick.jpg
+                texture portalOvi.png
                 tex_address_mode wrap
                 scale 1.0 1.0
                 colour_op modulate

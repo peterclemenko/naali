@@ -29,7 +29,7 @@ material Ovi6
             transparent_sorting on
             texture_unit 
             {
-                texture Ovi6.png
+                texture portalOvi6.png
                 tex_address_mode wrap
                 scale 1.0 1.0
                 colour_op modulate

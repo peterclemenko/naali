@@ -1,11 +1,11 @@
 
-// blender material: Ovi2
-material Ovi2 
+// blender material: Material.004
+material Material.004 
 {
     receive_shadows on
     technique
     {
-        pass Ovi2
+        pass Material.004
         {
             ambient 0.800000011920929 0.800000011920929 0.800000011920929 1.0
             diffuse 0.6400000190734865 0.6400000190734865 0.6400000190734865 1.0
@@ -29,7 +29,7 @@ material Ovi2
             transparent_sorting on
             texture_unit 
             {
-                texture Ovi2.png
+                texture portalBrickWall.jpg
                 tex_address_mode wrap
                 scale 1.0 1.0
                 colour_op modulate

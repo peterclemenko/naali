@@ -1,11 +1,11 @@
 
-// blender material: Material.001
-material Material.001 
+// blender material: Material.005
+material Material.005 
 {
     receive_shadows on
     technique
     {
-        pass Material.001
+        pass Material.005
         {
             ambient 0.800000011920929 0.800000011920929 0.800000011920929 1.0
             diffuse 0.6400000190734865 0.6400000190734865 0.6400000190734865 1.0
@@ -29,7 +29,7 @@ material Material.001
             transparent_sorting on
             texture_unit 
             {
-                texture wood.jpg
+                texture portalBrickWall.jpg
                 tex_address_mode wrap
                 scale 1.0 1.0
                 colour_op modulate

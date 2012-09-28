@@ -58,7 +58,7 @@ bool Server::Start(unsigned short port, QString protocol)
 {
     if (owner_->IsServer())
     {
-        LogDebug("Trying to start server but it's already running.");
+        LogDebug("[SERVER] Trying to start server but it's already running.");
         return true; // Already started, don't need to do anything.
     }
 
@@ -87,7 +87,7 @@ bool Server::Start(unsigned short port, QString protocol)
     // Start server
     if (!owner_->GetKristalliModule()->StartServer(port, transportLayer))
     {
-        ::LogError("Failed to start server in port " + QString::number(port));
+        ::LogError("[SERVER] Failed to start server in port " + QString::number(port));
         return false;
     }
 
@@ -116,7 +116,7 @@ void Server::Stop()
 {
     if (owner_->IsServer())
     {
-        ::LogInfo("Stopped Tundra server. Removing TundraServer scene.");
+        ::LogInfo("[SERVER] Stopped Tundra server. Removing TundraServer scene.");
 
         owner_->GetKristalliModule()->StopServer();
         framework_->Scene()->RemoveScene("TundraServer");
@@ -264,7 +264,7 @@ void Server::HandleLogin(kNet::MessageConnection* source, const MsgLogin& msg)
     UserConnectionPtr user = GetUserConnection(source);
     if (!user)
     {
-        ::LogWarning("Server::HandleLogin: Login message from an unknown user.");
+        ::LogWarning("[SERVER] Login message from unknown user");
         return;
     }
     
@@ -272,7 +272,7 @@ void Server::HandleLogin(kNet::MessageConnection* source, const MsgLogin& msg)
     QString loginData = QString::fromStdString(BufferToString(msg.loginData));
     bool success = xml.setContent(loginData);
     if (!success)
-        ::LogWarning("Server::HandleLogin: Received malformed XML login data from user " + QString::number(user->userID) + ".");
+        ::LogWarning(QString("[SERVER] ID %1 client login data xml has malformed data").arg(user->userID));
     
     // Fill the user's logindata, both in raw format and as keyvalue pairs
     user->loginData = loginData;
@@ -284,12 +284,17 @@ void Server::HandleLogin(kNet::MessageConnection* source, const MsgLogin& msg)
         user->SetProperty(keyvalueElem.tagName(), keyvalueElem.attribute("value"));
         keyvalueElem = keyvalueElem.nextSiblingElement();
     }
+
+    QString connectedUsername = user->GetProperty("username");
     
     user->properties["authenticated"] = "true";
     emit UserAboutToConnect(user->userID, user.get());
     if (user->properties["authenticated"] != "true")
     {
-        ::LogInfo("User with connection ID " + QString::number(user->userID) + " was denied access.");
+        if (connectedUsername.isEmpty())
+            ::LogInfo(QString("[SERVER] ID %1 client was denied access [%2] ").arg(user->userID).arg(user->connection->RemoteEndPoint().ToString().c_str()));
+        else
+            ::LogInfo(QString("[SERVER] ID %1 client '%2' was denied access [%3] ").arg(user->userID).arg(connectedUsername).arg(user->connection->RemoteEndPoint().ToString().c_str()));
         MsgLoginReply reply;
         reply.success = 0;
         reply.userID = 0;
@@ -299,7 +304,10 @@ void Server::HandleLogin(kNet::MessageConnection* source, const MsgLogin& msg)
         return;
     }
     
-    ::LogInfo("User with connection ID " + QString::number(user->userID) + " logged in.");
+    if (connectedUsername.isEmpty())
+        ::LogInfo(QString("[SERVER] ID %1 client connected - %2 ").arg(user->userID).arg(user->connection->RemoteEndPoint().ToString().c_str()));
+    else
+        ::LogInfo(QString("[SERVER] ID %1 client '%2' connected [%3] ").arg(user->userID).arg(connectedUsername).arg(user->connection->RemoteEndPoint().ToString().c_str()));
     
     // Allow entityactions & EC sync from now on
     MsgLoginReply reply;
@@ -346,6 +354,12 @@ void Server::HandleUserDisconnected(UserConnection* user)
             u->connection->Send(left);
 
     emit UserDisconnected(user->userID, user);
+
+    QString username = user->GetProperty("username");
+    if (username.isEmpty())
+        ::LogInfo(QString("[SERVER] ID %1 client disconnected").arg(user->userID));
+    else
+        ::LogInfo(QString("[SERVER] ID %1 client '%2' disconnected").arg(user->userID).arg(username));
 }
 
 namespace

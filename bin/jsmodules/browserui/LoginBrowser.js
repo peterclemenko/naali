@@ -223,6 +223,7 @@ var BrowserManager = Class.extend
         
         this.onTabIndexChanged(this.tabs.currentIndex);
         
+        /* Disable opening the home webpage tab. Is just confusing and takes mem/cpu in the startup.
         if (this.settings.startupLoadHomePage)
         {
             if (HasTundraScheme(this.settings.homepage))
@@ -230,6 +231,7 @@ var BrowserManager = Class.extend
                     return;
             this.openUrl(this.settings.homepage);
         }
+        */
         
         this.classiclogin.focus();
     },
@@ -1670,7 +1672,7 @@ var ClassicLogin = Class.extend
         this.udpButton = findChild(this.widget, "radioButton_ProtocolUDP");
 
         var logoLabel = findChild(this.widget, "label_ClientLogo");
-        logoLabel.pixmap = new QPixmap(appInstallDir + "data/ui/images/realxtend_logo.png");
+		logoLabel.pixmap = new QPixmap(appInstallDir + "data/ui/images/adminotech_logo.png");
 
         // Connections
         this.cancelFromLoading.clicked.connect(this, this.cancelLoginPressed);

@@ -57,10 +57,18 @@ if (SHOULD_RUN)
     use_package (VLC)
 
     build_library (${TARGET_NAME} SHARED ${CPP_FILES} ${H_FILES} ${MOC_FILES} ${UI_SRCS} ${RESOURCE_SRCS})
+    
+    # Disable certain optimizations for VLC as the libs get unstable when too much stuff is removed from them.
+    # I dont know if this is a bug in VLC or Microsoft tools that strip the unreferenced info away from the linked libs.
+    if (MSVC AND ENABLE_BUILD_OPTIMIZATIONS)
+        set_target_properties (${TARGET_NAME} PROPERTIES LINK_FLAGS_RELEASE "/INCREMENTAL /OPT:NOREF")
+        set_target_properties (${TARGET_NAME} PROPERTIES LINK_FLAGS_RELWITHDEBINFO "/INCREMENTAL /OPT:NOREF")
+    endif ()
 
     SetupCompileFlags()
 
     link_modules (Framework Asset Ui OgreRenderingModule SceneWidgetComponents)
+    link_entity_components(EC_Sound)
     link_package (VLC)
     if (APPLE)
         link_ogre()

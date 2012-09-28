@@ -33,6 +33,7 @@ set (ENABLE_OPEN_ASSET_IMPORT 0)    # Enables Open Asset Import Library, which c
 set (ENABLE_PROFILING 1)            # Enable the following flag to add compile with support for a built-in execution time profiler.
 set (ENABLE_JS_PROFILING 0)         # Enable js profiling?
 set (ENABLE_MEMORY_LEAK_CHECKS 0)   # If the following flag is defined, memory leak checking is enabled in all modules when building on MSVC.
+set (ENABLE_NVIDIA_PERFHUD 0)       # Enable Ogre's support for NVIDIA PerfHUD, http://developer.nvidia.com/nvidia-perfhud
 
 message ("\n")
 
@@ -78,6 +79,7 @@ if (NOT BUILD_SDK_ONLY)
     AddEntityComponent(EC_PlanarMirror)
     AddEntityComponent(EC_ProximityTrigger)
     AddEntityComponent(EC_LaserPointer)
+    AddEntityComponent(EC_StencilGlow)
 endif()
 
 ###### REQUIRED STATIC FRAMEWORK ######
@@ -151,6 +153,11 @@ if (ENABLE_OPEN_ASSET_IMPORT)
     AddProject(Application OpenAssetImport)         # Allows import of various mesh file formats
 endif ()
 
-#AddProject(Application AssetInterestPlugin)    # Options to only keep assets below certain distance threshold in memory. Can also unload all non used assets from memory. Exposed to scripts so scenes can set the behaviour.
+AddProject(Application AssetInterestPlugin)    # Options to only keep assets below certain distance threshold in memory. Can also unload all non used assets from memory. Exposed to scripts so scenes can set the behaviour.
 AddProject(Application CanvasPlugin)            # Component that draws a graphics scene with any number of widgets into a mesh and provides 3D mouse input.
+
 #AddProject(Application XMPPModule)              # A module that implements XMPP-based chat.
+
+if (WIN32 OR APPLE) # Enable on linux once the needed zziplib dependency is satisfied in the build scripts.
+    AddProject(Application ArchivePlugin)          # Provides archived asset bundle capabilities. Enables example sub asset referencing into eg. zip files.
+endif ()

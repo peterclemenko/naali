@@ -6,8 +6,10 @@
 #include "VlcVideoWidget.h"
 
 #include "Framework.h"
+#include "FrameAPI.h"
 #include "SceneAPI.h"
 #include "SceneInteract.h"
+#include "Scene.h"
 #include "Entity.h"
 #include "AttributeMetadata.h"
 #include "UiAPI.h"
@@ -21,6 +23,8 @@
 
 #include "EC_WidgetCanvas.h"
 #include "EC_Mesh.h"
+#include "EC_Placeable.h"
+#include "EC_SoundListener.h"
 
 #include <QUuid>
 #include <QString>
@@ -35,26 +39,33 @@ EC_MediaPlayer::EC_MediaPlayer(Scene* scene) :
     mediaPlayer_(0),
     componentPrepared_(false),
     pendingMediaDownload_(false),
+    spatialFramerate(0.f),
     sourceRef(this, "Media Source", AssetReference("", "")),
     renderSubmeshIndex(this, "Render Submesh", 0),
     interactive(this, "Interactive", false),
     illuminating(this, "Illuminating", true),
     streamingAllowed(this, "Streaming Allowed", true),
+    spatialRadius(this, "Spatial radius", 0.0),
     enabled(this, "Enabled", true)
 {
     if (!ViewEnabled() || GetFramework()->IsHeadless())
         return;
 
     // Set metadata min/max/step
-    static AttributeMetadata submeshMetaData;
+    static AttributeMetadata submeshMetaData, spatialRadiusMetaData;
     static bool metadataInitialized = false;
     if (!metadataInitialized)
     {
         submeshMetaData.minimum = "0";
         submeshMetaData.step = "1";
+
+        spatialRadiusMetaData.minimum = "0.0";
+        spatialRadiusMetaData.step = "1.0";
+
         metadataInitialized = true;
     }
     renderSubmeshIndex.SetMetadata(&submeshMetaData);
+    spatialRadius.SetMetadata(&spatialRadiusMetaData);
 
     // Init our internal media player
     mediaPlayer_ = new VlcMediaPlayer();
@@ -96,6 +107,8 @@ EC_MediaPlayer::EC_MediaPlayer(Scene* scene) :
     p.drawPixmap(target, bufferingIcon, bufferingIcon.rect());
     p.drawText(5, 12, "Downloading media...");
     p.end();
+
+    connect(GetFramework()->Frame(), SIGNAL(Updated(float)), this, SLOT(OnUpdate(float)));
 }
 
 EC_MediaPlayer::~EC_MediaPlayer()
@@ -133,7 +146,13 @@ void EC_MediaPlayer::Play()
 
     QAbstractAnimation::State state = GetMediaState();
     if (state != QAbstractAnimation::Running)
+    {
         mediaPlayer_->GetVideoWidget()->Play();
+        if (getspatialRadius() <= 0.0)
+            mediaPlayer_->GetVideoWidget()->SetVolume(50);
+        else
+            OnUpdate(1.0);
+    }
 }
 
 void EC_MediaPlayer::Pause()
@@ -284,6 +303,67 @@ void EC_MediaPlayer::OnFrameUpdate(QImage frame)
         sceneCanvas->SetSubmesh(submeshIndex);
 
     sceneCanvas->Update(frame);
+}
+
+void EC_MediaPlayer::OnUpdate(float frametime)
+{
+    if (getspatialRadius() <= 0.0)
+        return;
+
+    spatialFramerate += frametime;
+
+    if (spatialFramerate < 0.25)
+        return;
+
+    if (!mediaPlayer_ || !mediaPlayer_->GetVideoWidget())
+        return;
+    if (!ViewEnabled() || GetFramework()->IsHeadless())
+        return;
+    if (!componentPrepared_)
+        return;
+
+    QAbstractAnimation::State state = GetMediaState();
+    if (state != QAbstractAnimation::Running)
+        return;
+
+    Entity *entityListener = 0;
+    EntityList listeners = ParentScene()->EntitiesWithComponent(EC_SoundListener::TypeNameStatic());
+
+    if (!listeners.empty())
+    {
+        for (EntityList::const_iterator i = listeners.begin(); i != listeners.end(); ++i)
+        {
+            EC_SoundListener *listener = (*i)->GetComponent<EC_SoundListener>().get();
+            if (listener && listener->active.Get())
+            {
+                entityListener = (*i).get();
+                break;
+            }
+        }
+    }
+
+    if (entityListener)
+    {
+        EC_Placeable *thisPlaceable = ParentEntity()->GetComponent<EC_Placeable>().get();
+        EC_Placeable *listenerPlaceable = entityListener->GetComponent<EC_Placeable>().get();
+
+        if (thisPlaceable && listenerPlaceable)
+        {
+            float distance = thisPlaceable->WorldPosition().Distance(listenerPlaceable->WorldPosition());
+            if (distance != 0.0)
+            {
+                int volume = (int)(50.0 - distance / getspatialRadius() * 50.0);
+
+                if (volume < 0)
+                    volume = 0;
+
+                if (volume != mediaPlayer_->GetVideoWidget()->Volume())
+                    mediaPlayer_->GetVideoWidget()->SetVolume(volume);
+            }
+        }
+    }
+
+    spatialFramerate = 0.f;
 }
 
 void EC_MediaPlayer::RenderWindowResized()
@@ -513,6 +593,12 @@ void EC_MediaPlayer::AttributeChanged(IAttribute *attribute, AttributeChange::Ty
             else
                 sceneCanvas->SetSubmesh(getrenderSubmeshIndex());
         }
+    }
+    else if (attribute == &spatialRadius)
+    {
+        if (mediaPlayer_ && mediaPlayer_->GetVideoWidget() && getspatialRadius() == 0.0)
+            if (mediaPlayer_->GetVideoWidget()->Volume() != 50)
+                mediaPlayer_->GetVideoWidget()->SetVolume(50);
     }
 }
 

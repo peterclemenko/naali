@@ -59,9 +59,9 @@
 
 
 /// @note Modify these values when you are making a custom Tundra build. Also the version needs to be changed here on releases.
-const char *Application::organizationName = "realXtend";
+const char *Application::organizationName = "Adminotech";
 const char *Application::applicationName = "Tundra";
-const char *Application::version = "2.3.3.1";
+const char *Application::version = "2.3.3.6";
 
 Application::Application(Framework *owner, int &argc, char **argv) :
     QApplication(argc, argv),
@@ -140,7 +140,7 @@ void Application::InitializeSplash()
     if (!splashScreen)
     {
         QString runDir = InstallationDirectory();
-        splashScreen = new QSplashScreen(QPixmap(runDir + "/data/ui/images/realxtend_tundra_splash.png"));
+        splashScreen = new QSplashScreen(QPixmap(runDir + "/data/ui/images/adminotech_tundra_splash.png"));
         splashScreen->setFont(QFont("Calibri", 9));
         splashScreen->show();
         splashScreen->activateWindow();
@@ -166,7 +166,7 @@ void Application::SetSplashMessage(const QString &message)
     {
         // Call QApplication::processEvents() to update splash painting as at this point main loop is not running yet
         QString finalMessage = "v" + QString(Application::Version()) + " - " + message.toUpper();
-        splashScreen->showMessage(finalMessage, Qt::AlignBottom|Qt::AlignLeft, QColor(240, 240, 240));
+        splashScreen->showMessage(finalMessage, Qt::AlignBottom|Qt::AlignLeft, QColor(25, 25, 25));
         processEvents();
     }
 }

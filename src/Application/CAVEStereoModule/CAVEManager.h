@@ -65,6 +65,8 @@ namespace CAVEStereo
 
         CAVEStereo::CAVESettingsWidget* GetCaveWidget() const;
 
+        void ShowFullscreen();
+
     private:
         /// is cave enabled
         bool enabled_;

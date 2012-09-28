@@ -72,6 +72,8 @@ namespace CAVEStereo
         */
         void GetProjectionParameters( Ogre::Vector3 &top_left, Ogre::Vector3 &bottom_left, Ogre::Vector3 &bottom_right, Ogre::Vector3 &eye_pos);
 
+        void ShowFullscreen();
+
     protected:
         void resizeEvent(QResizeEvent *e);
         void keyPressEvent(QKeyEvent *e);

@@ -196,4 +196,12 @@ namespace CAVEStereo
     {
         return settings_widget_;
     }
+
+    void CAVEManager::ShowFullscreen()
+    {
+        foreach(QPointer<CAVEView> view, view_map_)
+        {
+            view->ShowFullscreen();
+        }
+    }
 }

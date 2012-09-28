@@ -42,6 +42,11 @@ namespace PythonScript
         return sceneapi->GetScene(scenename).get();
     }
     
+    QObject* TundraInstanceDecorator::GetEntityByNameRaw(Scene *scene, const QString &entName)
+    {
+         return scene->GetEntityByName(entName).get();
+    }
+
     // TundraDecorator
 
     /*QObject* TundraDecorator::get(ScenePtr self)

@@ -52,12 +52,12 @@ public:
     int Port() const;
 
     /// Returns server's protocol.
-    /** @return 'udp', tcp', or an empty string if server is not running. */
+    /** @return 'udp', tcp', 'sctp', or an empty string if server is not running. */
     QString Protocol() const;
 
 public slots:
     /// Create server scene & start server
-    /** @param protocol The server protocol to use, either "tcp" or "udp". If not specified, the default UDP will be used.
+    /** @param protocol The server protocol to use, either "tcp", "sctp", or "udp". If not specified, the default UDP will be used.
         @return True if successful, false otherwise. No scene will be created if starting the server fails. */
     bool Start(unsigned short port, QString protocol = "");
 
@@ -85,6 +85,9 @@ public slots:
     int GetPort() const; /**< @deprecated Use Port or 'port' property. */
     QString GetProtocol() const; /**< @deprecated Use Protocol or 'protocol' property. */
     UserConnectionPtr GetActionSender() const; /**< @deprecated Use ActionSender. */
+
+    /// Called from authentication handler to finish login 
+    void FinishLogin(UserConnectionPtr user);
 
 signals:
     /// A user is connecting. This is your chance to deny access.
@@ -129,6 +132,9 @@ private:
     Framework* framework_;
     int current_port_;
     QString current_protocol_;
+
+    /// UUID for server scene.
+    QString sceneID_;
 };
 
 }

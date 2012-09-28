@@ -123,13 +123,28 @@ if (!framework.IsHeadless())
     function Connected() {
         disconnectAction.enabled = true;
         screenshotAct.enabled = true;
-    }
+	}
 
     function Disconnected() {
-        disconnectAction.enabled = false;
-        screenshotAct.enabled = false;
-    }
-
+        var scene;
+        var sceneNames;
+        
+        sceneNames = client.getSceneNames();
+        if (sceneNames[0] == undefined)
+        {
+            disconnectAction.enabled = false;
+            screenshotAct.enabled = false;
+            return;
+        }
+        else
+            scene = framework.Scene().GetScene(sceneNames[0]);
+	    cameraentity = scene.GetEntityByName("AvatarCamera");
+    	    if (!cameraentity)
+    	        cameraentity = scene.GetEntityByName("FreeLookCamera");
+    	    var camera = cameraentity.camera;
+	    client.setActiveScenename(sceneNames[0]);
+	    camera.SetActive(camera);
+	}
     function Quit() {
         framework.Exit();
     }

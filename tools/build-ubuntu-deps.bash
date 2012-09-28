@@ -54,7 +54,8 @@ if lsb_release -c | egrep -q "lucid|maverick|natty|oneiric|precise|maya|lisa|kat
 	 libvlc-dev libspeexdsp-dev libprotobuf-dev \
 	 libprotobuf-c0 libprotobuf-c0-dev \
 	 protobuf-c-compiler protobuf-compiler \
-     libqt4-opengl-dev libqtwebkit-dev
+     libqt4-opengl-dev libqtwebkit-dev \
+     libsctp-dev
 
 fi
  
@@ -316,6 +317,22 @@ else
     cp lib/libqxmpp.a $prefix/lib/
     touch $tags/$what-done
 fi
+
+echo "Setting up Chiru specific dependencies"
+cd $viewer
+if [ ! -e "./src/ChiruAddons" ]; then
+    echo "./src/ChiruAddons does not exist. Cloning a new copy..."
+    git clone git://github.com/Chiru/ChiruAddons.git src/ChiruAddons
+fi
+cd ./src/ChiruAddons
+git pull origin master
+cd $viewer
+if test ! -f $tags/pcl-done; then # doing PCL repo addition only once
+    sudo add-apt-repository ppa:v-launchpad-jochen-sprickerhof-de/pcl
+    sudo apt-get update
+    touch $tags/pcl-done
+fi
+sudo aptitude install -y qtmobility-dev libpcl-all
 
 if test "$1" = "--depsonly"; then
     exit 0

@@ -1,0 +1,16 @@
+material CapturedObject
+{
+    receive_shadows off
+    technique
+    {
+        pass
+        {
+		cull_hardware none
+		ambient vertexcolour
+		diffuse vertexcolour
+		specular vertexcolour
+		emissive 0.1 0.1 0.1
+		lighting off
+        }
+    }
+}

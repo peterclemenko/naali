@@ -124,6 +124,14 @@ void OgreWorld::SetDefaultSceneFog()
     }
 }
 
+float3 OgreWorld::RaycastGetPoint(float dist)
+{
+    if (!rayQuery_)
+        return float3();
+    Ogre::Ray ray = rayQuery_->getRay();
+    return ray.getPoint(dist);
+}
+
 RaycastResult* OgreWorld::Raycast(int x, int y)
 {
     return Raycast(x, y, 0xffffffff);
@@ -166,7 +174,7 @@ RaycastResult* OgreWorld::RaycastInternal(unsigned layerMask)
     result_.component = 0;
     
     Ray ray = rayQuery_->getRay();
-    
+
     Ogre::RaySceneQueryResult &results = rayQuery_->execute();
     float closestDistance = -1.0f;
     
@@ -406,6 +414,86 @@ QList<Entity*> OgreWorld::FrustumQuery(QRect &viewrect) const
     sceneManager_->destroyQuery(query);
 
     return l;
+}
+
+Entity* OgreWorld::FrustumQuery(int rectLeft, int rectTop, int rectRight, int rectBottom, float3 entity_pos)
+{
+    PROFILE(OgreWorld_FrustumQuery);
+
+    QList<Entity*>l;
+
+    int width = renderer_->WindowWidth();
+    int height = renderer_->WindowHeight();
+    if ((!width) || (!height))
+        return 0; // Headless
+    Ogre::Camera* camera = VerifyCurrentSceneCamera();
+    if (!camera)
+        return 0;
+
+    float w= (float)width;
+    float h= (float)height;
+    float left = (float)rectLeft / w, right = (float)rectRight / w;
+    float top = (float)rectTop / h, bottom = (float)rectBottom / h;
+
+    if(left > right) std::swap(left, right);
+    if(top > bottom) std::swap(top, bottom);
+    // don't do selection box is too small
+    if((right - left) * (bottom-top) < 0.0001) return 0;
+
+    Ogre::PlaneBoundedVolumeList volumes;
+    Ogre::PlaneBoundedVolume p = camera->getCameraToViewportBoxVolume(left, top, right, bottom, true);
+    volumes.push_back(p);
+
+    Ogre::PlaneBoundedVolumeListSceneQuery *query = sceneManager_->createPlaneBoundedVolumeQuery(volumes);
+    assert(query);
+
+    Ogre::SceneQueryResult results = query->execute();
+    for(Ogre::SceneQueryResultMovableList::iterator iter = results.movables.begin(); iter != results.movables.end(); ++iter)
+    {
+        Ogre::MovableObject *m = *iter;
+        const Ogre::Any& any = m->getUserAny();
+        if (any.isEmpty())
+            continue;
+
+        Entity *entity = 0;
+        try
+        {
+            IComponent *component = Ogre::any_cast<IComponent*>(any);
+            entity = component ? component->ParentEntity() : 0;
+        }
+        catch(Ogre::InvalidParametersException &/*e*/)
+        {
+            continue;
+        }
+        if(entity)
+            l << entity;
+    }
+
+    sceneManager_->destroyQuery(query);
+
+
+
+    int nearest_distance = 999;
+    int closest_entity_index = -1;
+
+    for (int i = 0; i < l.size(); i++)
+    {
+        if (l[i]->GetComponent("EC_Placeable"))
+        {
+            EC_Placeable *placeable = dynamic_cast<EC_Placeable*>(l[i]->GetComponent("EC_Placeable").get());
+            Transform transform = placeable->gettransform();
+            int distance = entity_pos.Distance(transform.pos);
+            if (distance <= nearest_distance)
+            {
+                nearest_distance = distance;
+                closest_entity_index = i;
+            }
+        }
+    }
+    if (closest_entity_index > -1)
+        return l[closest_entity_index];
+    else
+        return 0;
 }
 
 bool OgreWorld::IsEntityVisible(Entity* entity) const

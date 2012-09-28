@@ -226,8 +226,11 @@ void Application::Message(const char *title, const char *text)
 #ifdef WIN32
     MessageBoxA(0, text != 0 ? text : "", title != 0 ? title : "", MB_OK | MB_ICONERROR | MB_TASKMODAL);
 #else
-    ///\todo The intention is to write a modal system message, but this simply prints to log.
-    std::cerr << "Application::Message: " << title << ": " << text << std::endl;
+    std::cerr << "Error:" << std::endl;
+    std::cerr << title << std::endl;
+    std::cerr << text << std::endl;
+    std::cerr << "[Modal error dialog not implemented so aborting]" << std::endl;
+    abort();
 #endif
 }
 void Application::Message(const std::string &title, const std::string &text)

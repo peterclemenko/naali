@@ -44,13 +44,14 @@ class QDomElement;
 class Entity : public QObject, public boost::enable_shared_from_this<Entity>
 {
     Q_OBJECT
-    Q_PROPERTY(uint id READ Id)
-    Q_PROPERTY(QString name READ Name WRITE SetName)
-    Q_PROPERTY(QString description READ Description WRITE SetDescription)
-    Q_PROPERTY(bool replicated READ IsReplicated)
-    Q_PROPERTY(bool local READ IsLocal)
-    Q_PROPERTY(bool unacked READ IsUnacked)
-    Q_PROPERTY(bool temporary READ IsTemporary WRITE SetTemporary)
+    Q_PROPERTY (uint id READ Id)
+    Q_PROPERTY (QString name READ Name WRITE SetName)
+    Q_PROPERTY (QString description READ Description WRITE SetDescription)
+    Q_PROPERTY (bool replicated READ IsReplicated)
+    Q_PROPERTY (bool local READ IsLocal)
+    Q_PROPERTY (bool unacked READ IsUnacked)
+    Q_PROPERTY (bool temporary READ IsTemporary WRITE SetTemporary)
+    Q_PROPERTY (bool keep_over_disconnect READ KeepOverDisconnect WRITE SetKeepOverDisconnect)
 
 public:
     typedef std::map<component_id_t, ComponentPtr> ComponentMap; ///< Component container.
@@ -356,6 +357,15 @@ public slots:
     /// Returns actions map for introspection/reflection.
     const ActionMap &Actions() const { return actions_; }
 
+    void SetKeepOverDisconnect(bool keepflag)
+    {
+	keep_over_disconnect_ = keepflag;
+    }
+
+    bool KeepOverDisconnect()
+    {
+	return keep_over_disconnect_;
+    }
     QObjectList ComponentsList() const; ///< @deprecated @todo Remove
 
 signals:
@@ -406,6 +416,7 @@ private:
     Scene* scene_; ///< Pointer to scene
     ActionMap actions_; ///< Map of registered entity actions.
     bool temporary_; ///< Temporary-flag
+    bool keep_over_disconnect_;
 };
 
 #include "Entity.inl"

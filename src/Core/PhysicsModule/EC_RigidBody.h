@@ -166,6 +166,10 @@ public:
     /// Angular factor. Defines in which dimensions the object can rotate
     Q_PROPERTY(float3 angularFactor READ getangularFactor WRITE setangularFactor)
     DEFINE_QPROPERTY_ATTRIBUTE(float3, angularFactor);
+
+    //! Gravity toggle. If true(default), gravity has effect on this body.
+    Q_PROPERTY(bool gravityEnabled READ getgravityEnabled WRITE setgravityEnabled)
+    DEFINE_QPROPERTY_ATTRIBUTE(bool, gravityEnabled)
     
     /// Kinematic flag. If true, forces don't affect the object, but it may push other objects around.
     Q_PROPERTY(bool kinematic READ getkinematic WRITE setkinematic)
@@ -267,6 +271,13 @@ public slots:
         @param rotation New rotation (eulers) */
     void SetRotation(const float3& rotation);
     
+    /// Forcibly set orientation
+    /** Use this instead of just setting the placeable's full transform to allow linear motion
+        to continue uninterrupted (with proper inter-step interpolation)
+        @param orientation New orientation
+     */
+    void SetOrientation(const Quat& orientation);
+    
     /// Rotate the body
     /** Use this instead of just setting the placeable's full transform to allow linear motion
         to continue uninterrupted (with proper inter-step interpolation)
@@ -291,6 +302,14 @@ public slots:
     
     /// Return whether have authority. On the client, returns false for non-local objects.
     bool HasAuthority() const;
+    
+    //! (Dis)claim authority.
+    void AssertAuthority(bool);
+
+    //! Force body to always stay in upright position (needs to be called in Update loop).
+    void InterpolateUpward();
+
+//    QVariant Shape() const;
 
     /// Returns the minimal axis-aligned bounding box that encloses the collision shape of this rigid body.
     /// Note that this function may be called even if the shape of this rigid body is not AABB.
@@ -404,4 +423,7 @@ private:
     
     /// Heightfield values, for the case the shape is a heightfield.
     std::vector<float> heightValues_;
+
+    //! Physics authority flag
+    bool got_authority_;
 };

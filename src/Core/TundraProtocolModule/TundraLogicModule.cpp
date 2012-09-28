@@ -65,7 +65,15 @@
 #include "EC_LaserPointer.h"
 #endif
 
-#include "MemoryLeakCheck.h"
+#ifdef EC_Portal_ENABLED
+#include "EC_Portal.h"
+#endif
+
+#include "EC_Camera.h"
+#include "EC_Placeable.h"
+#include "EC_AnimationController.h"
+#include "EC_Mesh.h"
+#include "EC_OgreCustomObject.h"
 
 namespace TundraLogic
 {
@@ -76,7 +84,9 @@ TundraLogicModule::TundraLogicModule() :
     IModule("TundraLogic"),
     autoStartServer_(false),
     autoStartServerPort_(cDefaultPort),
-    kristalliModule_(0)
+    kristalliModule_(0),
+    netrateBool(false),
+    netrateValue(0)
 {
 }
 
@@ -120,11 +130,14 @@ void TundraLogicModule::Load()
 #ifdef EC_LaserPointer_ENABLED
     framework_->Scene()->RegisterComponentFactory(ComponentFactoryPtr(new GenericComponentFactory<EC_LaserPointer>));
 #endif
+#ifdef EC_Portal_ENABLED
+    framework_->Scene()->RegisterComponentFactory(ComponentFactoryPtr(new GenericComponentFactory<EC_Portal>));
+#endif
 }
 
 void TundraLogicModule::Initialize()
 {
-    syncManager_ = boost::make_shared<SyncManager>(this);
+    //syncManager_ = boost::make_shared<SyncManager>(this);
     client_ = boost::make_shared<Client>(this);
     server_ = boost::make_shared<Server>(this);
     
@@ -134,7 +147,10 @@ void TundraLogicModule::Initialize()
 
     // Expose SyncManager only on the server side for scripting
     if (server_->IsAboutToStart())
-        framework_->RegisterDynamicObject("syncmanager", syncManager_.get());
+    {
+        LogInfo("Chiru fixme. Server does not export syncmanager by default!");
+        //framework_->RegisterDynamicObject("syncmanager", syncManagers_[0]);
+    }
 
     framework_->Console()->RegisterCommand("startserver", "Starts a server. Usage: startserver(port,protocol)",
         server_.get(), SLOT(Start(unsigned short,QString)));
@@ -164,6 +180,11 @@ void TundraLogicModule::Initialize()
         "Imports a single mesh as a new entity. Position, rotation, and scale can be specified optionally."
         "Usage: importmesh(filename, pos = 0 0 0, rot = 0 0 0, scale = 1 1 1, inspectForMaterialsAndSkeleton=true)",
         this, SLOT(ImportMesh(QString, const float3 &, const float3 &, const float3 &, bool)), SLOT(ImportMesh(QString)));
+
+    framework_->Console()->RegisterCommand("switch",
+        "Switches to different scene if multiple scenes exist."
+        " Usage: switch(scenename). To get scenenames usage: switch(print).",
+        this, SLOT(switchscene(QString)));
 
     // Take a pointer to KristalliProtocolModule so that we don't have to take/check it every time
     kristalliModule_ = framework_->GetModule<KristalliProtocolModule>();
@@ -207,17 +228,25 @@ void TundraLogicModule::Initialize()
             bool ok;
             int rate = rateParam.first().toInt(&ok);
             if (ok && rate > 0)
-                syncManager_->SetUpdatePeriod(1.f / (float)rate);
+            {
+                // Had to move some logic from here to registerSyncManager() because --netrate cmdLine option needs syncManager.
+                netrateBool = true;
+                netrateValue = rate;
+            }
             else
                 LogError("--netrate parameter is not a valid integer.");
-        }
+        }        
     }
+    connect(framework_->Scene(), SIGNAL(SceneAdded(QString)), this, SLOT(registerSyncManager(QString)));
+    connect(framework_->Scene(), SIGNAL(SceneRemoved(QString)), this, SLOT(removeSyncManager(QString)));
 }
 
 void TundraLogicModule::Uninitialize()
 {
     kristalliModule_ = 0;
-    syncManager_.reset();
+    foreach (SyncManager *sm, syncManagers_)
+        delete sm;
+    syncManagers_.clear();
     client_.reset();
     server_.reset();
 }
@@ -276,12 +305,50 @@ void TundraLogicModule::Update(f64 frametime)
     if (server_)
         server_->Update(frametime);
     // Run scene sync
-    if (syncManager_)
-        syncManager_->Update(frametime);
+    if (!syncManagers_.empty())
+        foreach (SyncManager *sm, syncManagers_)
+        {
+            //::LogInfo("Updating!");
+            sm->Update(frametime);
+        }
     // Run scene interpolation
     Scene *scene = GetFramework()->Scene()->MainCameraScene();
     if (scene)
         scene->UpdateAttributeInterpolations(frametime);
+}
+
+void TundraLogicModule::registerSyncManager(const QString name)
+{
+    // Do not create syncmanager for dummy TundraServer scene.
+    if (name == "TundraServer")
+        return;
+
+    // If scene is real deal, create syncManager.
+    SyncManager *sm = new SyncManager(this);
+    // Had to move some logic from Init to here because --netrate cmdLine option needs syncManager.
+    if (netrateBool)
+        sm->SetUpdatePeriod(1.f / (float)netrateValue);
+    ScenePtr newScene = framework_->Scene()->GetScene(name);
+    sm->RegisterToScene(newScene);
+    syncManagers_.insert(name, sm);
+}
+
+void TundraLogicModule::removeSyncManager(const QString name)
+{
+    delete syncManagers_[name];
+    syncManagers_.remove(name);
+}
+
+void TundraLogicModule::switchscene(const QString name) {
+    client_->emitSceneSwitch(name);
+}
+
+SyncManager* TundraLogicModule::GetSyncManager() const
+{
+    // Used by server. Returns 1st syncmanager for now because server does not have
+    // multiple scenes. If multiscene support is done for server this needs to be modified.
+    QMap<QString, SyncManager*>::const_iterator iter = syncManagers_.begin();
+    return iter.value();
 }
 
 void TundraLogicModule::LoadStartupScene()

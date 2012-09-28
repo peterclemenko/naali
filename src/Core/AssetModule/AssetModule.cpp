@@ -368,7 +368,8 @@ void AssetModule::OnAssetUploaded(const QString& assetRef)
     // If we are client, send to server
     else
     {
-        kNet::MessageConnection* connection = tundra->GetClient()->GetConnection();
+        /// TODO: this is unresolved for now. Need to know what connection we actually need
+        kNet::MessageConnection* connection = tundra->GetClient()->GetConnection("FIX_THIS");
         if (connection)
             connection->Send(msg);
     }
@@ -395,7 +396,8 @@ void AssetModule::OnAssetDeleted(const QString& assetRef)
     // If we are client, send to server
     else
     {
-        kNet::MessageConnection* connection = tundra->GetClient()->GetConnection();
+        /// TODO: this is unresolved for now. Need to know what connection we actually need
+        kNet::MessageConnection* connection = tundra->GetClient()->GetConnection("FIX_THIS");
         if (connection)
             connection->Send(msg);
     }

@@ -166,6 +166,20 @@ void PhysicsWorld::Simulate(f64 frametime)
         DrawDebugGeometry();
 }
 
+  // Collect all collision signals to a list before emitting any of them, in case a collision
+  // handler changes physics state before the loop below is over (which would lead into catastrophic
+  // consequences)
+  struct CollisionSignal
+  {
+    EC_RigidBody *bodyA;
+    EC_RigidBody *bodyB;
+    float3 position;
+    float3 normal;
+    float distance;
+    float impulse;
+    bool newCollision;
+  };
+
 void PhysicsWorld::ProcessPostTick(float substeptime)
 {
     PROFILE(PhysicsWorld_ProcessPostTick);
@@ -174,9 +188,6 @@ void PhysicsWorld::ProcessPostTick(float substeptime)
     
     std::set<std::pair<btCollisionObject*, btCollisionObject*> > currentCollisions;
     
-    // Collect all collision signals to a list before emitting any of them, in case a collision
-    // handler changes physics state before the loop below is over (which would lead into catastrophic
-    // consequences)
     std::vector<CollisionSignal> collisions;
     collisions.reserve(numManifolds * 3); // Guess some initial memory size for the collision list.
 

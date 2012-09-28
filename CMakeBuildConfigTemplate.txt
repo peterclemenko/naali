@@ -71,6 +71,19 @@ AddEntityComponent(EC_ParticleSystem)
 AddEntityComponent(EC_Billboard)
 AddEntityComponent(EC_TransformGizmo)
 
+if (EXISTS "./src/ChiruAddons")
+
+    AddEntityComponent(src/ChiruAddons/EC_Menu)
+    AddEntityComponent(src/ChiruAddons/EC_Portal)
+
+else ()
+
+    message("ChiruAddons project folder does not exist")
+    message("Did you forget to:")
+    message(FATAL_ERROR " git clone git://github.com/Chiru/ChiruAddons.git src/ChiruAddons")
+
+endif ()
+
 ## Here are the Application level ECs that wont be added if BUILD_SDK_ONLY is TRUE (default is FALSE)
 
 if (NOT BUILD_SDK_ONLY)
@@ -154,3 +167,25 @@ endif ()
 #AddProject(Application AssetInterestPlugin)    # Options to only keep assets below certain distance threshold in memory. Can also unload all non used assets from memory. Exposed to scripts so scenes can set the behaviour.
 AddProject(Application CanvasPlugin)            # Component that draws a graphics scene with any number of widgets into a mesh and provides 3D mouse input.
 #AddProject(Application XMPPModule)              # A module that implements XMPP-based chat.
+
+message ("\n=========== Configuring Chiru-Addons ===========\n")
+
+if (EXISTS "./src/ChiruAddons")
+
+    AddProject(src/ChiruAddons/MobilityModule)
+    AddProject(src/ChiruAddons/ObjectCaptureModule)
+    Addproject(src/ChiruAddons/XMPPModule)
+    AddProject(src/ChiruAddons/QMLPlugin)
+    
+    #AddProject(Application CanvasPlugin)
+    AddProject(src/ChiruAddons/RdfModule)
+    AddProject(src/ChiruAddons/3dUiModule)
+
+else ()
+
+    message("ChiruAddons project folder does not exist")
+    message("Did you forget to:")
+    message(FATAL_ERROR " git clone git://github.com/Chiru/ChiruAddons.git src/ChiruAddons")
+
+endif ()
+

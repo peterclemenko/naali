@@ -52,6 +52,10 @@ public:
     void SetDefaultSceneFog();
 
 public slots:
+    /// Does raycast into the world from current viewport coordinates to specific distance in 3D space.
+    /** @param dist Distance from camera where raycast is cast.
+        @return Float3 World coordinates from raycast using distance specified.*/
+    float3 RaycastGetPoint(float dist);
     /// Does raycast into the world from viewport coordinates, using specific selection layer(s)
     /** The coordinates are a position in the render window, not scaled to [0,1].
         @param x Horizontal position for the origin of the ray
@@ -72,6 +76,16 @@ public slots:
     /** @param viewRect The query rectangle in 2d window coords.
         @return List of entities within the frustrum. */
     QList<Entity*> FrustumQuery(QRect &viewRect) const;
+
+    /// This is an overloaded function.
+    /** Does a frustum query to the world from viewport coordinates.
+        @param rectLeft Left border of the rectangle
+        @param rectTop Top border of the rectangle
+        @param rectRight Right border of the rectangle
+        @param rectBottom Bottom border of the rectangle
+        @param entity_pos Position of the entity (viewport)
+        @return Entity closest to the viewport. */
+    Entity* FrustumQuery(int rectLeft, int rectTop, int rectRight, int rectBottom, float3 entity_pos);
 
     /// Return whether a single entity is visible in the currently active camera
     bool IsEntityVisible(Entity* entity) const;

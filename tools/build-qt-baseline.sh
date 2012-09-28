@@ -5,7 +5,7 @@ export QTINSTALLDIR=/usr/local/qt-releases/qt
 mkdir -p $QTBUILDDIR
 cd $QTBUILDDIR
 #---- Build QT
-git clone git://gitorious.org/qt/qt.git
+#git clone git://gitorious.org/qt/qt.git
 cd qt
 git checkout v4.8.2
 ./configure --prefix=$QTTARGETDIR --disable-qt3support -dbus -phonon-backend | tee configure.log

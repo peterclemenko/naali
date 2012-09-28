@@ -6,10 +6,23 @@
 #include "TundraProtocolModuleApi.h"
 #include "TundraProtocolModuleFwd.h"
 #include "AssetFwd.h"
+#include <QMap>
+
+namespace kNet
+{
+    class MessageConnection;
+    typedef unsigned long message_id_t;
+}
+
+namespace KristalliProtocol
+{
+    class KristalliProtocolModule;
+}
+
 #include "Math/float3.h"
 
-#include <kNetFwd.h>
-#include <kNet/Types.h>
+#include "kNetFwd.h"
+#include "kNet/Types.h"
 
 namespace TundraLogic
 {
@@ -34,7 +47,8 @@ public:
     KristalliProtocolModule *GetKristalliModule() const { return kristalliModule_; }
 
     /// Returns syncmanager
-    const boost::shared_ptr<SyncManager>& GetSyncManager() const { return syncManager_; }
+    SyncManager* GetSyncManager() const;
+    //const boost::shared_ptr<SyncManager>& GetSyncManager() const { return syncManager_; }
 
     /// Returns client
     const boost::shared_ptr<Client>& GetClient() const { return client_; }
@@ -79,6 +93,9 @@ public slots:
 private slots:
     void StartupSceneTransfedSucceeded(AssetPtr asset);
     void StartupSceneTransferFailed(IAssetTransfer *transfer, QString reason);
+    void registerSyncManager(const QString);
+    void removeSyncManager(const QString);
+    void switchscene(const QString);
 
 private:
     /// Handles a Kristalli protocol message
@@ -87,12 +104,15 @@ private:
     /// Loads the startup scene(s) specified by --file command line parameter.
     void LoadStartupScene();
 
-    boost::shared_ptr<SyncManager> syncManager_; ///< Sync manager
+    //boost::shared_ptr<SyncManager> syncManager_; ///< Sync manager
+    QMap<QString, SyncManager*> syncManagers_;
     boost::shared_ptr<Client> client_; ///< Client
     boost::shared_ptr<Server> server_; ///< Server
     KristalliProtocolModule *kristalliModule_; ///< KristalliProtocolModule pointer
     bool autoStartServer_; ///< Whether to autostart the server
     unsigned short autoStartServerPort_; ///< Autostart server port
+    bool netrateBool;
+    int netrateValue;
 };
 
 }

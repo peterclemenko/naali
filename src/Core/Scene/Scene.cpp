@@ -196,19 +196,32 @@ void Scene::RemoveAllEntities(bool signal, AttributeChange::Type change)
 {
     ///\todo Rewrite this function to call Scene::RemoveEntity and not duplicate the logic here.
     EntityMap::iterator it = entities_.begin();
+    EntityList stashed_entities;
     while(it != entities_.end())
     {
-        // If entity somehow manages to live, at least it doesn't belong to the scene anymore
-        if (signal)
-            EmitEntityRemoved(it->second.get(), change);
-
-        it->second->SetScene(0);
-        ++it;
+        // TODO: For now do not allow entities to keepOverDisconnect. This way removes crash on disconnect. Rethink this method?! -- Jukka V-A
+        if (it->second->KeepOverDisconnect() && 0)
+	{
+	    stashed_entities.push_back(it->second);
+	} else
+	{
+	    // If entity somehow manages to live, at least it doesn't belong to the scene anymore
+	    if (signal)
+	    {
+		EmitEntityRemoved(it->second.get(), change);
+	    }
+	    it->second->SetScene(0);
+	}
+	++it;
     }
     entities_.clear();
     if (signal)
         emit SceneCleared(this);
-    
+    for (EntityList::iterator it = stashed_entities.begin(); it != stashed_entities.end(); it++) 
+    {
+	entities_[(*it)->Id()] = *it;
+	LogWarning("Keeping entity over disconnect: " + QString::number((*it)->Id()));
+    }
     idGenerator_.Reset();
 }
 

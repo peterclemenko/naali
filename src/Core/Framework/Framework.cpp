@@ -149,14 +149,14 @@ Framework::Framework(int argc_, char** argv_) :
     cmdLineDescs.commands["--disableRunOnLoad"] = "Prevents script applications (EC_Script's with applicationName defined) starting automatically."; //JavascriptModule
     cmdLineDescs.commands["--server"] = "Starts Tundra as server."; // TundraLogicModule
     cmdLineDescs.commands["--port"] = "Specifies the Tundra server port."; // TundraLogicModule
-    cmdLineDescs.commands["--protocol"] = "Specifies the Tundra server protocol. Options: '--protocol tcp' and '--protocol udp'. Defaults to udp if no protocol is spesified."; // KristalliProtocolModule
+    cmdLineDescs.commands["--protocol"] = "Specifies the Tundra server protocol. Options: '--protocol tcp', '--protocol sctp' and '--protocol udp'. Defaults to udp if no protocol is spesified."; // KristalliProtocolModule
     cmdLineDescs.commands["--fpsLimit"] = "Specifies the FPS cap to use in rendering. Default: 60. Pass in 0 to disable."; // Framework
     cmdLineDescs.commands["--run"] = "Runs script on startup"; // JavaScriptModule
     cmdLineDescs.commands["--file"] = "Specifies a startup scene file. Multiple files supported. Accepts absolute and relative paths, local:// and http:// are accepted and fetched via the AssetAPI."; // TundraLogicModule & AssetModule
     cmdLineDescs.commands["--storage"] = "Adds the given directory as a local storage directory on startup."; // AssetModule
     cmdLineDescs.commands["--config"] = "Specifies a startup configration file to use. Multiple config files are supported, f.ex. '--config plugins.xml --config MyCustomAddons.xml'."; // Framework & PluginAPI
     cmdLineDescs.commands["--connect"] = "Connects to a Tundra server automatically. Syntax: '--connect serverIp;port;protocol;name;password'. Password is optional."; // TundraLogicModule & AssetModule
-    cmdLineDescs.commands["--login"] = "Automatically login to server using provided data. Url syntax: {tundra|http|https}://host[:port]/?username=x[&password=y&avatarurl=z&protocol={udp|tcp}]. Minimum information needed to try a connection in the url are host and username."; // TundraLogicModule & AssetModule
+    cmdLineDescs.commands["--login"] = "Automatically login to server using provided data. Url syntax: {tundra|http|https}://host[:port]/?username=x[&password=y&avatarurl=z&protocol={udp|tcp|sctp}]. Minimum information needed to try a connection in the url are host and username."; // TundraLogicModule & AssetModule
     cmdLineDescs.commands["--netRate"] = "Specifies the number of network updates per second. Default: 30."; // TundraLogicModule
     cmdLineDescs.commands["--noAssetCache"] = "Disable asset cache."; // Framework
     cmdLineDescs.commands["--assetCacheDir"] = "Specify asset cache directory to use."; // Framework
@@ -320,13 +320,16 @@ void Framework::ProcessOneFrame()
 
     for(size_t i = 0; i < modules.size(); ++i)
     {
+#ifdef NDEBUG
         try
+#endif
         {
 #ifdef PROFILING
             ProfilerSection ps(("Module_" + modules[i]->Name() + "_Update").toStdString());
 #endif
             modules[i]->Update(frametime);
         }
+#ifdef NDEBUG
         catch(const std::exception &e)
         {
             std::stringstream error;
@@ -340,6 +343,7 @@ void Framework::ProcessOneFrame()
             std::cout << error << std::endl;
             LogError(error);
         }
+#endif
     }
 
     asset->Update(frametime);

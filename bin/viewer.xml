@@ -17,6 +17,7 @@
   <plugin path="BrowserUiPlugin" />             <!-- Depends on JavascriptModule -->    
   <plugin path="SceneWidgetComponents" />       <!-- Depends on OgreRenderingModule and TundraProtocolModule (and optionally on BrowserUiPlugin) -->
   <plugin path="PythonScriptModule" />          <!-- Depends on OgreRenderingModule, TundraProtocolModule -->
+  <plugin path="XMPPModule" />                  <!-- This manly module doesn't depend on anyone -->
   <plugin path="MumblePlugin" />                <!-- Depends on OgreRenderingModule, JavascriptModule and TundraLogicModule -->
   <plugin path="VlcPlugin" />                   <!-- Depends on SceneWidgetComponents -->
   <plugin path="CAVEStereoModule" />            <!-- Depends on OgreRenderingModule -->
@@ -32,9 +33,11 @@
   <jsplugin path="RendererSettings.js" />
   <jsplugin path="SoundSettings.js" />
   <jsplugin path="LoginScreen.js" />
+  <jsplugin path="gazetracking.js" />
   <jsplugin path="LoadingScreen.js" />
 
   <!-- Python plugins -->
+  <pyplugin path="pythonqt_asyncore.py"/>
   <!-- <pyplugin path="lib/apitests.py" /> -->          <!-- Runs framework api tests -->
 
   <option name="--trustserverstorages" />

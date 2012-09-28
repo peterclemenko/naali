@@ -29,6 +29,7 @@ namespace PythonScript
         // Entity: Member functions, this is a knows QObject for PythonQt, we are adding functionality to the existing object.
         QObject *GetComponentRaw(Entity *entity, const QString &componentType);
         QObject *GetOrCreateComponentRaw(Entity *entity, const QString &componentType);
+	QObject *GetEntityByNameRaw(Scene *scene, const QString &entName);
     };
     /** @endcond */
 

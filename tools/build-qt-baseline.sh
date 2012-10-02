@@ -5,7 +5,7 @@ export QTINSTALLDIR=/usr/local/qt-releases/qt
 mkdir -p $QTBUILDDIR
 cd $QTBUILDDIR
 #---- Build QT
-git clone git://gitorious.org/qt/qt.git
+git clone https://git.gitorious.org/qt/qt.git
 cd qt
 git checkout v4.8.3
 ./configure --prefix=$QTTARGETDIR --disable-qt3support -dbus -phonon-backend | tee configure.log
@@ -13,7 +13,7 @@ make -j 8
 sudo make install
 sudo ln -s $QTTARGETDIR $QTINSTALLDIR
 #---- Build QT3D
-git clone git://gitorious.org/qt-labs/qt3d.git
+git clone https://git.gitorious.org/qt/qt3d.git
 cd qt3d
 sudo ln -s $QTBUILDDIR/qt/include/QtGui/private $QTTARGETDIR/include/QtGui/private
 sudo ln -s $QTBUILDDIR/qt/include/QtCore/private $QTTARGETDIR/include/QtCore/private

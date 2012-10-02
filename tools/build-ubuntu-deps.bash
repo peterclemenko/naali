@@ -101,7 +101,7 @@ if test -f $tags/$what-done; then
 else
     cd $build
     rm -rf $what
-    git clone git://gitorious.org/qt-labs/$what.git
+    git clone https://git.gitorious.org/qt-labs/$what.git
     cd $what
     patch -l -p1 <<EOF
 Description: Include QtWebkit and Phonon unconditionally.

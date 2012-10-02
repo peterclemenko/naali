@@ -11,6 +11,8 @@ set USE_JOM=TRUE
 cd ..
 set ORIGINAL_PATH=%PATH%
 set PATH=%PATH%;"%CD%\tools\utils-windows"
+set INCLUDE=%INCLUDE%;"%DXSDK_DIR%\include"
+set LIB=%LIB%;"%DXSDK_DIR%\Lib\x86"
 set TOOLS=%CD%\tools
 set TUNDRA_DIR="%CD%"
 set TUNDRA_BIN=%CD%\bin
@@ -845,6 +847,28 @@ IF NOT EXIST "%DEPS%\qxmpp\". (
 ) ELSE (
    cecho {0D}qxmpp already built. Skipping.{# #}{\n}
 )
+
+
+:: Object Orientated Input System (OIS)
+IF NOT EXIST "%DEPS%\ois\". (
+   cecho {0D}Checking OIS out to "%DEPS%\ois".{# #}{\n}
+   cd "%DEPS%"
+   svn checkout https://wgois.svn.sourceforge.net/svnroot/wgois/ois/trunk ois
+   IF NOT EXIST "%DEPS%\ois\.svn" GOTO :ERROR
+) ELSE "%DEPS%\ois\". (
+    cd "%DEPS%\ois\"
+	svn update
+	cd ../
+)
+   cecho {0D}Building OIS.{# #}{\n}
+   cd "%DEPS%\ois\Win32"
+   :: Build for debug and release
+   msbuild OIS_vc9.vcproj /p:configuration=Debug /p:VCBuildAdditionalOptions=/useenv /clp:ErrorsOnly /nologo
+   msbuild OIS_vc9.vcproj /p:configuration=Release /p:VCBuildAdditionalOptions=/useenv /clp:ErrorsOnly /nologo
+      
+  IF NOT %ERRORLEVEL%==0 GOTO :ERROR
+
+
 
 echo.
 cecho {0A}Tundra dependencies built.{# #}{\n}

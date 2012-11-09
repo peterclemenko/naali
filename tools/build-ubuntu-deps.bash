@@ -43,11 +43,11 @@ export TUNDRA_PYTHON_ENABLED=TRUE
 
 if lsb_release -c | egrep -q "lucid|maverick|natty|oneiric|precise|maya|lisa|katya|julia|isadora|quantal" && tty >/dev/null; then
         which aptitude > /dev/null 2>&1 || sudo apt-get install aptitude
-	sudo aptitude -y install git-core python-dev libogg-dev libvorbis-dev \
+  	sudo aptitude -y install git-core python-dev libogg-dev libvorbis-dev \
 	 build-essential g++ libboost-all-dev libois-dev \
-	 ccache libqt4-dev python-dev freeglut3-dev \
+	 ccache libqt4-dev freeglut3-dev \
 	 libxml2-dev cmake libalut-dev libtheora-dev ed \
-	 liboil0.3-dev mercurial unzip xsltproc libois-dev libxrandr-dev \
+	 liboil0.3-dev mercurial unzip xsltproc libxrandr-dev \
 	 libspeex-dev nvidia-cg-toolkit subversion \
 	 libfreetype6-dev libfreeimage-dev libzzip-dev \
 	 libxaw7-dev libgl1-mesa-dev libglu1-mesa-dev \
@@ -55,8 +55,12 @@ if lsb_release -c | egrep -q "lucid|maverick|natty|oneiric|precise|maya|lisa|kat
 	 libprotobuf-c0 libprotobuf-c0-dev \
 	 protobuf-c-compiler protobuf-compiler \
      libqt4-opengl-dev libqtwebkit-dev \
-     libspeexdsp-dev libprotobuf-dev \
-     libvlc-dev
+     libxerces-c3-dev libglut-mesa-dev \
+     xutils-dev libxi-dev libglut3 libglew-dev libxft-dev \
+     libapr1-dev libaprutil1-dev libcppunit-dev liblapack-dev \
+     libblas-dev libf2c2-dev mono-devel mono-xbuild libopenal-dev \
+     libsndfile-dev festival-dev libxxf86vm-dev imagemagick \
+     libode-dev festival
 fi
 
 what=bullet-2.79-rev2440
@@ -268,6 +272,36 @@ else
    make -j $nprocs install
    touch $tags/skyx-done
 fi
+
+
+# smartbody
+cd $build
+what=smartbody
+rev=r3875
+if test -f $tags/$what-done; then
+    echo $what is done
+else
+    rm -rf $what
+    svn checkout https://smartbody.svn.sourceforge.net/svnroot/smartbody/trunk@$rev $what
+    cd $what
+    sed 's/# DEFINES += QXMPP_USE_SPEEX/DEFINES += QXMPP_USE_SPEEX/g' src/src.pro > src/temp
+    sed 's/# LIBS += -lspeex/LIBS += -lspeex/g' src/temp > src/src.pro
+    sed 's/LIBS += $$QXMPP_LIBS/LIBS += $$QXMPP_LIBS -lspeex/g' tests/tests.pro > tests/temp && mv tests/temp tests/tests.pro
+    rm src/temp
+    qmake
+    make -j $nprocs
+    mkdir -p $prefix/include/$what
+    cp src/*.h $prefix/include/$what
+    cp lib/libqxmpp.a $prefix/lib/
+    touch $tags/$what-done
+fi
+
+if test "$1" = "--depsonly"; then
+    exit 0
+fi
+
+
+svn co  smartbody 
 
 # PythonQT build
 if test -f $tags/pythonqt-done; then

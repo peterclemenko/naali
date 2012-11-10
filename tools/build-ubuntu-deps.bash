@@ -41,7 +41,7 @@ export CXX="ccache g++"
 export CCACHE_DIR=$deps/ccache
 export TUNDRA_PYTHON_ENABLED=TRUE
 
-if lsb_release -c | egrep -q "lucid|maverick|natty|oneiric|precise|maya|lisa|katya|julia|isadora|quantal" && tty >/dev/null; then
+if lsb_release -c | egrep -q "lucid|maverick|natty|oneiric|precise|maya|lisa|katya|julia|isadora|quantal|nadia" && tty >/dev/null; then
         which aptitude > /dev/null 2>&1 || sudo apt-get install aptitude
   	sudo aptitude -y install git-core python-dev libogg-dev libvorbis-dev \
 	 build-essential g++ libboost-all-dev libois-dev \
@@ -60,8 +60,10 @@ if lsb_release -c | egrep -q "lucid|maverick|natty|oneiric|precise|maya|lisa|kat
      libapr1-dev libaprutil1-dev libcppunit-dev liblapack-dev \
      libblas-dev libf2c2-dev mono-devel mono-xbuild libopenal-dev \
      libsndfile-dev festival-dev libxxf86vm-dev imagemagick \
-     libode-dev festival
+     libode-dev festival activemq
 fi
+
+# bullet
 
 what=bullet-2.79-rev2440
 whatdir=bullet-2.79
@@ -78,6 +80,8 @@ else
     make install
     touch $tags/$what-done
 fi
+
+# celt
 
 what=celt
 if test -f $tags/$what-done; then
@@ -97,6 +101,8 @@ else
     make install
     touch $tags/$what-done
 fi
+
+# qt script generator
 
 what=qtscriptgenerator
 if test -f $tags/$what-done; then 
@@ -147,6 +153,8 @@ fi
 mkdir -p $viewer/bin/qtplugins/script
 cp -lf $build/$what/plugins/script/* $viewer/bin/qtplugins/script/
 
+# assimp
+
 what=assimp--3.0.1270-source-only
 if test -f $tags/$what-done; then
 	echo $what is done
@@ -165,6 +173,8 @@ else
 	touch $tags/$what-done
 fi
 
+# knet
+
 what=kNet
 if test -f $tags/$what-done; then 
    echo $what is done
@@ -182,6 +192,8 @@ else
     rsync -r include/* $prefix/include/
     touch $tags/$what-done
 fi
+
+# ogre safe nocrashes
 
 what=ogre-safe-nocrashes
 if test -f $tags/$what-done; then 
@@ -273,35 +285,49 @@ else
    touch $tags/skyx-done
 fi
 
-
 # smartbody
 cd $build
 what=smartbody
+amqwhat=activemq
 rev=r3875
 if test -f $tags/$what-done; then
     echo $what is done
 else
-    rm -rf $what
-    svn checkout https://smartbody.svn.sourceforge.net/svnroot/smartbody/trunk@$rev $what
-    cd $what
-    sed 's/# DEFINES += QXMPP_USE_SPEEX/DEFINES += QXMPP_USE_SPEEX/g' src/src.pro > src/temp
-    sed 's/# LIBS += -lspeex/LIBS += -lspeex/g' src/temp > src/src.pro
-    sed 's/LIBS += $$QXMPP_LIBS/LIBS += $$QXMPP_LIBS -lspeex/g' tests/tests.pro > tests/temp && mv tests/temp tests/tests.pro
-    rm src/temp
-    qmake
-    make -j $nprocs
-    mkdir -p $prefix/include/$what
-    cp src/*.h $prefix/include/$what
-    cp lib/libqxmpp.a $prefix/lib/
-    touch $tags/$what-done
+    if test -f $build/$what; then
+        cd $what
+        svn update -r $rev
+    else
+        svn checkout https://smartbody.svn.sourceforge.net/svnroot/smartbody/trunk@$rev $what
+        cd $what
+    fi
+
+    # activemq cpp dependency for smartbody
+  #  if test -f $tags/$amqwhat-done; then
+ #       echo $amqwhat is done
+ #   else
+#        cd lib/activemq/activemq-cpp
+#        chmod +x configure
+#        ./configure --prefix=$prefix --exec-prefix=$prefix
+#        make -j $nprocs
+#        make install
+
+#        cp -r $prefix/include/activemq-cpp-3.4.4/* $prefix/include
+#        touch $tags/$amqwhat-done
+#    fi
+    cd $build/$what    
+    cd build
+    chmod +x sb-automated-build.py
+    python sb-automated-build.py build password -ci
+
+#    python sb-automated-build.py
+#    cmake -DCMAKE_INSTALL_PREFIX=$prefix
+  #  ./configure
+   # make
+
+# touch $tags/$what-done
+
+
 fi
-
-if test "$1" = "--depsonly"; then
-    exit 0
-fi
-
-
-svn co  smartbody 
 
 # PythonQT build
 if test -f $tags/pythonqt-done; then
@@ -330,6 +356,8 @@ else
     touch $tags/pythonqt-done
 fi
 
+# qt propertybrowser
+
 cd $build
 what=qtpropertybrowser
 if test -f $tags/$what-done; then
@@ -349,6 +377,8 @@ else
     cp src/qt*.h src/Qt* $prefix/include/
     touch $tags/$what-done
 fi
+
+# qxmpp
 
 cd $build
 what=qxmpp

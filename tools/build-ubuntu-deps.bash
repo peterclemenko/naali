@@ -42,25 +42,52 @@ export CCACHE_DIR=$deps/ccache
 export TUNDRA_PYTHON_ENABLED=TRUE
 
 if lsb_release -c | egrep -q "lucid|maverick|natty|oneiric|precise|maya|lisa|katya|julia|isadora|quantal|nadia" && tty >/dev/null; then
-        which aptitude > /dev/null 2>&1 || sudo apt-get install aptitude
-  	sudo aptitude -y install git-core python-dev libogg-dev libvorbis-dev \
-	 build-essential g++ libboost-all-dev libois-dev \
-	 ccache libqt4-dev freeglut3-dev \
-	 libxml2-dev cmake libalut-dev libtheora-dev ed \
-	 liboil0.3-dev mercurial unzip xsltproc libxrandr-dev \
-	 libspeex-dev nvidia-cg-toolkit subversion \
-	 libfreetype6-dev libfreeimage-dev libzzip-dev \
-	 libxaw7-dev libgl1-mesa-dev libglu1-mesa-dev \
-	 libvlc-dev libspeexdsp-dev libprotobuf-dev \
-	 libprotobuf-c0 libprotobuf-c0-dev \
-	 protobuf-c-compiler protobuf-compiler \
-     libqt4-opengl-dev libqtwebkit-dev \
-     libxerces-c3-dev libglut-mesa-dev \
-     xutils-dev libxi-dev libglut3 libglew-dev libxft-dev \
-     libapr1-dev libaprutil1-dev libcppunit-dev liblapack-dev \
-     libblas-dev libf2c2-dev mono-devel mono-xbuild libopenal-dev \
-     libsndfile-dev festival-dev libxxf86vm-dev imagemagick \
-     libode-dev festival activemq
+    which aptitude > /dev/null 2>&1 || sudo apt-get install aptitude
+    if lsb_release -c | egrep -q "precise|maya|quantal|nadia" && tty >/dev/null; then
+        sudo aptitude -y install git-core python-dev libogg-dev libvorbis-dev \
+         build-essential g++ libboost1.48-all-dev libois-dev \
+         ccache libqt4-dev freeglut3-dev \
+         libxml2-dev cmake libalut-dev libtheora-dev ed \
+         liboil0.3-dev mercurial unzip xsltproc libxrandr-dev \
+         libspeex-dev nvidia-cg-toolkit subversion \
+         libfreetype6-dev libfreeimage-dev libzzip-dev \
+         libxaw7-dev libgl1-mesa-dev libglu1-mesa-dev \
+         libvlc-dev libspeexdsp-dev libprotobuf-dev \
+         libprotobuf-c0 libprotobuf-c0-dev \
+         protobuf-c-compiler protobuf-compiler \
+         libqt4-opengl-dev libqtwebkit-dev \
+         libxerces-c3-dev libglut-mesa-dev \
+         xutils-dev libxi-dev libglut3 libglew-dev libxft-dev \
+         libapr1-dev libaprutil1-dev libcppunit-dev liblapack-dev \
+         libblas-dev libf2c2-dev mono-devel mono-xbuild libopenal-dev \
+         libsndfile-dev festival-dev libxxf86vm-dev imagemagick \
+         libode-dev festival activemq wget mono-devel mono-xbuild \
+         python-dev libxerces-c-dev freeglut-3-dev libactivemq-java \
+         libglew1.6-dev libfltk1.3-dev libsndfile1-dev autoconf \
+         automake libtool festival-dev 
+    else
+        sudo aptitude -y install git-core python-dev libogg-dev libvorbis-dev \
+         build-essential g++ libboost-all-dev libois-dev \
+	     ccache libqt4-dev freeglut3-dev \
+    	 libxml2-dev cmake libalut-dev libtheora-dev ed \
+    	 liboil0.3-dev mercurial unzip xsltproc libxrandr-dev \
+    	 libspeex-dev nvidia-cg-toolkit subversion \
+    	 libfreetype6-dev libfreeimage-dev libzzip-dev \
+    	 libxaw7-dev libgl1-mesa-dev libglu1-mesa-dev \
+    	 libvlc-dev libspeexdsp-dev libprotobuf-dev \
+	     libprotobuf-c0 libprotobuf-c0-dev \
+    	 protobuf-c-compiler protobuf-compiler \
+         libqt4-opengl-dev libqtwebkit-dev \
+         libxerces-c3-dev libglut-mesa-dev \
+         xutils-dev libxi-dev libglut3 libglew-dev libxft-dev \
+         libapr1-dev libaprutil1-dev libcppunit-dev liblapack-dev \
+         libblas-dev libf2c2-dev mono-devel mono-xbuild libopenal-dev \
+         libsndfile-dev festival-dev libxxf86vm-dev imagemagick \
+         libode-dev festival activemq wget mono-devel mono-xbuild \
+         python-dev libxerces-c-dev freeglut-3-dev libactivemq-java \
+         libglew1.6-dev libfltk1.3-dev libsndfile1-dev autoconf \
+         automake libtool festival-dev
+    fi
 fi
 
 # bullet
@@ -222,7 +249,7 @@ else
     hg checkout v1-8 # Make sure we are in the right branch
     mkdir -p $what-build
     cd $what-build  
-    cmake .. -DCMAKE_INSTALL_PREFIX=$prefix -DOGRE_BUILD_PLUGIN_BSP:BOOL=OFF -DOGRE_BUILD_PLUGIN_PCZ:BOOL=OFF -DOGRE_BUILD_SAMPLES:BOOL=OFF -DOGRE_CONFIG_THREADS:INT=1
+    cmake .. -DCMAKE_INSTALL_PREFIX=$prefix -DOGRE_BUILD_PLUGIN_BSP:BOOL=OFF -DOGRE_BUILD_PLUGIN_PCZ:BOOL=OFF -DOGRE_BUILD_SAMPLES:BOOL=OFF
     make -j $nprocs VERBOSE=1
     make install
     touch $tags/$what-done
@@ -254,6 +281,7 @@ else
 fi
 
 # HydraX build:
+
 if test -f $tags/hydrax-done; then
     echo "Hydrax-done"
 else
@@ -264,6 +292,7 @@ else
     make PREFIX=$prefix install
     touch $tags/hydrax-done
 fi
+
 # SkyX build
 
 if test -f $tags/skyx-done; then
@@ -285,51 +314,78 @@ else
    touch $tags/skyx-done
 fi
 
+
+# boost numeric bindings
+
+cd $build
+what=boost-numeric-bindings
+if test -f $tags/$what-done; then
+    echo $what is done
+else
+    if test -f $build/$what; then
+        cd $what
+        git pull
+    else
+        git clone http://git.tiker.net/trees/boost-numeric-bindings.git $what
+        cd $what
+    fi
+    ./configure --prefix=$prefix
+    make -j $nprocs install
+    touch $tags/$what-done
+fi
+
+
+# activemq c++ bindings
+
+what=activemq-cpp-3.4.5
+whatdir=activemq-cpp-library-3.4.5
+tarfilename=activemq-cpp-library-3.4.5-src
+if test -f $tags/$what-done; then
+    echo $what is done
+else
+    cd $build
+    rm -rf $whatdir
+    test -f $tarballs/$tarfilename.tar.gz || wget -P $tarballs wget http://apache.cu.be/activemq/activemq-cpp/source/$tarfilename.tar.gz
+    tar -zxvf $tarballs/activemq-cpp-library-3.4.5-src.tar.gz
+    cd $whatdir
+    ./autogen.sh
+#    ./configure –disable-ssl --prefix=$prefix
+    ./configure --prefix=$prefix
+    make -j $nprocs
+    make -j $nprocs install
+    sudo ldconfig
+    touch $tags/$what-done
+fi
+
 # smartbody
+
 cd $build
 what=smartbody
-amqwhat=activemq
 rev=r3875
 if test -f $tags/$what-done; then
     echo $what is done
 else
     if test -f $build/$what; then
         cd $what
+        svn propget svn:externals
         svn update -r $rev
+
     else
         svn checkout https://smartbody.svn.sourceforge.net/svnroot/smartbody/trunk@$rev $what
         cd $what
+        svn propget svn:externals
     fi
-
-    # activemq cpp dependency for smartbody
-  #  if test -f $tags/$amqwhat-done; then
- #       echo $amqwhat is done
- #   else
-#        cd lib/activemq/activemq-cpp
-#        chmod +x configure
-#        ./configure --prefix=$prefix --exec-prefix=$prefix
-#        make -j $nprocs
-#        make install
-
-#        cp -r $prefix/include/activemq-cpp-3.4.4/* $prefix/include
-#        touch $tags/$amqwhat-done
-#    fi
-    cd $build/$what    
-    cd build
-    chmod +x sb-automated-build.py
-    python sb-automated-build.py build password -ci
-
-#    python sb-automated-build.py
-#    cmake -DCMAKE_INSTALL_PREFIX=$prefix
-  #  ./configure
-   # make
-
-# touch $tags/$what-done
-
-
+  #  rm -rf buildfolder
+#    mkdir buildfolder
+ #   cd buildfolder
+    cmake . -DCMAKE_INSTALL_PREFIX=$prefix 
+    make -j $nprocs
+    make -j $nprocs install
+   # touch $tags/$what-done
 fi
 
 # PythonQT build
+
 if test -f $tags/pythonqt-done; then
     echo "PythonQt-done"
 else

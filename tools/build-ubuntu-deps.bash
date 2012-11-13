@@ -361,7 +361,7 @@ fi
 
 cd $build
 what=smartbody
-rev=r3875
+rev=r3890
 if test -f $tags/$what-done; then
     echo $what is done
 else
@@ -369,7 +369,6 @@ else
         cd $what
         svn propget svn:externals
         svn update -r $rev
-
     else
         svn checkout https://smartbody.svn.sourceforge.net/svnroot/smartbody/trunk@$rev $what
         cd $what
@@ -378,7 +377,7 @@ else
   #  rm -rf buildfolder
 #    mkdir buildfolder
  #   cd buildfolder
-    cmake . -DCMAKE_INSTALL_PREFIX=$prefix 
+    cmake . -DCMAKE_INSTALL_PREFIX=$prefix -DCMAKE_CXX_FLAGS="-I /usr/include/python2.7/"
     make -j $nprocs
     make -j $nprocs install
    # touch $tags/$what-done

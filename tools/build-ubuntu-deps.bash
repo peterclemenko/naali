@@ -41,10 +41,16 @@ export CXX="ccache g++"
 export CCACHE_DIR=$deps/ccache
 export TUNDRA_PYTHON_ENABLED=TRUE
 
+if lsb_release -c | egrep -q "precise|maya|quantal|nadia" && tty >/dev/null; then
+export APT_BOOST_VERSION="libboost1.48-all-dev"
+else
+export APT_BOOST_VERSION="libboost-all-dev"
+fi    
+
 if lsb_release -c | egrep -q "lucid|maverick|natty|oneiric|precise|maya|lisa|katya|julia|isadora|quantal|nadia" && tty >/dev/null; then
         which aptitude > /dev/null 2>&1 || sudo apt-get install aptitude
 	sudo aptitude -y install git-core python-dev libogg-dev libvorbis-dev \
-	 build-essential g++ libboost1.48-all-dev libois-dev \
+	 build-essential g++ $APT_BOOST_VERSION libois-dev \
 	 ccache libqt4-dev python-dev freeglut3-dev \
 	 libxml2-dev cmake libalut-dev libtheora-dev ed \
 	 liboil0.3-dev mercurial unzip xsltproc libois-dev libxrandr-dev \

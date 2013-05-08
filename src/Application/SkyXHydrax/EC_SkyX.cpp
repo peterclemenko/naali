@@ -141,6 +141,11 @@ EC_SkyX::EC_SkyX(Scene* scene) :
     INIT_ATTRIBUTE_VALUE(moonlightDiffuseColor, "Moonlight color", Color(0.639f,0.639f,0.639f, 0.25f)), /**< @todo Nicer color for moonlight */
     INIT_ATTRIBUTE(moonlightSpecularColor, "Moonlight specular color"), // defaults to black
     INIT_ATTRIBUTE_VALUE(ambientLightColor, "Ambient light color", OgreWorld::DefaultSceneAmbientLightColor()), // Ambient and sun diffuse color copied from EC_EnvironmentLight
+    INIT_ATTRIBUTE_VALUE(lightningEnabled, "Lightning enabled", false),
+    INIT_ATTRIBUTE_VALUE(delayedResponse, "Delayed Response", false),
+    INIT_ATTRIBUTE_VALUE(lightningAverageAparitionTime, "Average aparition time of lightning", 1.0f),
+    INIT_ATTRIBUTE_VALUE(lightningTimeMultiplier, "Lightning time multiplier", 0.0f),
+    INIT_ATTRIBUTE_VALUE(lightningColor, "Lightning color", float3(1.0f,0.976f,0.092f)),
     impl(0)
 {
     static AttributeMetadata cloudTypeMd, cloudHeightMd, timeMd, zeroToHundredMd, mediumStepMd, smallStepMd;
@@ -174,6 +179,8 @@ EC_SkyX::EC_SkyX(Scene* scene) :
     timeMultiplier.SetMetadata(&smallStepMd);
     sunInnerRadius.SetMetadata(&mediumStepMd);
     sunOuterRadius.SetMetadata(&mediumStepMd);
+    lightningTimeMultiplier.SetMetadata(&smallStepMd);
+    lightningAverageAparitionTime.SetMetadata(&smallStepMd);
 
     connect(this, SIGNAL(ParentEntitySet()), SLOT(Create()));
 }
@@ -445,13 +452,14 @@ void EC_SkyX::UpdateAttribute(IAttribute *attr, AttributeChange::Type change)
             }
         }
     }
-    else if (attr == &cloudCoverage || attr == &cloudAverageSize)
+    else if (attr == &cloudCoverage || attr == &cloudAverageSize || attr == &delayedResponse)
     {
         if ((CloudType)cloudType.Get() == Volumetric)
         {
             float skyxCoverage = cloudCoverage.Get() / 100.f; // [0,1]
             float skyxSize = cloudAverageSize.Get() / 100.f; // [0,1]
-            impl->skyX->getVCloudsManager()->getVClouds()->setWheater(skyxCoverage, skyxSize, false);
+            bool delayedResponseValue = delayedResponse.Get();
+            impl->skyX->getVCloudsManager()->getVClouds()->setWheater(skyxCoverage, skyxSize, delayedResponseValue);
         }
     }
     else if (attr == &cloudHeight)
@@ -561,6 +569,22 @@ void EC_SkyX::UpdateAttribute(IAttribute *attr, AttributeChange::Type change)
     else if (attr == &ambientLightColor && impl->skyX->getSceneManager())
     {
         impl->skyX->getSceneManager()->setAmbientLight(ambientLightColor.Get());
+    }
+    else if (attr == &lightningEnabled)
+    {
+        impl->skyX->getVCloudsManager()->getVClouds()->getLightningManager()->setEnabled(lightningEnabled.Get());
+    }
+    else if (attr == &lightningAverageAparitionTime)
+    {
+        impl->skyX->getVCloudsManager()->getVClouds()->getLightningManager()->setAverageLightningApparitionTime(lightningAverageAparitionTime.Get());
+    }
+    else if (attr == &lightningColor)
+    {
+        impl->skyX->getVCloudsManager()->getVClouds()->getLightningManager()->setLightningColor(lightningColor.Get());
+    }
+    else if (attr == &lightningTimeMultiplier)
+    {
+        impl->skyX->getVCloudsManager()->getVClouds()->getLightningManager()->setLightningTimeMultiplier(lightningTimeMultiplier.Get());
     }
 }
 

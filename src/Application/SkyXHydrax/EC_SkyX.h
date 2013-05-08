@@ -111,6 +111,27 @@ public:
     DEFINE_QPROPERTY_ATTRIBUTE(Color, ambientLightColor);
     Q_PROPERTY(Color ambientLightColor READ getambientLightColor WRITE setambientLightColor);
 
+    /// Is lightning enabled?
+    DEFINE_QPROPERTY_ATTRIBUTE(bool, lightningEnabled);
+    Q_PROPERTY(bool lightningEnabled READ getlightningEnabled WRITE setlightningEnabled);
+
+    /// delayedResponse false to change wheather conditions over several updates, true to change it at the moment
+    DEFINE_QPROPERTY_ATTRIBUTE(bool, delayedResponse);
+    Q_PROPERTY(bool delayedResponse READ getdelayedResponse WRITE setdelayedResponse);
+
+    /// VCloud's lightning color.
+    DEFINE_QPROPERTY_ATTRIBUTE(float3, lightningColor);
+    Q_PROPERTY(float3 lightningColor READ getlightningColor WRITE setlightningColor);
+
+    /// AverageCloudsSize Average clouds size, for example: if previous wheater clouds size parameter was very different from new one(i.e: more little) only the old biggest clouds are going to be keept and the little ones are going to be replaced
+    DEFINE_QPROPERTY_ATTRIBUTE(float, lightningAverageAparitionTime);
+    Q_PROPERTY(float lightningAverageAparitionTime READ getlightningAverageAparitionTime WRITE setlightningAverageAparitionTime);
+
+    /// AverageCloudsSize Average clouds size, for example: if previous wheater clouds size parameter was very different from new one(i.e: more little) only the old biggest clouds are going to be keept and the little ones are going to be replaced
+    DEFINE_QPROPERTY_ATTRIBUTE(float, lightningTimeMultiplier);
+    Q_PROPERTY(float lightningTimeMultiplier READ getlightningTimeMultiplier WRITE setlightningTimeMultiplier);
+
+
 public slots:
     /// Returns whether or not the sun is visible (above horizon).
     bool IsSunVisible() const;
